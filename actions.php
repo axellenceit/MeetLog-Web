@@ -1,0 +1,1649 @@
+<?php
+
+declare(strict_types=1);
+
+ob_start();
+
+require_once __DIR__ . '/src/init.php';
+
+if (!$auth->isLoggedIn()) {
+    $redirect->to('login.php');
+}
+
+use Src\User\User;
+use Src\Organisation\OrganisationsMitglied;
+use Src\Organisation\OrganisationMitgliedRepository;
+use Src\Person\Person;
+use Src\Besprechung\InvitationPdfBuilder;
+
+$action = $_GET['action'] ?? $_POST['action'] ?? null;
+
+function buildFeedbackRedirectUrl(string $status): string
+{
+    $referer = $_SERVER['HTTP_REFERER'] ?? 'index.php';
+    $parts = parse_url($referer);
+
+    $path = $parts['path'] ?? 'index.php';
+    $query = [];
+
+    if (!empty($parts['query'])) {
+        parse_str($parts['query'], $query);
+    }
+
+    $query['feedback_issue'] = $status;
+
+    return $path . '?' . http_build_query($query);
+}
+
+switch ($action) {
+    case 'logout':
+        $auth->logout();
+        $redirect->to('login.php');
+        break;
+
+    case 'deleteProfilePhoto':
+        $result = $userRepository->deleteProfilePhoto($session->get('id'));
+
+        if (!$result) {
+            $flash->set('errorMsg', 'Foto konnte nicht gelöscht werden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $redirect->back();
+        break;
+
+    case 'uploadProfilePhoto':
+
+        if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+            $flash->set('errorMsg', 'Bitte Foto auswählen');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $file = $_FILES['file'];
+        $maxSize = 2 * 1024 * 1024;
+
+        if ($file['size'] > $maxSize) {
+            $flash->set('errorMsg', 'Datei zu groß. Maximal 2 MB');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->file($file['tmp_name']);
+
+        $allowedMimeTypes = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp'
+        ];
+
+        if (!isset($allowedMimeTypes[$mimeType])) {
+            $flash->set('errorMsg', 'Nicht zulässiges Dateiformat');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $extension = $allowedMimeTypes[$mimeType];
+
+        $uploadDir = __DIR__ . '/upload/user/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0775, true);
+        }
+
+        $newFilename = (string) 'user_' . $session->get('id') . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
+        $targetPath = (string) $uploadDir . $newFilename;
+
+        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+            $flash->set('errorMsg', 'Hochladen fehlgeschlagen');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $relativePath = (string) '/upload/user/' . $newFilename;
+
+        $userRepository->addProfilePhoto($session->get('id'), $relativePath);
+
+        $redirect->back();
+
+    case 'editMeeting':
+        $meetingId = $_POST['editMeetingId'] ?? null;
+
+        if (!$meetingId) {
+            $flash->set('errorMsg', 'Meeting ID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $meeting = $besprechungRepository->findById((int)$meetingId);
+
+        if (!$meeting) {
+            $flash->set('errorMsg', 'Meeting nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        $meeting->titel = $_POST['editMeetingTitle'] ?? $meeting->titel;
+        $meeting->ort = $_POST['editMeetingLocation'] ?? $meeting->ort;
+        $meeting->datum = $_POST['editMeetingDate'] ?? $meeting->datum;
+        $meeting->beginn = $_POST['editMeetingBegin'] ?? $meeting->beginn;
+        $meeting->ende = $_POST['editMeetingEnde'] ?? $meeting->ende;
+
+        $besprechungRepository->update($meeting);
+
+        $redirect->back();
+        break;
+
+    case 'changeMeetingStatus':
+        $meetingId = $_POST['changeMeetingStatusId'] ?? null;
+        $status = $_POST['changeMeetingStatusStatus'] ?? null;
+
+        if (!$meetingId || !$status) {
+            $flash->set('errorMsg', 'Meeting ID oder Status fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $meeting = $besprechungRepository->findById((int)$meetingId);
+
+        if (!$meeting) {
+            $flash->set('errorMsg', 'Meeting nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        if (!in_array($status, ['geplant', 'live', 'beendet'])) {
+            $flash->set('errorMsg', 'Ungültiger Status');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $meeting->status = $status;
+        $besprechungRepository->update($meeting);
+
+        $redirect->back();
+        break;
+
+    case 'publishMeeting':
+        $meetingId = $_POST['publishMeetingId'] ?? null;
+
+        if (!$meetingId) {
+            $flash->set('errorMsg', 'Meeting ID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $meeting = $besprechungRepository->findById((int)$meetingId);
+
+        if (!$meeting) {
+            $flash->set('errorMsg', 'Meeting nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        if ($meeting->status !== 'beendet') {
+            $flash->set('errorMsg', 'Nur Meetings mit Status "beendet" können veröffentlicht werden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '403');
+            $redirect->to('error.php');
+        }
+
+        $meeting->istVeröffentlicht = true;
+        $meeting->public_code = bin2hex(random_bytes(8));
+        $besprechungRepository->update($meeting);
+
+        $redirect->back();
+        break;
+
+    case 'unpublishMeeting':
+        $meetingId = $_POST['unpublishMeetingId'] ?? null;
+
+        if (!$meetingId) {
+            $flash->set('errorMsg', 'Meeting ID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $meeting = $besprechungRepository->findById((int)$meetingId);
+
+        if (!$meeting) {
+            $flash->set('errorMsg', 'Meeting nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        $meeting->istVeröffentlicht = false;
+        $meeting->public_code = null;
+        $besprechungRepository->update($meeting);
+
+        $redirect->back();
+        break;
+
+    case 'deleteMeeting':
+        $meetingId = $_POST['deleteMeetingId'] ?? null;
+
+        if (!$meetingId) {
+            $flash->set('errorMsg', 'Meeting ID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $meeting = $besprechungRepository->findById((int)$meetingId);
+
+        if (!$meeting) {
+            $flash->set('errorMsg', 'Meeting nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        $meeting->istAktiviert = false;
+
+        $besprechungRepository->update($meeting);
+
+        $redirect->back();
+        break;
+
+    case 'addMeetingPoint':
+        $meetingId = $_POST['newMeetingPointId'] ?? null;
+
+        if (!$meetingId) {
+            $flash->set('errorMsg', 'Meeting ID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $meeting = $besprechungRepository->findById((int)$meetingId);
+
+        if (!$meeting) {
+            $flash->set('errorMsg', 'Meeting nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        $parentId = (int)($_POST['newMeetingPointParent'] ?? 0);
+        $parentPosition = 0;
+
+        if ($parentId > 0) {
+            $parentMeetingPoint = $besprechungspunktRepository->findById($parentId);
+
+            if ($parentMeetingPoint && $parentMeetingPoint->besprechungId === (int)$meetingId) {
+                $parentPosition = $parentMeetingPoint->position;
+            }
+        }
+
+        $newMeetingPoint = new \Src\Besprechung\Besprechungspunkt();
+        $newMeetingPoint->besprechungId = (int)$meetingId;
+        $newMeetingPoint->position = $besprechungspunktRepository->findNextPosition((int)$meetingId, $parentPosition);
+        $newMeetingPoint->titel = $_POST['newMeetingPointTitle'] ?? '';
+        $newMeetingPoint->beschreibung = $_POST['newMeetingPointDescription'] ?? '';
+        $newMeetingPoint->typ = $_POST['newMeetingPointType'] ?? '';
+        $newMeetingPoint->elternPosition = $parentPosition;
+        $newMeetingPoint->ergebnis = $_POST['newMeetingPointResult'] ?? '';
+
+        $result = $besprechungspunktRepository->insert($newMeetingPoint);
+
+        if (!$result) {
+            $flash->set('errorMsg', 'Fehler beim Hinzufügen des Besprechungspunkts');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $redirect->back();
+        break;
+
+    case 'editMeetingPoint':
+        $meetingPointId = $_POST['editMeetingPointId'] ?? null;
+
+        if (!$meetingPointId) {
+            $flash->set('errorMsg', 'Meeting Point ID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $meetingPoint = $besprechungspunktRepository->findById((int)$meetingPointId);
+
+        if (!$meetingPoint) {
+            $flash->set('errorMsg', 'Meeting Point nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        $meetingPoint->beschreibung = $_POST['editMeetingPointDescription'] ?? $meetingPoint->beschreibung;
+        $meetingPoint->typ = $_POST['editMeetingPointType'] ?? $meetingPoint->typ;
+        $meetingPoint->elternPosition = (int)($_POST['editMeetingPointParent'] ?? $meetingPoint->elternPosition);
+        $meetingPoint->ergebnis = $_POST['editMeetingPointResult'] ?? $meetingPoint->ergebnis;
+
+        $meetingPoint->ergebnis_zustimmung = (int)($_POST['editMeetingPointVotingYes'] ?? $meetingPoint->ergebnis_zustimmung);
+        $meetingPoint->ergebnis_ablehnung = (int)($_POST['editMeetingPointVotingNo'] ?? $meetingPoint->ergebnis_ablehnung);
+        $meetingPoint->ergebnis_enthaltung = (int)($_POST['editMeetingPointVotingAbstain'] ?? $meetingPoint->ergebnis_enthaltung);
+
+        $result = $besprechungspunktRepository->update($meetingPoint);
+
+        $redirect->back();
+        break;
+
+    case 'meetingChairman':
+        $meetingId = $_GET['meetingId'] ?? null;
+        $participantId = $_GET['participantId'] ?? null;
+
+        if (!$meetingId || !$participantId) {
+            $flash->set('errorMsg', 'Meeting ID oder Teilnehmer ID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $meeting = $besprechungRepository->findById((int)$meetingId);
+
+        if (!$meeting) {
+            $flash->set('errorMsg', 'Meeting nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        $participant = $besprechungsteilnehmerRepository->findById((int)$participantId);
+
+        if (!$participant) {
+            $flash->set('errorMsg', 'Teilnehmer nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        // Setze den aktuellen Vorsitzenden auf false
+        $currentChairman = $besprechungsteilnehmerRepository->findChairmanByMeetingId((int)$meetingId);
+        if ($currentChairman) {
+            $currentChairman->istSitzungsleitung = false;
+            $besprechungsteilnehmerRepository->updateTeilnehmer((int) $meetingId, $currentChairman);
+        }
+
+        // Setze den neuen Vorsitzenden auf true
+        $participant->istSitzungsleitung = true;
+        $besprechungsteilnehmerRepository->updateTeilnehmer((int) $meetingId, $participant);
+
+        $redirect->back();
+        break;
+
+    case 'meetingSecretary':
+        $meetingId = $_GET['meetingId'] ?? null;
+        $participantId = $_GET['participantId'] ?? null;
+
+        if (!$meetingId || !$participantId) {
+            $flash->set('errorMsg', 'Meeting ID oder Teilnehmer ID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $meeting = $besprechungRepository->findById((int)$meetingId);
+
+        if (!$meeting) {
+            $flash->set('errorMsg', 'Meeting nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        $participant = $besprechungsteilnehmerRepository->findById((int)$participantId);
+
+        if (!$participant) {
+            $flash->set('errorMsg', 'Teilnehmer nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        // Setze den aktuellen Protokollführer auf false
+        $currentSecretary = $besprechungsteilnehmerRepository->findSecretaryByMeetingId((int)$meetingId);
+        if ($currentSecretary) {
+            $currentSecretary->istProtokollfuehrer = false;
+            $besprechungsteilnehmerRepository->updateTeilnehmer((int) $meetingId, $currentSecretary);
+        }
+
+        // Setze den neuen Protokollführer auf true
+        $participant->istProtokollfuehrer = true;
+        $besprechungsteilnehmerRepository->updateTeilnehmer((int) $meetingId, $participant);
+
+        $redirect->back();
+        break;
+
+    case 'meetingSign':
+        $meetingId = $_GET['meetingId'] ?? null;
+        $participantId = $_GET['participantId'] ?? null;
+
+        if (!$meetingId || !$participantId) {
+            $flash->set('errorMsg', 'Meeting ID oder Teilnehmer ID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $meeting = $besprechungRepository->findById((int)$meetingId);
+
+        if (!$meeting) {
+            $flash->set('errorMsg', 'Meeting nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        $participant = $besprechungsteilnehmerRepository->findById((int)$participantId);
+
+        if (!$participant) {
+            $flash->set('errorMsg', 'Teilnehmer nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        // Toggle the signing authorization
+        $participant->darfUnterschreiben = !$participant->darfUnterschreiben;
+        $besprechungsteilnehmerRepository->updateTeilnehmer((int) $meetingId, $participant);
+
+        $redirect->back();
+        break;
+
+    case 'sendInvitations':
+        $meetingId = $_POST['sendInvitationMeetingId'] ?? null;
+        $participantIds = $_POST['sendInvitationParticipantIds'] ?? [];
+
+        if (!$meetingId) {
+            $flash->set('errorMsg', 'Meeting ID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $meeting = $besprechungRepository->findById((int)$meetingId);
+
+        if (!$meeting) {
+            $flash->set('errorMsg', 'Meeting nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        if (!is_array($participantIds) || empty($participantIds)) {
+            $flash->set('errorMsg', 'Bitte mindestens einen Teilnehmer auswählen');
+            $flash->set('errorColor', 'red');
+            $redirect->back();
+        }
+
+        $failedCount = 0;
+        $missingFallbackRecipient = false;
+
+        foreach ($participantIds as $participantId) {
+            $participant = $besprechungsteilnehmerRepository->findById((int)$participantId);
+
+            if (!$participant || $participant->besprechung !== $meeting->id) {
+                $failedCount++;
+                continue;
+            }
+
+            $pdfContent = InvitationPdfBuilder::render($app, $meeting, $participant);
+            $attachmentName = 'Einladung_' . str_replace('.', '', str_replace(' ', '_', $meeting->titel)) . '.pdf';
+
+            $recipientName = trim((string)$participant->vorname . ' ' . (string)$participant->nachname);
+            $subject = $translator->t('meetings.participants.invitationMail.subject') . ': ' . $meeting->titel;
+            
+            $body = '<p>' . $translator->t('meetings.participants.invitationMail.greeting') . '</p>'
+                . '<p>' . sprintf($translator->t('meetings.participants.invitationMail.body'), htmlspecialchars($meeting->titel, ENT_QUOTES, 'UTF-8')) . '</p>'
+                . '<p>' . $translator->t('meetings.participants.invitationMail.closing') . '</p>'
+                . $mail->imprint($meeting->organisationId);
+
+            if (empty($participant->mail) || $participant->mail === null) {
+                // Wenn die E-Mail-Adresse leer ist, wird die Einladung an den ausführenden Benutzer gesendet, damit er die Einladung postalisch verschicken kann
+                $currentUser = $userRepository->findById((int)$session->get('id'));
+                $fallbackMail = trim((string)($currentUser->mail ?? ''));
+
+                if (!filter_var($fallbackMail, FILTER_VALIDATE_EMAIL)) {
+                    $failedCount++;
+                    $missingFallbackRecipient = true;
+                    continue;
+                }
+
+                $sent = $mail->send($fallbackMail, 'Einladung postalisch verschicken: ' . $meeting->titel, $body, [
+                    ['name' => $attachmentName, 'content' => $pdfContent],
+                ]);
+            } else {
+                $sent = $mail->send($participant->mail, $subject, $body, [
+                    ['name' => $attachmentName, 'content' => $pdfContent],
+                ]);
+            }
+
+            if ($sent) {
+                $participant->istEingeladen = true;
+                $besprechungsteilnehmerRepository->updateTeilnehmer((int)$meeting->id, $participant);
+            } else {
+                $failedCount++;
+            }
+        }
+
+        if ($failedCount > 0) {
+            $errorMessage = 'Einladung konnte an ' . $failedCount . ' Teilnehmer nicht gesendet werden';
+            if ($missingFallbackRecipient) {
+                $errorMessage .= '. Ihre Benutzer-E-Mail-Adresse fehlt oder ist ungültig';
+            }
+            $flash->set('errorMsg', $errorMessage);
+            $flash->set('errorColor', 'red');
+        }
+
+        $redirect->back();
+        break;
+
+    case 'updateOrganisation':
+        $orgId = $_POST['organisationId'] ?? null;
+
+        if (!$orgId) {
+            $flash->set('errorMsg', 'OrganisationsID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $org = $organisationRepository->findById((int) $orgId);
+
+        if (!$org) {
+            $flash->set('errorMsg', 'Organisation nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
+            $file = $_FILES['logo'];
+            $maxSize = 2 * 1024 * 1024;
+
+            if ($file['size'] > $maxSize) {
+                $flash->set('errorMsg', 'Datei zu groß. Maximal 2 MB');
+                $flash->set('errorColor', 'red');
+                $flash->set('errorCode', '500');
+                $redirect->to('error.php');
+            }
+
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->file($file['tmp_name']);
+
+            $allowedMimeTypes = [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/gif' => 'gif',
+                'image/webp' => 'webp'
+            ];
+
+            if (!isset($allowedMimeTypes[$mimeType])) {
+                $flash->set('errorMsg', 'Nicht zulässiges Dateiformat');
+                $flash->set('errorColor', 'red');
+                $flash->set('errorCode', '500');
+                $redirect->to('error.php');
+            }
+
+            $extension = $allowedMimeTypes[$mimeType];
+
+            $uploadDir = __DIR__ . '/upload/organization/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0775, true);
+            }
+
+            $newFilename = (string) 'organization_' . $org->id . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
+            $targetPath = (string) $uploadDir . $newFilename;
+
+            if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+                $flash->set('errorMsg', 'Hochladen fehlgeschlagen');
+                $flash->set('errorColor', 'red');
+                $flash->set('errorCode', '500');
+                $redirect->to('error.php');
+            }
+
+            $relativePath = (string) '/upload/organization/' . $newFilename;
+
+            $org->logo = $relativePath;
+        }
+
+        $org->name1 = $_POST['name1'] ?? $org->name1;
+        $org->name2 = $_POST['name2'] ?? $org->name2;
+        $org->homepage = $_POST['homepage'] ?? $org->homepage;
+        $org->email = $_POST['email'] ?? $org->email;
+        $org->telefon = $_POST['telefon'] ?? $org->telefon;
+        $org->telefax = $_POST['telefax'] ?? $org->telefax;
+        $org->strasse = $_POST['strasse'] ?? $org->strasse;
+        $org->plz = $_POST['plz'] ?? $org->plz;
+        $org->ort = $_POST['ort'] ?? $org->ort;
+        $org->land = $_POST['land'] ?? $org->land;
+        $org->registergericht = $_POST['registergericht'] ?? $org->registergericht;
+        $org->registereintrag = $_POST['registereintrag'] ?? $org->registereintrag;
+
+        $organisationRepository->update($org);
+
+        $redirect->back();
+
+        break;
+
+    case 'saveConfig':
+        $data = $_POST ?? [];
+
+        if (empty($data)) {
+            $flash->set('errorMsg', 'Keine Daten zum speichern gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '503');
+            $redirect->to('error.php');
+        }
+
+        foreach ($data as $name => $value) {
+            if ($name === 'updateConfigButton') {
+                continue;
+            }
+
+            $parts = explode('_', $name, 3);
+
+            if (count($parts) !== 3 || $parts[0] !== 'update') {
+                continue;
+            }
+
+            $section = $parts[1];
+            $key = $parts[2];
+
+            $config->set($section, $key, $value);
+        }
+
+        $config->save();
+        $config->reload();
+
+        $redirect->back();
+
+        break;
+
+    case 'testConfig':
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-cache, must-revalidate');
+
+        $type = $_POST['type'] ?? '';
+
+        if ($type === 'mail') {
+            $host   = trim($_POST['update_mail_server'] ?? '');
+            $port   = (int)($_POST['update_mail_port'] ?? 587);
+            $user   = trim($_POST['update_mail_user'] ?? '');
+            $pass   = (string)($_POST['update_mail_pass'] ?? '');
+            $secure = trim($_POST['update_mail_usessl'] ?? 'tls');
+
+            if ($host === '' || $port <= 0) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Mail-Host und Port sind erforderlich'
+                ]);
+                exit;
+            }
+
+            try {
+                $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+                $mail->isSMTP();
+                $mail->Host = $host;
+                $mail->Port = $port;
+                $mail->Timeout = 5;
+
+                if ($secure === 'ssl') {
+                    $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+                } elseif ($secure === 'tls') {
+                    $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+                } else {
+                    $mail->SMTPSecure = false;
+                }
+
+                if ($user !== '') {
+                    $mail->SMTPAuth = true;
+                    $mail->Username = $user;
+                    $mail->Password = $pass;
+                } else {
+                    $mail->SMTPAuth = false;
+                }
+
+                $ok = $mail->smtpConnect();
+
+                if ($ok) {
+                    $mail->smtpClose();
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'SMTP-Verbindung erfolgreich'
+                    ]);
+                } else {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'SMTP-Verbindung fehlgeschlagen'
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'SMTP-Test fehlgeschlagen: ' . $e->getMessage()
+                ]);
+            }
+            exit;
+        }
+
+        if ($type === 'database') {
+            $host    = trim($_POST['update_database_host'] ?? '');
+            $port    = trim($_POST['update_database_port'] ?? '3306');
+            $dbname  = trim($_POST['update_database_name'] ?? '');
+            $user    = trim($_POST['update_database_user'] ?? '');
+            $pass    = (string)($_POST['update_database_pass'] ?? '');
+            $charset = trim($_POST['update_database_charset'] ?? 'utf8mb4');
+
+            if ($host === '' || $port === '' || $dbname === '' || $user === '') {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Host, Port, Datenbankname und Benutzer sind erforderlich'
+                ]);
+                exit;
+            }
+
+            if (str_contains($host, ';') || str_contains($dbname, ';')) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Ungültige Zeichen in Host oder Datenbankname'
+                ]);
+                exit;
+            }
+
+            try {
+                $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset={$charset}";
+
+                $pdo = new PDO($dsn, $user, $pass, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_TIMEOUT => 5,
+                ]);
+
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Datenbankverbindung erfolgreich'
+                ]);
+            } catch (PDOException $e) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Datenbankverbindung fehlgeschlagen: ' . $e->getMessage()
+                ]);
+            }
+            exit;
+        }
+
+        echo json_encode([
+            'success' => false,
+            'message' => 'Ungültiger Testtyp'
+        ]);
+
+        break;
+
+    case 'create_member':
+        $orgId = $_POST['organisation_id'] ?? null;
+        $vorname = trim($_POST['vorname'] ?? '');
+        $nachname = trim($_POST['nachname'] ?? '');
+        $strasse = trim($_POST['strasse'] ?? '');
+        $plz = trim($_POST['plz'] ?? '');
+        $ort = trim($_POST['ort'] ?? '');
+        $land = trim($_POST['land'] ?? '');
+        $telefon = trim($_POST['telefon'] ?? '');
+        $email = trim($_POST['mail'] ?? '');
+        $pass = trim($_POST['password'] ?? '');
+        $funktionId = $_POST['funktion_id'] ?? null;
+        $landId = ($land !== '' && ctype_digit($land)) ? (int) $land : null;
+
+        # Wenn eine E-Mail-Adresse angegeben wurde, dann soll auch ein Benutzerkonto angelegt werden
+
+        if (!empty($email)) {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $flash->set('errorMsg', 'Ungültige E-Mail-Adresse');
+                $flash->set('errorColor', 'red');
+                $flash->set('errorCode', '500');
+                $redirect->to('error.php');
+            }
+        }
+
+        $person = new Person(
+            vorname: $vorname !== '' ? $vorname : null,
+            nachname: $nachname !== '' ? $nachname : null,
+            mail: $email !== '' ? $email : null,
+            telefon: $telefon !== '' ? $telefon : null,
+            strasse: $strasse !== '' ? $strasse : null,
+            plz: $plz !== '' ? $plz : null,
+            ort: $ort !== '' ? $ort : null,
+            land: $landId,
+            istAktiv: 1,
+            istGeloescht: 0,
+        );
+
+        $personId = $personRepository->create($person);
+
+        if (!$personId) {
+            $flash->set('errorMsg', 'Fehler beim Erstellen der Personendaten');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        if (!empty($email)) {
+            if (empty($pass)) {
+                $pass = bin2hex(random_bytes(12));
+            }
+
+            $user = new User();
+            $user->person = (int) $personId;
+            $user->vorname = $vorname;
+            $user->nachname = $nachname;
+            $user->mail = $email;
+            $user->password = password_hash($pass, PASSWORD_DEFAULT);
+            $user->standardOrganisation = $session->get('StandardOrganisation');
+            $user->istAktiv = 1;
+
+            $newUserId = $userRepository->addUser($user);
+
+            if (!$newUserId) {
+                $flash->set('errorMsg', 'Fehler beim Erstellen des Benutzerkontos');
+                $flash->set('errorColor', 'red');
+                $flash->set('errorCode', '500');
+                $redirect->to('error.php');
+            }
+        }
+
+        $mitglied = new OrganisationsMitglied();
+        $mitglied->organisation = (int) $orgId;
+        $mitglied->person = (int) $personId;
+        $mitglied->user = isset($newUserId) ? (int) $newUserId : null;
+        $mitglied->funktion = isset($funktionId) && $funktionId !== '' ? (int) $funktionId : null;
+        $mitglied->vorname = $vorname;
+        $mitglied->nachname = $nachname;
+        $mitglied->strasse = $strasse;
+        $mitglied->plz = $plz;
+        $mitglied->ort = $ort;
+        $mitglied->land = $landId;
+        $mitglied->telefon = $telefon;
+        $mitglied->mail = $email;
+        $mitglied->istAktiv = 1;
+        $mitglied->istGeloescht = 0;
+
+        $result = (int) $organisationsMitgliedRepository->addMember($mitglied);
+
+        if ($result) {
+            if (isset($email) && isset($newUserId)) {
+                $mail->sendWelcomeEmail($email, $vorname, $email, $pass);
+            }
+        } else {
+            $flash->set('errorMsg', 'Fehler beim Erstellen des Mitglieds');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $redirect->back();
+        break;
+
+    case 'enable_member':
+    case 'disable_member':
+
+        $memberId = $_GET['member_id'] ?? null;
+
+        if (!$memberId) {
+            $flash->set('errorMsg', 'MitgliedsID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $mitglied = $organisationsMitgliedRepository->findById((int) $memberId);
+
+        if (!$mitglied) {
+            $flash->set('errorMsg', 'Mitglied nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        $user = $userRepository->findById($mitglied->user);
+
+        if ($user && $user->istAdmin && $action === 'disable_member') {
+            $flash->set('errorMsg', 'Admin-Mitglied kann nicht deaktiviert werden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '403');
+            $redirect->to('error.php');
+        }
+
+        $mitglied->istAktiv = ($action === 'enable_member');
+
+        $result = $organisationsMitgliedRepository->update($mitglied);
+
+        if (!$result) {
+            $flash->set('errorMsg', 'Fehler beim Aktualisieren des Mitgliedsstatus');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $redirect->back();
+        break;
+
+    case 'update_member':
+        $memberId = $_POST['member_id'] ?? null;
+
+        if (!$memberId) {
+            $flash->set('errorMsg', 'MitgliedsID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $mitglied = $organisationsMitgliedRepository->findById((int) $memberId);
+
+        if (!$mitglied) {
+            $flash->set('errorMsg', 'Mitglied nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        $mitglied->vorname = trim((string) ($_POST['vorname'] ?? (string) $mitglied->vorname));
+        $mitglied->nachname = trim((string) ($_POST['nachname'] ?? (string) $mitglied->nachname));
+        $mitglied->strasse = trim((string) ($_POST['strasse'] ?? (string) $mitglied->strasse));
+        $mitglied->plz = trim((string) ($_POST['plz'] ?? (string) $mitglied->plz));
+        $mitglied->ort = trim((string) ($_POST['ort'] ?? (string) $mitglied->ort));
+        $postedLand = trim((string) ($_POST['land'] ?? ''));
+        $mitglied->land = ($postedLand !== '' && ctype_digit($postedLand)) ? (int) $postedLand : $mitglied->land;
+        $mitglied->telefon = trim((string) ($_POST['telefon'] ?? (string) $mitglied->telefon));
+        $mitglied->mail = trim((string) ($_POST['mail'] ?? (string) $mitglied->mail));
+
+        $result = (int) $organisationsMitgliedRepository->updateMember($mitglied);
+
+        if (!$result) {
+            $flash->set('errorMsg', 'Fehler beim Aktualisieren des Mitglieds');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        if ($mitglied->user) {
+            // Wenn das Mitglied ein Benutzerkonto hat, dann aktualisiere auch das Benutzerkonto
+            $user = $userRepository->findById((int) $mitglied->user);
+
+            if ($user) {
+                $user->person = $mitglied->person;
+                $user->vorname = (string) ($mitglied->vorname ?? $user->vorname);
+                $user->nachname = (string) ($mitglied->nachname ?? $user->nachname);
+                $newMail = trim((string) ($_POST['mail'] ?? ''));
+
+                if ($newMail !== '' && filter_var($newMail, FILTER_VALIDATE_EMAIL)) {
+                    $user->mail = $newMail;
+                }
+
+                $userRepository->updateUser($user);
+            }
+        }
+
+        $redirect->back();
+        break;
+
+    case 'delete_member':
+        $memberId = $_GET['member_id'] ?? null;
+
+        if (!$memberId) {
+            $flash->set('errorMsg', 'MitgliedsID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $mitglied = $organisationsMitgliedRepository->findById((int) $memberId);
+
+        if (!$mitglied) {
+            $flash->set('errorMsg', 'Mitglied nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        $user = $userRepository->findById($mitglied->user);
+
+        if ($user && $user->istAdmin) {
+            $flash->set('errorMsg', 'Admin-Mitglied kann nicht gelöscht werden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '403');
+            $redirect->to('error.php');
+        }
+
+        $mitglied->istAktiv = 0;
+        $mitglied->istGeloescht = 1;
+
+        $mailaddress = '';
+        $result = $organisationsMitgliedRepository->updateMember($mitglied);
+
+        if ($result && $user) {
+            $user->person = $mitglied->person;
+            $user->istAktiv = 0;
+            $user->istGeloescht = 1;
+
+            $mailaddress = (string) $user->mail; // Für Lösch-Benachrichtigung sichern
+
+            // Person/User anonymisieren
+            $user->vorname = 'Anonym';
+            $user->nachname = 'Anonym';
+            $user->mail = 'anonym_' . bin2hex(random_bytes(8)) . '@example.com';
+            $user->password = password_hash(bin2hex(random_bytes(12)), PASSWORD_DEFAULT);
+
+            $result = $userRepository->updateUser($user);
+        }
+
+        if (!$result) {
+            $flash->set('errorMsg', 'Fehler beim Aktualisieren des Mitgliedsstatus');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        if ($mailaddress !== '') {
+            $mail->sendDeletionEmail($mailaddress, $mitglied->organisation);
+        }
+
+        $redirect->back();
+        break;
+
+    case 'create_person':
+        $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
+
+        if ($organisationId <= 0) {
+            $flash->set('errorMsg', 'Keine gültige Standardorganisation gesetzt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        $vorname = trim((string) ($_POST['vorname'] ?? ''));
+        $nachname = trim((string) ($_POST['nachname'] ?? ''));
+        $mailAddress = trim((string) ($_POST['mail'] ?? ''));
+        $telefon = trim((string) ($_POST['telefon'] ?? ''));
+        $strasse = trim((string) ($_POST['strasse'] ?? ''));
+        $plz = trim((string) ($_POST['plz'] ?? ''));
+        $ort = trim((string) ($_POST['ort'] ?? ''));
+        $land = trim((string) ($_POST['land'] ?? ''));
+        $landId = ($land !== '' && ctype_digit($land)) ? (int) $land : null;
+        $funktionIdRaw = trim((string) ($_POST['funktion_id'] ?? ''));
+        $funktionId = ($funktionIdRaw !== '' && ctype_digit($funktionIdRaw)) ? (int) $funktionIdRaw : null;
+        $createUser = (string) ($_POST['create_user'] ?? '0') === '1';
+        $password = trim((string) ($_POST['password'] ?? ''));
+
+        if ($mailAddress !== '' && !filter_var($mailAddress, FILTER_VALIDATE_EMAIL)) {
+            $flash->set('errorMsg', 'Ungültige E-Mail-Adresse');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        if ($createUser && $mailAddress === '') {
+            $flash->set('errorMsg', 'Für ein Benutzerkonto ist eine E-Mail-Adresse erforderlich');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        $person = new Person(
+            vorname: $vorname !== '' ? $vorname : null,
+            nachname: $nachname !== '' ? $nachname : null,
+            mail: $mailAddress !== '' ? $mailAddress : null,
+            telefon: $telefon !== '' ? $telefon : null,
+            strasse: $strasse !== '' ? $strasse : null,
+            plz: $plz !== '' ? $plz : null,
+            ort: $ort !== '' ? $ort : null,
+            land: $landId,
+            istAktiv: 1,
+            istGeloescht: 0,
+        );
+
+        $personId = $personRepository->create($person);
+        if (!$personId) {
+            $flash->set('errorMsg', 'Fehler beim Erstellen der Person');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $mitglied = new OrganisationsMitglied();
+        $mitglied->organisation = $organisationId;
+        $mitglied->person = (int) $personId;
+        $mitglied->funktion = $funktionId;
+        $mitglied->istAktiv = 1;
+        $mitglied->istGeloescht = 0;
+
+        $newMemberId = (int) $organisationsMitgliedRepository->addMember($mitglied);
+        if ($newMemberId <= 0) {
+            $flash->set('errorMsg', 'Fehler beim Verknüpfen der Person mit der Organisation');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        if ($createUser) {
+            if ($password === '') {
+                $password = bin2hex(random_bytes(12));
+            }
+
+            $user = new User();
+            $user->person = (int) $personId;
+            $user->vorname = $vorname;
+            $user->nachname = $nachname;
+            $user->mail = $mailAddress;
+            $user->password = password_hash($password, PASSWORD_DEFAULT);
+            $user->standardOrganisation = $organisationId;
+            $user->istAktiv = 1;
+            $user->istAdmin = 0;
+            $user->istGeloescht = 0;
+
+            $newUserId = $userRepository->addUser($user);
+            if (!$newUserId) {
+                $flash->set('errorMsg', 'Fehler beim Erstellen des Benutzerkontos');
+                $flash->set('errorColor', 'red');
+                $flash->set('errorCode', '500');
+                $redirect->to('error.php');
+            }
+
+            $mitglied = $organisationsMitgliedRepository->findById($newMemberId);
+            if ($mitglied) {
+                $mitglied->user = (int) $newUserId;
+                $organisationsMitgliedRepository->updateMember($mitglied);
+            }
+
+            $displayName = trim($vorname . ' ' . $nachname);
+            $mail->sendWelcomeEmail($mailAddress, $displayName !== '' ? $displayName : $mailAddress, $mailAddress, $password, $organisationId);
+        }
+
+        $redirect->back();
+        break;
+
+    case 'update_person':
+        $personId = (int) ($_POST['person_id'] ?? 0);
+        $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
+
+        if ($personId <= 0 || $organisationId <= 0) {
+            $flash->set('errorMsg', 'Person oder Organisation ungültig');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        $mitglied = $organisationsMitgliedRepository->findByPersonAndOrganisation($personId, $organisationId);
+        if (!$mitglied || $mitglied->istGeloescht) {
+            $flash->set('errorMsg', 'Person gehört nicht zur aktuellen Organisation');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '403');
+            $redirect->to('error.php');
+        }
+
+        $person = $personRepository->findById($personId);
+        if (!$person || $person->istGeloescht) {
+            $flash->set('errorMsg', 'Person nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        $vorname = trim((string) ($_POST['vorname'] ?? ''));
+        $nachname = trim((string) ($_POST['nachname'] ?? ''));
+        $mailAddress = trim((string) ($_POST['mail'] ?? ''));
+        $telefon = trim((string) ($_POST['telefon'] ?? ''));
+        $strasse = trim((string) ($_POST['strasse'] ?? ''));
+        $plz = trim((string) ($_POST['plz'] ?? ''));
+        $ort = trim((string) ($_POST['ort'] ?? ''));
+        $land = trim((string) ($_POST['land'] ?? ''));
+        $landId = ($land !== '' && ctype_digit($land)) ? (int) $land : null;
+        $funktionIdRaw = trim((string) ($_POST['funktion_id'] ?? ''));
+        $funktionId = ($funktionIdRaw !== '' && ctype_digit($funktionIdRaw)) ? (int) $funktionIdRaw : null;
+
+        if ($mailAddress !== '' && !filter_var($mailAddress, FILTER_VALIDATE_EMAIL)) {
+            $flash->set('errorMsg', 'Ungültige E-Mail-Adresse');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        $person->vorname = $vorname !== '' ? $vorname : null;
+        $person->nachname = $nachname !== '' ? $nachname : null;
+        $person->mail = $mailAddress !== '' ? $mailAddress : null;
+        $person->telefon = $telefon !== '' ? $telefon : null;
+        $person->strasse = $strasse !== '' ? $strasse : null;
+        $person->plz = $plz !== '' ? $plz : null;
+        $person->ort = $ort !== '' ? $ort : null;
+        $person->land = $landId;
+        $mitglied->funktion = $funktionId;
+
+        $result = $personRepository->update($person);
+
+        if ($result) {
+            $result = $organisationsMitgliedRepository->updateMember($mitglied);
+        }
+
+        if (!$result) {
+            $flash->set('errorMsg', 'Fehler beim Aktualisieren der Person');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $redirect->back();
+        break;
+
+    case 'disable_person':
+    case 'enable_person':
+        $personId = (int) ($_GET['person_id'] ?? 0);
+        $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
+
+        if ($personId <= 0 || $organisationId <= 0) {
+            $flash->set('errorMsg', 'Person oder Organisation ungültig');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        $person = $personRepository->findById($personId);
+        if (!$person || $person->istGeloescht) {
+            $flash->set('errorMsg', 'Person nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        $enable = $action === 'enable_person';
+        $user = $userRepository->findByPersonId($personId);
+        if (!$enable && $user && $user->istAdmin) {
+            $flash->set('errorMsg', 'Admin-Benutzer kann nicht gesperrt werden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '403');
+            $redirect->to('error.php');
+        }
+
+        $person->istAktiv = $enable ? 1 : 0;
+        $result = $personRepository->update($person);
+
+        $mitglied = $organisationsMitgliedRepository->findByPersonAndOrganisation($personId, $organisationId);
+        if ($result && $mitglied) {
+            $mitglied->istAktiv = $enable ? 1 : 0;
+            $result = $organisationsMitgliedRepository->updateMember($mitglied);
+        }
+
+        if ($result && $user) {
+            $user->istAktiv = $enable ? 1 : 0;
+            $result = $userRepository->updateUser($user);
+        }
+
+        if (!$result) {
+            $flash->set('errorMsg', 'Fehler beim Aktualisieren des Personenstatus');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $redirect->back();
+        break;
+
+    case 'delete_person':
+        $personId = (int) ($_GET['person_id'] ?? 0);
+        $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
+
+        if ($personId <= 0 || $organisationId <= 0) {
+            $flash->set('errorMsg', 'Person oder Organisation ungültig');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        $person = $personRepository->findById($personId);
+        if (!$person || $person->istGeloescht) {
+            $flash->set('errorMsg', 'Person nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        $user = $userRepository->findByPersonId($personId);
+        if ($user && $user->istAdmin) {
+            $flash->set('errorMsg', 'Admin-Benutzer kann nicht gelöscht werden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '403');
+            $redirect->to('error.php');
+        }
+
+        $mailAddress = (string) ($person->mail ?? '');
+
+        $person->istAktiv = 0;
+        $person->istGeloescht = 1;
+        $person->vorname = 'Anonym';
+        $person->nachname = 'Anonym';
+        $person->mail = 'anonym_' . bin2hex(random_bytes(8)) . '@example.com';
+        $person->telefon = null;
+        $person->strasse = null;
+        $person->plz = null;
+        $person->ort = null;
+        $person->land = null;
+
+        $result = $personRepository->update($person);
+
+        $mitglied = $organisationsMitgliedRepository->findByPersonAndOrganisation($personId, $organisationId);
+        if ($result && $mitglied) {
+            $mitglied->istAktiv = 0;
+            $mitglied->istGeloescht = 1;
+            $result = $organisationsMitgliedRepository->updateMember($mitglied);
+        }
+
+        if ($result && $user) {
+            $user->vorname = 'Anonym';
+            $user->nachname = 'Anonym';
+            $user->mail = $person->mail;
+            $user->istAktiv = 0;
+            $user->istGeloescht = 1;
+            $user->password = password_hash(bin2hex(random_bytes(12)), PASSWORD_DEFAULT);
+            $result = $userRepository->updateUser($user);
+        }
+
+        if (!$result) {
+            $flash->set('errorMsg', 'Fehler beim Löschen der Person');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        if ($mailAddress !== '') {
+            $mail->sendDeletionEmail($mailAddress, $organisationId);
+        }
+
+        $redirect->back();
+        break;
+
+    case 'create_user_for_person':
+        $personId = (int) ($_GET['person_id'] ?? 0);
+        $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
+
+        if ($personId <= 0 || $organisationId <= 0) {
+            $flash->set('errorMsg', 'Person oder Organisation ungültig');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        $person = $personRepository->findById($personId);
+        if (!$person || $person->istGeloescht) {
+            $flash->set('errorMsg', 'Person nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        if (empty($person->mail) || !filter_var((string) $person->mail, FILTER_VALIDATE_EMAIL)) {
+            $flash->set('errorMsg', 'Die Person benötigt eine gültige E-Mail-Adresse');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        $existingUser = $userRepository->findByPersonId($personId);
+        if ($existingUser) {
+            $flash->set('errorMsg', 'Für diese Person existiert bereits ein Benutzerkonto');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        $tempPassword = bin2hex(random_bytes(12));
+        $user = new User();
+        $user->person = $personId;
+        $user->vorname = (string) ($person->vorname ?? '');
+        $user->nachname = (string) ($person->nachname ?? '');
+        $user->mail = (string) $person->mail;
+        $user->password = password_hash($tempPassword, PASSWORD_DEFAULT);
+        $user->standardOrganisation = $organisationId;
+        $user->istAktiv = 1;
+        $user->istAdmin = 0;
+        $user->istGeloescht = 0;
+
+        $newUserId = $userRepository->addUser($user);
+        if (!$newUserId) {
+            $flash->set('errorMsg', 'Fehler beim Erstellen des Benutzerkontos');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $mitglied = $organisationsMitgliedRepository->findByPersonAndOrganisation($personId, $organisationId);
+        if ($mitglied) {
+            $mitglied->user = (int) $newUserId;
+            $organisationsMitgliedRepository->updateMember($mitglied);
+        }
+
+        $displayName = trim((string) ($person->vorname ?? '') . ' ' . (string) ($person->nachname ?? ''));
+        $mail->sendWelcomeEmail((string) $person->mail, $displayName !== '' ? $displayName : (string) $person->mail, (string) $person->mail, $tempPassword, $organisationId);
+
+        $redirect->back();
+        break;
+
+    case 'reset_password_for_person':
+        $personId = (int) ($_GET['person_id'] ?? 0);
+        $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
+
+        if ($personId <= 0 || $organisationId <= 0) {
+            $flash->set('errorMsg', 'Person oder Organisation ungültig');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        $person = $personRepository->findById($personId);
+        $user = $userRepository->findByPersonId($personId);
+
+        if (!$person || !$user) {
+            $flash->set('errorMsg', 'Person oder Benutzerkonto nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        if (empty($person->mail) || !filter_var((string) $person->mail, FILTER_VALIDATE_EMAIL)) {
+            $flash->set('errorMsg', 'Keine gültige E-Mail-Adresse für den Versand vorhanden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        $tempPassword = bin2hex(random_bytes(12));
+        $updated = $userRepository->updatePasswordHash((int) $user->id, password_hash($tempPassword, PASSWORD_DEFAULT));
+
+        if (!$updated) {
+            $flash->set('errorMsg', 'Fehler beim Zurücksetzen des Passworts');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $displayName = trim((string) ($person->vorname ?? '') . ' ' . (string) ($person->nachname ?? ''));
+        $mail->sendWelcomeEmail((string) $person->mail, $displayName !== '' ? $displayName : (string) $person->mail, (string) $person->mail, $tempPassword, $organisationId);
+
+        $redirect->back();
+        break;
+
+    /*case 'create_user':
+        $member_id = $_GET['member_id'] ?? null;
+
+        if (!$member_id) {
+            $flash->set('errorMsg', 'MitgliedsID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $mitglied = $organisationsMitgliedRepository->findById((int) $member_id);
+
+        if (!$mitglied) {
+            $flash->set('errorMsg', 'Mitglied nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        if ($mitglied->user) {
+            $flash->set('errorMsg', 'Mitglied hat bereits ein Benutzerkonto');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        $user = new User();
+        $user->vorname = $mitglied->vorname;
+        $user->nachname = $mitglied->nachname;
+        $user->mail = $mitglied->mail;
+        $tempPassword = bin2hex(random_bytes(12));
+        $user->password = password_hash($tempPassword, PASSWORD_DEFAULT);
+        $user->standardOrganisation = $mitglied->organisation;
+        $user->istAktiv = 1;
+        $result = $userRepository->addUser($user);
+
+        if (!$result) {
+            $flash->set('errorMsg', 'Fehler beim Erstellen des Benutzerkontos');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        } else {
+            // Sende die Willkommens-E-Mail mit dem temporären Passwort
+            $mail->sendWelcomeEmail($mitglied->mail, $mitglied->vorname, $mitglied->mail, $tempPassword, $mitglied->organisation);
+        }
+
+        $mitglied->user = $result;
+        $organisationsMitgliedRepository->update($mitglied);
+
+        $redirect->back();
+        break;*/
+
+    case 'send_welcome_email':
+        $memberId = $_GET['member_id'] ?? null;
+
+        if (!$memberId) {
+            $flash->set('errorMsg', 'MitgliedsID fehlt');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $mitglied = $organisationsMitgliedRepository->findById((int) $memberId);
+
+        if (!$mitglied) {
+            $flash->set('errorMsg', 'Mitglied nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        $user = $userRepository->findById($mitglied->user);
+
+        if (!$user) {
+            $flash->set('errorMsg', 'Benutzerkonto nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        // Generiere ein temporäres Passwort
+        $tempPassword = bin2hex(random_bytes(12));
+        $userRepository->updatePasswordHash($user->id, password_hash($tempPassword, PASSWORD_DEFAULT));
+
+        // Sende die Willkommens-E-Mail mit dem temporären Passwort
+        $recipientMail = (string) ($mitglied->mail ?? $user->mail ?? '');
+        $recipientName = (string) ($mitglied->vorname ?? $user->vorname ?? '');
+
+        if ($recipientMail === '' || !filter_var($recipientMail, FILTER_VALIDATE_EMAIL)) {
+            $flash->set('errorMsg', 'Keine gültige E-Mail-Adresse für den Versand gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        $mail->sendWelcomeEmail($recipientMail, $recipientName, $recipientMail, $tempPassword, $mitglied->organisation);
+
+        $redirect->back();
+        break;
+
+    case 'createFeedbackIssue':
+        $payload = [
+            'feedbackType' => trim((string)($_POST['feedbackType'] ?? '')),
+            'feedbackTitle' => trim((string)($_POST['feedbackTitle'] ?? '')),
+            'feedbackDescription' => trim((string)($_POST['feedbackDescription'] ?? '')),
+            'feedbackName' => trim((string)($_POST['feedbackName'] ?? '')),
+            'feedbackEmail' => trim((string)($_POST['feedbackEmail'] ?? '')),
+            'feedbackPrivacyConsent' => (string)($_POST['feedbackPrivacyConsent'] ?? '') === '1',
+            'pageUrl' => (string)($_SERVER['HTTP_REFERER'] ?? ''),
+            'appVersion' => 'meetlog-web',
+        ];
+
+        if (!function_exists('curl_init')) {
+            $redirect->to(buildFeedbackRedirectUrl('error'));
+        }
+
+        //$curl = curl_init('https://feedback.meetlog.app/api/v1/feedback');
+        $curl = curl_init('http://192.168.1.108/meetlog-feedback/');
+
+        if ($curl === false) {
+            $redirect->to(buildFeedbackRedirectUrl('error'));
+        }
+
+        curl_setopt_array($curl, [
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Accept: application/json',
+            ],
+            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        ]);
+
+        $response = curl_exec($curl);
+        $curlError = curl_error($curl);
+        $statusCode = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        curl_close($curl);
+
+        if ($response === false || $statusCode !== 201) {
+            error_log('[Feedback/API] Fehler | HTTP ' . $statusCode . ' | cURL: ' . ($curlError !== '' ? $curlError : 'kein cURL-Fehler') . ' | Response: ' . (string)$response);
+            $redirect->to(buildFeedbackRedirectUrl('error'));
+        }
+
+        error_log('[Feedback/API] Feedback erfolgreich übertragen | HTTP ' . $statusCode);
+
+        $decoded = json_decode((string)$response, true);
+
+        if (!is_array($decoded) || !($decoded['ok'] ?? false)) {
+            $redirect->to(buildFeedbackRedirectUrl('error'));
+        }
+
+        $redirect->to(buildFeedbackRedirectUrl('success'));
+        break;
+
+    default:
+        $flash->set('ErrorMsg', 'Wrong Action');
+        $flash->set('ErrorColor', 'red');
+        $flash->set('ErrorCode', '500');
+        $redirect->to('error.php');
+        break;
+};

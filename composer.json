@@ -1,0 +1,11 @@
+{
+    "autoload": {
+        "psr-4": {
+            "Src\\": "src/"
+        }
+    },
+    "require": {
+        "tecnickcom/tcpdf": "^6.10",
+        "phpmailer/phpmailer": "^7.0"
+    }
+}

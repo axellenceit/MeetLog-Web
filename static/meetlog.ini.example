@@ -1,0 +1,21 @@
+[database]
+host = localhost
+port = 3306
+name = meetlog
+user = meetlog
+pass = meetlog
+charset = utf8mb4
+
+[mail]
+server = smtpserver
+port = 587
+usessl = false
+user = mail@example.com
+pass = "Password"
+from = mail@example.com
+
+[github]
+repository = "owner/repository"
+token = ""
+label_bug = "bug"
+label_improvement = "enhancement"
