@@ -13,6 +13,7 @@ if (!$auth->isLoggedIn()) {
 }
 
 $naechstenBesprechungen = $besprechungRepository->findNextMeetings(5);
+$meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
 
 ?>
 
@@ -71,7 +72,7 @@ $naechstenBesprechungen = $besprechungRepository->findNextMeetings(5);
                 </div>
                 <div class="col-md-4">
                     <div class="row row-cards">
-                        <div class="col-12">
+                        <div class="col-12 mb-2">
                             <div class="card">
                                 <div class="card-header">
                                     <h3 class="card-title"><?= $translator->t('meetings.next'); ?></h3>
@@ -139,6 +140,79 @@ $naechstenBesprechungen = $besprechungRepository->findNextMeetings(5);
                                 </div>
                             </div>
                         </div>
+
+                        <div class="col-12 mb-2">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title"><?= $translator->t('tasks.my'); ?></h3>
+                                    <div class="card-actions">
+                                        <a href="./tasks.php?f_titel=&f_user=<?= (int) $session->get('id'); ?>&f_erledigt=" class="btn btn-primary btn-sm"><?= $translator->t('tasks.view_all'); ?></a>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        <div class="row">
+                                            <div class="col-auto">
+                                                <span class="badge bg-green"></span> > 14 <?= $translator->t('meetings.days'); ?>
+                                            </div>
+                                            <div class="col-auto">
+                                                <span class="badge bg-yellow"></span> > 7 <?= $translator->t('meetings.days'); ?>
+                                            </div>
+                                            <div class="col-auto">
+                                                <span class="badge bg-red"></span>
+                                                <= 7 <?= $translator->t('meetings.days'); ?>
+                                                    </div>
+                                            </div>
+                                            <div class="list-group list-group-flush list-group-hoverable">
+
+                                                <?php if (empty($meineAufgaben)): ?>
+                                                    <div class="list-group-item">
+                                                        <div class="row align-items-center">
+                                                            <div class="col text-center">
+                                                                <span class="text-secondary"><?= $translator->t('tasks.no_tasks'); ?></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                <?php endif; ?>
+
+                                                <?php foreach ($meineAufgaben as $task): ?>
+
+                                                    <?php
+                                                    /** @var \Src\Task\Task $task */
+                                                    $diff = date_diff(new DateTime(), new DateTime($task->deadline));
+                                                    $eventColor = match (true) {
+                                                        $diff->days > 14 => 'bg-green',
+                                                        $diff->days > 7 => 'bg-yellow',
+                                                        default => 'bg-red',
+                                                    };
+                                                    ?>
+                                                    <div class="list-group-item">
+                                                        <div class="row align-items-center">
+                                                            <div class="col-auto"><span class="badge <?= $eventColor ?>"></span></div>
+                                                            <div class="col-auto">
+                                                                <span class="avatar">
+                                                                    <?= date('d.m', strtotime($task->deadline)); ?>
+                                                                </span>
+                                                            </div>
+                                                            <div class="col text-truncate">
+                                                                <?= $task->titel; ?>
+                                                                <div class="d-block text-secondary text-truncate mt-n1">
+                                                                    <?= $task->beschreibung ?>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-auto">
+                                                                <input type="checkbox" class="form-check-input" <?= $task->istErledigt ? 'checked' : ''; ?> id="erledigt" name="erledigt" data-task-id="<?= $task->id ?>">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                <?php endforeach; ?>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -186,6 +260,33 @@ $naechstenBesprechungen = $besprechungRepository->findNextMeetings(5);
         });
         calendar.render();
         calendar.setOption('locale', '<?= $session->get('lang'); ?>');
+    });
+</script>
+
+<script>
+    document.querySelectorAll('input[name="erledigt"]').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            const taskId = this.dataset.taskId;
+            const isChecked = this.checked ? 1 : 0;
+
+            fetch(`actions.php?action=update_task_status&task_id=${taskId}&ist_erledigt=${isChecked}`, {
+                    method: 'POST',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        alert('Fehler beim Aktualisieren des Aufgabenstatus.');
+                        this.checked = !this.checked; // Revert checkbox state
+                    } else {
+                        // reload the page to reflect the changes
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    alert('Fehler beim Aktualisieren des Aufgabenstatus.');
+                    this.checked = !this.checked; // Revert checkbox state
+                });
+        });
     });
 </script>
 

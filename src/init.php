@@ -25,4 +25,5 @@ $besprechungspunktRepository = $app->besprechungspunktRepository();
 $besprechungsteilnehmerRepository = $app->besprechungsteilnehmerRepository();
 $personRepository = $app->personRepository();
 $countryRepository = $app->countryRepository();
+$taskRepository = $app->taskRepository();
 $acl = $app->acl();

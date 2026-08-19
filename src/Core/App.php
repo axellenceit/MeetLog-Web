@@ -18,6 +18,7 @@ use Src\Besprechung\BesprechungsteilnehmerRepository;
 use Src\Core\CountryRepository;
 use Src\Person\PersonRepository;
 use Src\User\ACL;
+use Src\Task\TaskRepository;
 
 final class App
 {
@@ -40,6 +41,7 @@ final class App
     private PersonRepository $personRepository;
     private CountryRepository $countryRepository;
     private ACL $acl;
+    private TaskRepository $taskRepository; 
 
     public function __construct()
     {
@@ -65,6 +67,7 @@ final class App
         $this->personRepository = new PersonRepository($this->db);
         $this->countryRepository = new CountryRepository($this->db);
         $this->acl = new ACL($this->userRepository, $this->organisationsFunktionRepository, $this->organisationsMitgliedRepository);
+        $this->taskRepository = new TaskRepository($this->db);
     }
 
     public function config(): Config
@@ -170,5 +173,10 @@ final class App
     public function acl(): ACL
     {
         return $this->acl;
+    }
+
+    public function taskRepository(): TaskRepository
+    {
+        return $this->taskRepository;
     }
 }

@@ -15,6 +15,7 @@ use Src\Organisation\OrganisationsMitglied;
 use Src\Organisation\OrganisationMitgliedRepository;
 use Src\Person\Person;
 use Src\Besprechung\InvitationPdfBuilder;
+use Src\Task\Task;
 
 $action = $_GET['action'] ?? $_POST['action'] ?? null;
 
@@ -509,7 +510,7 @@ switch ($action) {
 
             $recipientName = trim((string)$participant->vorname . ' ' . (string)$participant->nachname);
             $subject = $translator->t('meetings.participants.invitationMail.subject') . ': ' . $meeting->titel;
-            
+
             $body = '<p>' . $translator->t('meetings.participants.invitationMail.greeting') . '</p>'
                 . '<p>' . sprintf($translator->t('meetings.participants.invitationMail.body'), htmlspecialchars($meeting->titel, ENT_QUOTES, 'UTF-8')) . '</p>'
                 . '<p>' . $translator->t('meetings.participants.invitationMail.closing') . '</p>'
@@ -1061,6 +1062,165 @@ switch ($action) {
 
         if ($mailaddress !== '') {
             $mail->sendDeletionEmail($mailaddress, $mitglied->organisation);
+        }
+
+        $redirect->back();
+        break;
+
+    case 'create_task':
+        $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
+        $besprechungId = (int) ($_POST['besprechung_id'] ?? 0);
+        $titel = trim((string) ($_POST['titel'] ?? ''));
+        $beschreibung = trim((string) ($_POST['beschreibung'] ?? ''));
+        $deadline = trim((string) ($_POST['deadline'] ?? ''));
+        $verantwortlicherUserId = (int) ($_POST['verantwortlicher_user_id'] ?? 0);
+        $meeting = $besprechungRepository->findById($besprechungId);
+
+        if ($organisationId <= 0 || $besprechungId <= 0 || $titel === '' || $meeting === null || $meeting->organisationId !== $organisationId) {
+            $flash->set('errorMsg', 'Meeting und Titel der Aufgabe sind erforderlich');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        if ($deadline !== '' && (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $deadline) || !checkdate((int) substr($deadline, 5, 2), (int) substr($deadline, 8, 2), (int) substr($deadline, 0, 4)))) {
+            $flash->set('errorMsg', 'Ungültiges Fälligkeitsdatum');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        if ($verantwortlicherUserId > 0 && $userRepository->findById($verantwortlicherUserId) === null) {
+            $flash->set('errorMsg', 'Verantwortliche Person nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        $taskId = $taskRepository->create(new Task(
+            besprechungId: $besprechungId,
+            erstellerUserId: (int) $session->get('id'),
+            verantwortlicherUserId: $verantwortlicherUserId > 0 ? $verantwortlicherUserId : null,
+            titel: $titel,
+            beschreibung: $beschreibung !== '' ? $beschreibung : null,
+            deadline: $deadline !== '' ? $deadline : null,
+        ));
+
+        if ($taskId <= 0) {
+            $flash->set('errorMsg', 'Fehler beim Erstellen der Aufgabe');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $redirect->back();
+        break;
+
+    case 'update_task':
+        $taskId = (int) ($_POST['task_id'] ?? 0);
+        $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
+        $besprechungId = (int) ($_POST['besprechung_id'] ?? 0);
+        $titel = trim((string) ($_POST['titel'] ?? ''));
+        $beschreibung = trim((string) ($_POST['beschreibung'] ?? ''));
+        $deadline = trim((string) ($_POST['deadline'] ?? ''));
+        $verantwortlicherUserId = (int) ($_POST['verantwortlicher_user_id'] ?? 0);
+        $task = $taskRepository->findById($taskId);
+        $meeting = $besprechungRepository->findById($besprechungId);
+        $currentMeeting = $task !== null ? $besprechungRepository->findById((int) $task->besprechungId) : null;
+
+        if ($organisationId <= 0 || $task === null || $besprechungId <= 0 || $titel === '' || $meeting === null || $currentMeeting === null || $meeting->organisationId !== $organisationId || $currentMeeting->organisationId !== $organisationId) {
+            $flash->set('errorMsg', 'Aufgabe, Meeting und Titel sind erforderlich');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        if ($deadline !== '' && (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $deadline) || !checkdate((int) substr($deadline, 5, 2), (int) substr($deadline, 8, 2), (int) substr($deadline, 0, 4)))) {
+            $flash->set('errorMsg', 'Ungültiges Fälligkeitsdatum');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        if ($verantwortlicherUserId > 0 && $userRepository->findById($verantwortlicherUserId) === null) {
+            $flash->set('errorMsg', 'Verantwortliche Person nicht gefunden');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '400');
+            $redirect->to('error.php');
+        }
+
+        $task->besprechungId = $besprechungId;
+        $task->verantwortlicherUserId = $verantwortlicherUserId > 0 ? $verantwortlicherUserId : null;
+        $task->titel = $titel;
+        $task->beschreibung = $beschreibung !== '' ? $beschreibung : null;
+        $task->deadline = $deadline !== '' ? $deadline : null;
+        $task->istErledigt = (string) ($_POST['ist_erledigt'] ?? '0') === '1';
+
+        if (!$taskRepository->update($task)) {
+            $flash->set('errorMsg', 'Fehler beim Bearbeiten der Aufgabe');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
+        }
+
+        $redirect->back();
+        break;
+
+    case 'update_task_status':
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-cache, must-revalidate');
+
+        $taskId = (int) ($_POST['task_id'] ?? $_GET['task_id'] ?? 0);
+        $istErledigt = (string) ($_POST['ist_erledigt'] ?? $_GET['ist_erledigt'] ?? '0') === '1';
+        $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
+        $task = $taskRepository->findById($taskId);
+        $meeting = $task !== null ? $besprechungRepository->findById((int) $task->besprechungId) : null;
+
+        if ($organisationId <= 0 || $task === null || $meeting === null || $meeting->organisationId !== $organisationId) {
+            http_response_code(404);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Aufgabe nicht gefunden oder nicht zugänglich',
+            ]);
+            exit;
+        }
+
+        $task->istErledigt = $istErledigt;
+
+        if (!$taskRepository->update($task)) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Fehler beim Aktualisieren des Aufgabenstatus',
+            ]);
+            exit;
+        }
+
+        echo json_encode([
+            'success' => true,
+            'taskId' => $taskId,
+            'istErledigt' => $istErledigt,
+        ]);
+        exit;
+
+    case 'delete_task':
+        $taskId = (int) ($_POST['task_id'] ?? 0);
+        $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
+        $task = $taskRepository->findById($taskId);
+        $meeting = $task !== null ? $besprechungRepository->findById((int) $task->besprechungId) : null;
+
+        if ($organisationId <= 0 || $task === null || $meeting === null || $meeting->organisationId !== $organisationId) {
+            $flash->set('errorMsg', 'Aufgabe nicht gefunden oder nicht zugänglich');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '404');
+            $redirect->to('error.php');
+        }
+
+        if (!$taskRepository->delete($taskId)) {
+            $flash->set('errorMsg', 'Fehler beim Löschen der Aufgabe');
+            $flash->set('errorColor', 'red');
+            $flash->set('errorCode', '500');
+            $redirect->to('error.php');
         }
 
         $redirect->back();
