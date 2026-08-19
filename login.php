@@ -6,6 +6,10 @@ ob_start();
 
 require_once __DIR__ . '/src/init.php';
 
+if (!file_exists(__DIR__ . '/install.done')) {
+    $redirect->to('install/index.php');
+}
+
 if ($auth->isLoggedIn()) {
     $redirect->to('index.php');
 }
