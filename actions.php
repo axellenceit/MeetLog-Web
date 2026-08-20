@@ -1762,7 +1762,7 @@ switch ($action) {
         }
 
         //$curl = curl_init('https://feedback.meetlog.app/api/v1/feedback');
-        $curl = curl_init('http://192.168.1.108/meetlog-feedback/');
+        $curl = curl_init('https://feedback.meetlog.axellence.cloud/');
 
         if ($curl === false) {
             $redirect->to(buildFeedbackRedirectUrl('error'));

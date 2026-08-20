@@ -6,15 +6,17 @@ ob_start();
 
 require_once __DIR__ . '/src/init.php';
 
+require_once __DIR__ . '/version.php';
+
 // Impressum ist bewusst öffentlich erreichbar (kein Login erforderlich).
 
 // Angaben zur App und zum Entwickler hier pflegen:
 $appName = 'MeetLog';
-$appVersion = '0.0.35';
-$appUrl = 'https://meetlog.it';
+$appVersion = $currentVersion;
+$appUrl = 'https://github.com/axellenceit/MeetLog/wiki';
 $appGithub = 'https://github.com/axellenceit/MeetLog';
 
-$developerName = 'axellenceit';
+$developerName = 'Axel Hoga';
 $developerLinkedIn = 'https://www.linkedin.com/in/axel-hoga-datamanager';
 $developerGithub = 'https://github.com/axellenceit';
 
@@ -59,7 +61,7 @@ $libraries = [
                                 <strong><?= htmlspecialchars($appName, ENT_QUOTES, 'UTF-8'); ?></strong>
                                 (Version <?= htmlspecialchars($appVersion, ENT_QUOTES, 'UTF-8'); ?>)
                                 <a class="btn btn-website" href="<?= htmlspecialchars($appUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">
-                                    <?= htmlspecialchars($appUrl, ENT_QUOTES, 'UTF-8'); ?>
+                                    Wiki / Dokumentation</a>
                                 </a>
                                 <a class="btn btn-github" href="<?= htmlspecialchars($appGithub, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener"><!-- Download SVG icon from http://tabler.io/icons/icon/brand-github -->
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
@@ -70,13 +72,7 @@ $libraries = [
 
                             <h3 class="h4">Verantwortlich / Entwickler</h3>
                             <p class="mb-4">
-                                <a href="https://projects.axellence.cloud" target="_blank" rel="noopener" class="btn btn-md"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-code">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
-                                        <path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" />
-                                        <path d="M20 21l2 -2l-2 -2" />
-                                        <path d="M17 17l-2 2l2 2" />
-                                    </svg> <?= htmlspecialchars($developerName, ENT_QUOTES, 'UTF-8'); ?></a>
+                                <strong><?= htmlspecialchars($developerName, ENT_QUOTES, 'UTF-8'); ?></strong>
                                 <a class="btn btn-linkedin" href="<?= htmlspecialchars($developerLinkedIn, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener"><!-- Download SVG icon from http://tabler.io/icons/icon/brand-linkedin -->
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
                                         <path d="M8 11v5"></path>
