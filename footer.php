@@ -57,6 +57,8 @@ $feedbackAlerts = [
     </div>
 </footer>
 
+<?php include_once __DIR__ . '/toasts.php'; ?>
+
 <div class="modal modal-blur fade" id="reportFeedbackModal" tabindex="-1" aria-labelledby="reportFeedbackModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">

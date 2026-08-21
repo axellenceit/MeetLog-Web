@@ -2,13 +2,16 @@
 <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
 </div>
 
-<?php if (method_exists($meetlog, 'getToasts')): ?>
-    <?php $toasts = $meetlog->getToasts(); ?>
+<?php if (isset($flash)): ?>
+    <?php $toasts = $flash->getToasts(); ?>
     <?php if (!empty($toasts)): ?>
         <script>
-            document.addEventListener('DOMContentLoaded', function () {
+            document.addEventListener('DOMContentLoaded', function() {
                 <?php foreach ($toasts as $toast): ?>
-                    showToast(<?= json_encode($toast['message']) ?>, <?= json_encode($toast['type']) ?>);
+                    showToast(
+                        <?= json_encode($toast['message'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
+                        <?= json_encode($toast['type'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>
+                    );
                 <?php endforeach; ?>
             });
         </script>
@@ -28,22 +31,30 @@
         toast.style.marginBottom = '10px';
         toast.style.minWidth = '300px';
 
-        toast.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">
-                ${message}
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    `;
+        const layout = document.createElement('div');
+        layout.className = 'd-flex';
+
+        const body = document.createElement('div');
+        body.className = 'toast-body';
+        body.style.whiteSpace = 'pre-line';
+        body.textContent = message;
+
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'btn-close btn-close-white me-2 m-auto';
+        closeBtn.setAttribute('aria-label', 'Close');
+
+        layout.appendChild(body);
+        layout.appendChild(closeBtn);
+        toast.appendChild(layout);
 
         container.appendChild(toast);
 
         // Auto-hide nach 5 Sekunden
-        setTimeout(function () {
+        setTimeout(function() {
             if (toast.parentNode) {
                 toast.classList.add('fade');
-                setTimeout(function () {
+                setTimeout(function() {
                     if (toast.parentNode) {
                         toast.parentNode.removeChild(toast);
                     }
@@ -52,18 +63,15 @@
         }, 5000);
 
         // Manual close
-        const closeBtn = toast.querySelector('.btn-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', function () {
-                if (toast.parentNode) {
-                    toast.classList.add('fade');
-                    setTimeout(function () {
-                        if (toast.parentNode) {
-                            toast.parentNode.removeChild(toast);
-                        }
-                    }, 150);
-                }
-            });
-        }
+        closeBtn.addEventListener('click', function() {
+            if (toast.parentNode) {
+                toast.classList.add('fade');
+                setTimeout(function() {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 150);
+            }
+        });
     }
 </script>

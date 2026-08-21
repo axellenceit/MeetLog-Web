@@ -5,6 +5,7 @@ declare(strict_types=1);
 ob_start();
 
 require_once __DIR__ . '/src/init.php';
+require_once __DIR__ . '/version.php';
 
 if (!$auth->isLoggedIn()) {
     $redirect->to('login.php');
@@ -46,10 +47,7 @@ switch ($action) {
         $result = $userRepository->deleteProfilePhoto($session->get('id'));
 
         if (!$result) {
-            $flash->set('errorMsg', 'Foto konnte nicht gelöscht werden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Foto konnte nicht gelöscht werden', 'danger');
         }
 
         $redirect->back();
@@ -58,20 +56,14 @@ switch ($action) {
     case 'uploadProfilePhoto':
 
         if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-            $flash->set('errorMsg', 'Bitte Foto auswählen');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Bitte Foto auswählen', 'danger');
         }
 
         $file = $_FILES['file'];
         $maxSize = 2 * 1024 * 1024;
 
         if ($file['size'] > $maxSize) {
-            $flash->set('errorMsg', 'Datei zu groß. Maximal 2 MB');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Datei zu groß. Maximal 2 MB', 'danger');
         }
 
         $finfo = new finfo(FILEINFO_MIME_TYPE);
@@ -85,10 +77,7 @@ switch ($action) {
         ];
 
         if (!isset($allowedMimeTypes[$mimeType])) {
-            $flash->set('errorMsg', 'Nicht zulässiges Dateiformat');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Nicht zulässiges Dateiformat', 'danger');
         }
 
         $extension = $allowedMimeTypes[$mimeType];
@@ -102,10 +91,7 @@ switch ($action) {
         $targetPath = (string) $uploadDir . $newFilename;
 
         if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
-            $flash->set('errorMsg', 'Hochladen fehlgeschlagen');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Hochladen fehlgeschlagen', 'danger');
         }
 
         $relativePath = (string) '/upload/user/' . $newFilename;
@@ -118,19 +104,13 @@ switch ($action) {
         $meetingId = $_POST['editMeetingId'] ?? null;
 
         if (!$meetingId) {
-            $flash->set('errorMsg', 'Meeting ID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting ID fehlt', 'danger');
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
-            $flash->set('errorMsg', 'Meeting nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting nicht gefunden', 'danger');
         }
 
         $meeting->titel = $_POST['editMeetingTitle'] ?? $meeting->titel;
@@ -149,26 +129,17 @@ switch ($action) {
         $status = $_POST['changeMeetingStatusStatus'] ?? null;
 
         if (!$meetingId || !$status) {
-            $flash->set('errorMsg', 'Meeting ID oder Status fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting ID oder Status fehlt', 'danger');
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
-            $flash->set('errorMsg', 'Meeting nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting nicht gefunden', 'danger');
         }
 
         if (!in_array($status, ['geplant', 'live', 'beendet'])) {
-            $flash->set('errorMsg', 'Ungültiger Status');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Ungültiger Status', 'danger');
         }
 
         $meeting->status = $status;
@@ -181,26 +152,17 @@ switch ($action) {
         $meetingId = $_POST['publishMeetingId'] ?? null;
 
         if (!$meetingId) {
-            $flash->set('errorMsg', 'Meeting ID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting ID fehlt', 'danger');
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
-            $flash->set('errorMsg', 'Meeting nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting nicht gefunden', 'danger');
         }
 
         if ($meeting->status !== 'beendet') {
-            $flash->set('errorMsg', 'Nur Meetings mit Status "beendet" können veröffentlicht werden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '403');
-            $redirect->to('error.php');
+            $flash->addToast('Nur Meetings mit Status "beendet" können veröffentlicht werden', 'danger');
         }
 
         $meeting->istVeröffentlicht = true;
@@ -214,19 +176,13 @@ switch ($action) {
         $meetingId = $_POST['unpublishMeetingId'] ?? null;
 
         if (!$meetingId) {
-            $flash->set('errorMsg', 'Meeting ID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting ID fehlt', 'danger');
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
-            $flash->set('errorMsg', 'Meeting nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting nicht gefunden', 'danger');
         }
 
         $meeting->istVeröffentlicht = false;
@@ -240,19 +196,13 @@ switch ($action) {
         $meetingId = $_POST['deleteMeetingId'] ?? null;
 
         if (!$meetingId) {
-            $flash->set('errorMsg', 'Meeting ID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting ID fehlt', 'danger');
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
-            $flash->set('errorMsg', 'Meeting nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting nicht gefunden', 'danger');
         }
 
         $meeting->istAktiviert = false;
@@ -266,19 +216,13 @@ switch ($action) {
         $meetingId = $_POST['newMeetingPointId'] ?? null;
 
         if (!$meetingId) {
-            $flash->set('errorMsg', 'Meeting ID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting ID fehlt', 'danger');
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
-            $flash->set('errorMsg', 'Meeting nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting nicht gefunden', 'danger');
         }
 
         $parentId = (int)($_POST['newMeetingPointParent'] ?? 0);
@@ -304,10 +248,7 @@ switch ($action) {
         $result = $besprechungspunktRepository->insert($newMeetingPoint);
 
         if (!$result) {
-            $flash->set('errorMsg', 'Fehler beim Hinzufügen des Besprechungspunkts');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Hinzufügen des Besprechungspunkts', 'danger');
         }
 
         $redirect->back();
@@ -317,19 +258,13 @@ switch ($action) {
         $meetingPointId = $_POST['editMeetingPointId'] ?? null;
 
         if (!$meetingPointId) {
-            $flash->set('errorMsg', 'Meeting Point ID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting Point ID fehlt', 'danger');
         }
 
         $meetingPoint = $besprechungspunktRepository->findById((int)$meetingPointId);
 
         if (!$meetingPoint) {
-            $flash->set('errorMsg', 'Meeting Point nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting Point nicht gefunden', 'danger');
         }
 
         $meetingPoint->beschreibung = $_POST['editMeetingPointDescription'] ?? $meetingPoint->beschreibung;
@@ -351,28 +286,19 @@ switch ($action) {
         $participantId = $_GET['participantId'] ?? null;
 
         if (!$meetingId || !$participantId) {
-            $flash->set('errorMsg', 'Meeting ID oder Teilnehmer ID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting ID oder Teilnehmer ID fehlt', 'danger');
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
-            $flash->set('errorMsg', 'Meeting nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting nicht gefunden', 'danger');
         }
 
         $participant = $besprechungsteilnehmerRepository->findById((int)$participantId);
 
         if (!$participant) {
-            $flash->set('errorMsg', 'Teilnehmer nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Teilnehmer nicht gefunden', 'danger');
         }
 
         // Setze den aktuellen Vorsitzenden auf false
@@ -394,28 +320,19 @@ switch ($action) {
         $participantId = $_GET['participantId'] ?? null;
 
         if (!$meetingId || !$participantId) {
-            $flash->set('errorMsg', 'Meeting ID oder Teilnehmer ID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting ID oder Teilnehmer ID fehlt', 'danger');
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
-            $flash->set('errorMsg', 'Meeting nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting nicht gefunden', 'danger');
         }
 
         $participant = $besprechungsteilnehmerRepository->findById((int)$participantId);
 
         if (!$participant) {
-            $flash->set('errorMsg', 'Teilnehmer nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Teilnehmer nicht gefunden', 'danger');
         }
 
         // Setze den aktuellen Protokollführer auf false
@@ -437,28 +354,19 @@ switch ($action) {
         $participantId = $_GET['participantId'] ?? null;
 
         if (!$meetingId || !$participantId) {
-            $flash->set('errorMsg', 'Meeting ID oder Teilnehmer ID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting ID oder Teilnehmer ID fehlt', 'danger');
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
-            $flash->set('errorMsg', 'Meeting nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting nicht gefunden', 'danger');
         }
 
         $participant = $besprechungsteilnehmerRepository->findById((int)$participantId);
 
         if (!$participant) {
-            $flash->set('errorMsg', 'Teilnehmer nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Teilnehmer nicht gefunden', 'danger');
         }
 
         // Toggle the signing authorization
@@ -473,24 +381,17 @@ switch ($action) {
         $participantIds = $_POST['sendInvitationParticipantIds'] ?? [];
 
         if (!$meetingId) {
-            $flash->set('errorMsg', 'Meeting ID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting ID fehlt', 'danger');
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
-            $flash->set('errorMsg', 'Meeting nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting nicht gefunden', 'danger');
         }
 
         if (!is_array($participantIds) || empty($participantIds)) {
-            $flash->set('errorMsg', 'Bitte mindestens einen Teilnehmer auswählen');
-            $flash->set('errorColor', 'red');
+            $flash->addToast('Bitte mindestens einen Teilnehmer auswählen', 'danger');
             $redirect->back();
         }
 
@@ -549,8 +450,7 @@ switch ($action) {
             if ($missingFallbackRecipient) {
                 $errorMessage .= '. Ihre Benutzer-E-Mail-Adresse fehlt oder ist ungültig';
             }
-            $flash->set('errorMsg', $errorMessage);
-            $flash->set('errorColor', 'red');
+            $flash->addToast($errorMessage, 'danger');
         }
 
         $redirect->back();
@@ -560,19 +460,13 @@ switch ($action) {
         $orgId = $_POST['organisationId'] ?? null;
 
         if (!$orgId) {
-            $flash->set('errorMsg', 'OrganisationsID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('OrganisationsID fehlt', 'danger');
         }
 
         $org = $organisationRepository->findById((int) $orgId);
 
         if (!$org) {
-            $flash->set('errorMsg', 'Organisation nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Organisation nicht gefunden', 'danger');
         }
 
         if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
@@ -580,10 +474,7 @@ switch ($action) {
             $maxSize = 2 * 1024 * 1024;
 
             if ($file['size'] > $maxSize) {
-                $flash->set('errorMsg', 'Datei zu groß. Maximal 2 MB');
-                $flash->set('errorColor', 'red');
-                $flash->set('errorCode', '500');
-                $redirect->to('error.php');
+                $flash->addToast('Datei zu groß. Maximal 2 MB', 'danger');
             }
 
             $finfo = new finfo(FILEINFO_MIME_TYPE);
@@ -597,10 +488,7 @@ switch ($action) {
             ];
 
             if (!isset($allowedMimeTypes[$mimeType])) {
-                $flash->set('errorMsg', 'Nicht zulässiges Dateiformat');
-                $flash->set('errorColor', 'red');
-                $flash->set('errorCode', '500');
-                $redirect->to('error.php');
+                $flash->addToast('Nicht zulässiges Dateiformat', 'danger');
             }
 
             $extension = $allowedMimeTypes[$mimeType];
@@ -614,10 +502,7 @@ switch ($action) {
             $targetPath = (string) $uploadDir . $newFilename;
 
             if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
-                $flash->set('errorMsg', 'Hochladen fehlgeschlagen');
-                $flash->set('errorColor', 'red');
-                $flash->set('errorCode', '500');
-                $redirect->to('error.php');
+                $flash->addToast('Hochladen fehlgeschlagen', 'danger');
             }
 
             $relativePath = (string) '/upload/organization/' . $newFilename;
@@ -648,10 +533,7 @@ switch ($action) {
         $data = $_POST ?? [];
 
         if (empty($data)) {
-            $flash->set('errorMsg', 'Keine Daten zum speichern gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '503');
-            $redirect->to('error.php');
+            $flash->addToast('Keine Daten zum speichern gefunden', 'danger');
         }
 
         foreach ($data as $name => $value) {
@@ -815,10 +697,7 @@ switch ($action) {
 
         if (!empty($email)) {
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $flash->set('errorMsg', 'Ungültige E-Mail-Adresse');
-                $flash->set('errorColor', 'red');
-                $flash->set('errorCode', '500');
-                $redirect->to('error.php');
+                $flash->addToast('Ungültige E-Mail-Adresse', 'danger');
             }
         }
 
@@ -838,10 +717,7 @@ switch ($action) {
         $personId = $personRepository->create($person);
 
         if (!$personId) {
-            $flash->set('errorMsg', 'Fehler beim Erstellen der Personendaten');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Erstellen der Personendaten', 'danger');
         }
 
         if (!empty($email)) {
@@ -861,10 +737,7 @@ switch ($action) {
             $newUserId = $userRepository->addUser($user);
 
             if (!$newUserId) {
-                $flash->set('errorMsg', 'Fehler beim Erstellen des Benutzerkontos');
-                $flash->set('errorColor', 'red');
-                $flash->set('errorCode', '500');
-                $redirect->to('error.php');
+                $flash->addToast('Fehler beim Erstellen des Benutzerkontos', 'danger');
             }
         }
 
@@ -891,10 +764,7 @@ switch ($action) {
                 $mail->sendWelcomeEmail($email, $vorname, $email, $pass);
             }
         } else {
-            $flash->set('errorMsg', 'Fehler beim Erstellen des Mitglieds');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Erstellen des Mitglieds', 'danger');
         }
 
         $redirect->back();
@@ -906,28 +776,19 @@ switch ($action) {
         $memberId = $_GET['member_id'] ?? null;
 
         if (!$memberId) {
-            $flash->set('errorMsg', 'MitgliedsID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('MitgliedsID fehlt', 'danger');
         }
 
         $mitglied = $organisationsMitgliedRepository->findById((int) $memberId);
 
         if (!$mitglied) {
-            $flash->set('errorMsg', 'Mitglied nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Mitglied nicht gefunden', 'danger');
         }
 
         $user = $userRepository->findById($mitglied->user);
 
         if ($user && $user->istAdmin && $action === 'disable_member') {
-            $flash->set('errorMsg', 'Admin-Mitglied kann nicht deaktiviert werden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '403');
-            $redirect->to('error.php');
+            $flash->addToast('Admin-Mitglied kann nicht deaktiviert werden', 'danger');
         }
 
         $mitglied->istAktiv = ($action === 'enable_member');
@@ -935,10 +796,7 @@ switch ($action) {
         $result = $organisationsMitgliedRepository->update($mitglied);
 
         if (!$result) {
-            $flash->set('errorMsg', 'Fehler beim Aktualisieren des Mitgliedsstatus');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Aktualisieren des Mitgliedsstatus', 'danger');
         }
 
         $redirect->back();
@@ -948,19 +806,13 @@ switch ($action) {
         $memberId = $_POST['member_id'] ?? null;
 
         if (!$memberId) {
-            $flash->set('errorMsg', 'MitgliedsID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('MitgliedsID fehlt', 'danger');
         }
 
         $mitglied = $organisationsMitgliedRepository->findById((int) $memberId);
 
         if (!$mitglied) {
-            $flash->set('errorMsg', 'Mitglied nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Mitglied nicht gefunden', 'danger');
         }
 
         $mitglied->vorname = trim((string) ($_POST['vorname'] ?? (string) $mitglied->vorname));
@@ -976,10 +828,7 @@ switch ($action) {
         $result = (int) $organisationsMitgliedRepository->updateMember($mitglied);
 
         if (!$result) {
-            $flash->set('errorMsg', 'Fehler beim Aktualisieren des Mitglieds');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Aktualisieren des Mitglieds', 'danger');
         }
 
         if ($mitglied->user) {
@@ -1007,28 +856,19 @@ switch ($action) {
         $memberId = $_GET['member_id'] ?? null;
 
         if (!$memberId) {
-            $flash->set('errorMsg', 'MitgliedsID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('MitgliedsID fehlt', 'danger');
         }
 
         $mitglied = $organisationsMitgliedRepository->findById((int) $memberId);
 
         if (!$mitglied) {
-            $flash->set('errorMsg', 'Mitglied nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Mitglied nicht gefunden', 'danger');
         }
 
         $user = $userRepository->findById($mitglied->user);
 
         if ($user && $user->istAdmin) {
-            $flash->set('errorMsg', 'Admin-Mitglied kann nicht gelöscht werden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '403');
-            $redirect->to('error.php');
+            $flash->addToast('Admin-Mitglied kann nicht gelöscht werden', 'danger');
         }
 
         $mitglied->istAktiv = 0;
@@ -1054,10 +894,7 @@ switch ($action) {
         }
 
         if (!$result) {
-            $flash->set('errorMsg', 'Fehler beim Aktualisieren des Mitgliedsstatus');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Aktualisieren des Mitgliedsstatus', 'danger');
         }
 
         if ($mailaddress !== '') {
@@ -1077,24 +914,15 @@ switch ($action) {
         $meeting = $besprechungRepository->findById($besprechungId);
 
         if ($organisationId <= 0 || $besprechungId <= 0 || $titel === '' || $meeting === null || $meeting->organisationId !== $organisationId) {
-            $flash->set('errorMsg', 'Meeting und Titel der Aufgabe sind erforderlich');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Meeting und Titel der Aufgabe sind erforderlich', 'danger');
         }
 
         if ($deadline !== '' && (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $deadline) || !checkdate((int) substr($deadline, 5, 2), (int) substr($deadline, 8, 2), (int) substr($deadline, 0, 4)))) {
-            $flash->set('errorMsg', 'Ungültiges Fälligkeitsdatum');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Ungültiges Fälligkeitsdatum', 'danger');
         }
 
         if ($verantwortlicherUserId > 0 && $userRepository->findById($verantwortlicherUserId) === null) {
-            $flash->set('errorMsg', 'Verantwortliche Person nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Verantwortliche Person nicht gefunden', 'danger');
         }
 
         $taskId = $taskRepository->create(new Task(
@@ -1107,10 +935,7 @@ switch ($action) {
         ));
 
         if ($taskId <= 0) {
-            $flash->set('errorMsg', 'Fehler beim Erstellen der Aufgabe');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Erstellen der Aufgabe', 'danger');
         }
 
         $redirect->back();
@@ -1129,24 +954,15 @@ switch ($action) {
         $currentMeeting = $task !== null ? $besprechungRepository->findById((int) $task->besprechungId) : null;
 
         if ($organisationId <= 0 || $task === null || $besprechungId <= 0 || $titel === '' || $meeting === null || $currentMeeting === null || $meeting->organisationId !== $organisationId || $currentMeeting->organisationId !== $organisationId) {
-            $flash->set('errorMsg', 'Aufgabe, Meeting und Titel sind erforderlich');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Aufgabe, Meeting und Titel sind erforderlich', 'danger');
         }
 
         if ($deadline !== '' && (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $deadline) || !checkdate((int) substr($deadline, 5, 2), (int) substr($deadline, 8, 2), (int) substr($deadline, 0, 4)))) {
-            $flash->set('errorMsg', 'Ungültiges Fälligkeitsdatum');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Ungültiges Fälligkeitsdatum', 'danger');
         }
 
         if ($verantwortlicherUserId > 0 && $userRepository->findById($verantwortlicherUserId) === null) {
-            $flash->set('errorMsg', 'Verantwortliche Person nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Verantwortliche Person nicht gefunden', 'danger');
         }
 
         $task->besprechungId = $besprechungId;
@@ -1157,10 +973,7 @@ switch ($action) {
         $task->istErledigt = (string) ($_POST['ist_erledigt'] ?? '0') === '1';
 
         if (!$taskRepository->update($task)) {
-            $flash->set('errorMsg', 'Fehler beim Bearbeiten der Aufgabe');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Bearbeiten der Aufgabe', 'danger');
         }
 
         $redirect->back();
@@ -1210,17 +1023,11 @@ switch ($action) {
         $meeting = $task !== null ? $besprechungRepository->findById((int) $task->besprechungId) : null;
 
         if ($organisationId <= 0 || $task === null || $meeting === null || $meeting->organisationId !== $organisationId) {
-            $flash->set('errorMsg', 'Aufgabe nicht gefunden oder nicht zugänglich');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Aufgabe nicht gefunden oder nicht zugänglich', 'danger');
         }
 
         if (!$taskRepository->delete($taskId)) {
-            $flash->set('errorMsg', 'Fehler beim Löschen der Aufgabe');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Löschen der Aufgabe', 'danger');
         }
 
         $redirect->back();
@@ -1230,10 +1037,7 @@ switch ($action) {
         $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
 
         if ($organisationId <= 0) {
-            $flash->set('errorMsg', 'Keine gültige Standardorganisation gesetzt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Keine gültige Standardorganisation gesetzt', 'danger');
         }
 
         $vorname = trim((string) ($_POST['vorname'] ?? ''));
@@ -1251,17 +1055,11 @@ switch ($action) {
         $password = trim((string) ($_POST['password'] ?? ''));
 
         if ($mailAddress !== '' && !filter_var($mailAddress, FILTER_VALIDATE_EMAIL)) {
-            $flash->set('errorMsg', 'Ungültige E-Mail-Adresse');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Ungültige E-Mail-Adresse', 'danger');
         }
 
         if ($createUser && $mailAddress === '') {
-            $flash->set('errorMsg', 'Für ein Benutzerkonto ist eine E-Mail-Adresse erforderlich');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Für ein Benutzerkonto ist eine E-Mail-Adresse erforderlich', 'danger');
         }
 
         $person = new Person(
@@ -1279,10 +1077,7 @@ switch ($action) {
 
         $personId = $personRepository->create($person);
         if (!$personId) {
-            $flash->set('errorMsg', 'Fehler beim Erstellen der Person');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Erstellen der Person', 'danger');
         }
 
         $mitglied = new OrganisationsMitglied();
@@ -1294,10 +1089,7 @@ switch ($action) {
 
         $newMemberId = (int) $organisationsMitgliedRepository->addMember($mitglied);
         if ($newMemberId <= 0) {
-            $flash->set('errorMsg', 'Fehler beim Verknüpfen der Person mit der Organisation');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Verknüpfen der Person mit der Organisation', 'danger');
         }
 
         if ($createUser) {
@@ -1318,10 +1110,7 @@ switch ($action) {
 
             $newUserId = $userRepository->addUser($user);
             if (!$newUserId) {
-                $flash->set('errorMsg', 'Fehler beim Erstellen des Benutzerkontos');
-                $flash->set('errorColor', 'red');
-                $flash->set('errorCode', '500');
-                $redirect->to('error.php');
+                $flash->addToast('Fehler beim Erstellen des Benutzerkontos', 'danger');
             }
 
             $mitglied = $organisationsMitgliedRepository->findById($newMemberId);
@@ -1342,26 +1131,17 @@ switch ($action) {
         $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
 
         if ($personId <= 0 || $organisationId <= 0) {
-            $flash->set('errorMsg', 'Person oder Organisation ungültig');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Person oder Organisation ungültig', 'danger');
         }
 
         $mitglied = $organisationsMitgliedRepository->findByPersonAndOrganisation($personId, $organisationId);
         if (!$mitglied || $mitglied->istGeloescht) {
-            $flash->set('errorMsg', 'Person gehört nicht zur aktuellen Organisation');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '403');
-            $redirect->to('error.php');
+            $flash->addToast('Person gehört nicht zur aktuellen Organisation', 'danger');
         }
 
         $person = $personRepository->findById($personId);
         if (!$person || $person->istGeloescht) {
-            $flash->set('errorMsg', 'Person nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Person nicht gefunden', 'danger');
         }
 
         $vorname = trim((string) ($_POST['vorname'] ?? ''));
@@ -1377,10 +1157,7 @@ switch ($action) {
         $funktionId = ($funktionIdRaw !== '' && ctype_digit($funktionIdRaw)) ? (int) $funktionIdRaw : null;
 
         if ($mailAddress !== '' && !filter_var($mailAddress, FILTER_VALIDATE_EMAIL)) {
-            $flash->set('errorMsg', 'Ungültige E-Mail-Adresse');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Ungültige E-Mail-Adresse', 'danger');
         }
 
         $person->vorname = $vorname !== '' ? $vorname : null;
@@ -1400,10 +1177,7 @@ switch ($action) {
         }
 
         if (!$result) {
-            $flash->set('errorMsg', 'Fehler beim Aktualisieren der Person');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Aktualisieren der Person', 'danger');
         }
 
         $redirect->back();
@@ -1415,27 +1189,18 @@ switch ($action) {
         $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
 
         if ($personId <= 0 || $organisationId <= 0) {
-            $flash->set('errorMsg', 'Person oder Organisation ungültig');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Person oder Organisation ungültig', 'danger');
         }
 
         $person = $personRepository->findById($personId);
         if (!$person || $person->istGeloescht) {
-            $flash->set('errorMsg', 'Person nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Person nicht gefunden', 'danger');
         }
 
         $enable = $action === 'enable_person';
         $user = $userRepository->findByPersonId($personId);
         if (!$enable && $user && $user->istAdmin) {
-            $flash->set('errorMsg', 'Admin-Benutzer kann nicht gesperrt werden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '403');
-            $redirect->to('error.php');
+            $flash->addToast('Admin-Benutzer kann nicht gesperrt werden', 'danger');
         }
 
         $person->istAktiv = $enable ? 1 : 0;
@@ -1453,10 +1218,7 @@ switch ($action) {
         }
 
         if (!$result) {
-            $flash->set('errorMsg', 'Fehler beim Aktualisieren des Personenstatus');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Aktualisieren des Personenstatus', 'danger');
         }
 
         $redirect->back();
@@ -1467,26 +1229,17 @@ switch ($action) {
         $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
 
         if ($personId <= 0 || $organisationId <= 0) {
-            $flash->set('errorMsg', 'Person oder Organisation ungültig');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Person oder Organisation ungültig', 'danger');
         }
 
         $person = $personRepository->findById($personId);
         if (!$person || $person->istGeloescht) {
-            $flash->set('errorMsg', 'Person nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Person nicht gefunden', 'danger');
         }
 
         $user = $userRepository->findByPersonId($personId);
         if ($user && $user->istAdmin) {
-            $flash->set('errorMsg', 'Admin-Benutzer kann nicht gelöscht werden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '403');
-            $redirect->to('error.php');
+            $flash->addToast('Admin-Benutzer kann nicht gelöscht werden', 'danger');
         }
 
         $mailAddress = (string) ($person->mail ?? '');
@@ -1522,10 +1275,7 @@ switch ($action) {
         }
 
         if (!$result) {
-            $flash->set('errorMsg', 'Fehler beim Löschen der Person');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Löschen der Person', 'danger');
         }
 
         if ($mailAddress !== '') {
@@ -1540,33 +1290,21 @@ switch ($action) {
         $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
 
         if ($personId <= 0 || $organisationId <= 0) {
-            $flash->set('errorMsg', 'Person oder Organisation ungültig');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Person oder Organisation ungültig', 'danger');
         }
 
         $person = $personRepository->findById($personId);
         if (!$person || $person->istGeloescht) {
-            $flash->set('errorMsg', 'Person nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Person nicht gefunden', 'danger');
         }
 
         if (empty($person->mail) || !filter_var((string) $person->mail, FILTER_VALIDATE_EMAIL)) {
-            $flash->set('errorMsg', 'Die Person benötigt eine gültige E-Mail-Adresse');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Die Person benötigt eine gültige E-Mail-Adresse', 'danger');
         }
 
         $existingUser = $userRepository->findByPersonId($personId);
         if ($existingUser) {
-            $flash->set('errorMsg', 'Für diese Person existiert bereits ein Benutzerkonto');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Für diese Person existiert bereits ein Benutzerkonto', 'danger');
         }
 
         $tempPassword = bin2hex(random_bytes(12));
@@ -1583,10 +1321,7 @@ switch ($action) {
 
         $newUserId = $userRepository->addUser($user);
         if (!$newUserId) {
-            $flash->set('errorMsg', 'Fehler beim Erstellen des Benutzerkontos');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Erstellen des Benutzerkontos', 'danger');
         }
 
         $mitglied = $organisationsMitgliedRepository->findByPersonAndOrganisation($personId, $organisationId);
@@ -1606,37 +1341,25 @@ switch ($action) {
         $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
 
         if ($personId <= 0 || $organisationId <= 0) {
-            $flash->set('errorMsg', 'Person oder Organisation ungültig');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Person oder Organisation ungültig', 'danger');
         }
 
         $person = $personRepository->findById($personId);
         $user = $userRepository->findByPersonId($personId);
 
         if (!$person || !$user) {
-            $flash->set('errorMsg', 'Person oder Benutzerkonto nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Person oder Benutzerkonto nicht gefunden', 'danger');
         }
 
         if (empty($person->mail) || !filter_var((string) $person->mail, FILTER_VALIDATE_EMAIL)) {
-            $flash->set('errorMsg', 'Keine gültige E-Mail-Adresse für den Versand vorhanden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Keine gültige E-Mail-Adresse für den Versand vorhanden', 'danger');
         }
 
         $tempPassword = bin2hex(random_bytes(12));
         $updated = $userRepository->updatePasswordHash((int) $user->id, password_hash($tempPassword, PASSWORD_DEFAULT));
 
         if (!$updated) {
-            $flash->set('errorMsg', 'Fehler beim Zurücksetzen des Passworts');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Zurücksetzen des Passworts', 'danger');
         }
 
         $displayName = trim((string) ($person->vorname ?? '') . ' ' . (string) ($person->nachname ?? ''));
@@ -1649,26 +1372,17 @@ switch ($action) {
         $member_id = $_GET['member_id'] ?? null;
 
         if (!$member_id) {
-            $flash->set('errorMsg', 'MitgliedsID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('MitgliedsID fehlt', 'danger');
         }
 
         $mitglied = $organisationsMitgliedRepository->findById((int) $member_id);
 
         if (!$mitglied) {
-            $flash->set('errorMsg', 'Mitglied nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Mitglied nicht gefunden', 'danger');
         }
 
         if ($mitglied->user) {
-            $flash->set('errorMsg', 'Mitglied hat bereits ein Benutzerkonto');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Mitglied hat bereits ein Benutzerkonto', 'danger');
         }
 
         $user = new User();
@@ -1682,10 +1396,7 @@ switch ($action) {
         $result = $userRepository->addUser($user);
 
         if (!$result) {
-            $flash->set('errorMsg', 'Fehler beim Erstellen des Benutzerkontos');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('Fehler beim Erstellen des Benutzerkontos', 'danger');
         } else {
             // Sende die Willkommens-E-Mail mit dem temporären Passwort
             $mail->sendWelcomeEmail($mitglied->mail, $mitglied->vorname, $mitglied->mail, $tempPassword, $mitglied->organisation);
@@ -1701,28 +1412,19 @@ switch ($action) {
         $memberId = $_GET['member_id'] ?? null;
 
         if (!$memberId) {
-            $flash->set('errorMsg', 'MitgliedsID fehlt');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '500');
-            $redirect->to('error.php');
+            $flash->addToast('MitgliedsID fehlt', 'danger');
         }
 
         $mitglied = $organisationsMitgliedRepository->findById((int) $memberId);
 
         if (!$mitglied) {
-            $flash->set('errorMsg', 'Mitglied nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Mitglied nicht gefunden', 'danger');
         }
 
         $user = $userRepository->findById($mitglied->user);
 
         if (!$user) {
-            $flash->set('errorMsg', 'Benutzerkonto nicht gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '404');
-            $redirect->to('error.php');
+            $flash->addToast('Benutzerkonto nicht gefunden', 'danger');
         }
 
         // Generiere ein temporäres Passwort
@@ -1734,10 +1436,7 @@ switch ($action) {
         $recipientName = (string) ($mitglied->vorname ?? $user->vorname ?? '');
 
         if ($recipientMail === '' || !filter_var($recipientMail, FILTER_VALIDATE_EMAIL)) {
-            $flash->set('errorMsg', 'Keine gültige E-Mail-Adresse für den Versand gefunden');
-            $flash->set('errorColor', 'red');
-            $flash->set('errorCode', '400');
-            $redirect->to('error.php');
+            $flash->addToast('Keine gültige E-Mail-Adresse für den Versand gefunden', 'danger');
         }
 
         $mail->sendWelcomeEmail($recipientMail, $recipientName, $recipientMail, $tempPassword, $mitglied->organisation);
@@ -1752,20 +1451,23 @@ switch ($action) {
             'feedbackDescription' => trim((string)($_POST['feedbackDescription'] ?? '')),
             'feedbackName' => trim((string)($_POST['feedbackName'] ?? '')),
             'feedbackEmail' => trim((string)($_POST['feedbackEmail'] ?? '')),
-            'feedbackPrivacyConsent' => (string)($_POST['feedbackPrivacyConsent'] ?? '') === '1',
-            'pageUrl' => (string)($_SERVER['HTTP_REFERER'] ?? ''),
-            'appVersion' => 'meetlog-web',
+            'instanceUrl' => (string)($_SERVER['HTTP_REFERER'] ?? ''),
+            'appVersion' => $currentVersion,
+            'userAgent' => (string)($_SERVER['HTTP_USER_AGENT'] ?? ''),
+            'phpVersion' => phpversion(),
+            'serverSoftware' => (string)($_SERVER['SERVER_SOFTWARE'] ?? ''),
         ];
 
         if (!function_exists('curl_init')) {
-            $redirect->to(buildFeedbackRedirectUrl('error'));
+            $flash->addToast('Da ist was schief gegangen\n' . '[Feedback/API] cURL nicht verfügbar', 'danger');
+            $redirect->back();
         }
 
-        //$curl = curl_init('https://feedback.meetlog.app/api/v1/feedback');
-        $curl = curl_init('https://feedback.meetlog.axellence.cloud/');
+        $curl = curl_init('https://process.axellence.cloud/webhook/meetlog-feedback');
 
         if ($curl === false) {
-            $redirect->to(buildFeedbackRedirectUrl('error'));
+            $flash->addToast('Da ist was schief gegangen\n' . '[Feedback/API] cURL nicht verfügbar', 'danger');
+            $redirect->back();
         }
 
         curl_setopt_array($curl, [
@@ -1785,25 +1487,27 @@ switch ($action) {
         curl_close($curl);
 
         if ($response === false || $statusCode !== 201) {
-            error_log('[Feedback/API] Fehler | HTTP ' . $statusCode . ' | cURL: ' . ($curlError !== '' ? $curlError : 'kein cURL-Fehler') . ' | Response: ' . (string)$response);
-            $redirect->to(buildFeedbackRedirectUrl('error'));
+            $flash->addToast('Da ist was schief gegangen\n' . '[Feedback/API] Fehler \n HTTP ' . $statusCode . ' \n cURL: ' . ($curlError !== '' ? $curlError : 'kein cURL-Fehler') . ' \n Response: ' . (string)$response, 'danger');
+            $redirect->back();
         }
-
-        error_log('[Feedback/API] Feedback erfolgreich übertragen | HTTP ' . $statusCode);
 
         $decoded = json_decode((string)$response, true);
 
         if (!is_array($decoded) || !($decoded['ok'] ?? false)) {
-            $redirect->to(buildFeedbackRedirectUrl('error'));
+            $flash->addToast('Da ist was schief gegangen\n' . ($decoded['message'] ?? ''), 'danger');
+        } else {
+            $flash->addToast('Vielen Dank für dein Feedback!\n' . ($decoded['message'] ?? ''), 'success');
         }
 
-        $redirect->to(buildFeedbackRedirectUrl('success'));
+        $redirect->back();
         break;
 
     default:
-        $flash->set('ErrorMsg', 'Wrong Action');
+        $flash->addToast('Fehler', 'Unbekannte Aktion: ' . htmlspecialchars($action), 'danger');
+        /*$flash->set('ErrorMsg', 'Wrong Action');
         $flash->set('ErrorColor', 'red');
         $flash->set('ErrorCode', '500');
-        $redirect->to('error.php');
+        $redirect->to('error.php');*/
+        $redirect->back();
         break;
 };
