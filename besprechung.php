@@ -29,9 +29,14 @@ if (!$besprechung->istAktiviert) {
 }
 
 $datum = (new DateTime($besprechung->datum))->format('d.m.Y');
-$zeiten = (new DateTime($besprechung->beginn))->format('H:i') . ' - ' . (new DateTime($besprechung->ende))->format('H:i');
-$dauer = (new DateTime($besprechung->ende))->getTimestamp() - (new DateTime($besprechung->beginn))->getTimestamp();
-$dauer = round($dauer / 60);
+if($besprechung->beginn && $besprechung->ende) {
+    $zeiten = (new DateTime($besprechung->beginn))->format('H:i') . ' - ' . (new DateTime($besprechung->ende))->format('H:i');
+    $dauer = (new DateTime($besprechung->ende))->getTimestamp() - (new DateTime($besprechung->beginn))->getTimestamp();
+    $dauer = round($dauer / 60);
+} else {
+    $zeiten = '';
+    $dauer = '';
+}
 
 $tops = $besprechungspunktRepository->findByBesprechungId($besprechung->id);
 
@@ -304,7 +309,7 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                 </svg><strong> <?= $translator->t('meetings.duration'); ?>:</strong>
                             </div>
                             <div class="col-7">
-                                <?= $dauer; ?> <?= $translator->t('minutes'); ?>
+                                <?= $dauer; ?> <?= $translator->t('common.minutes'); ?>
                             </div>
                         </div>
 

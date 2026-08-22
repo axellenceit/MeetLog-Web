@@ -10,4 +10,5 @@ return [
     'meetings' => 'Besprechungen',
     'settings' => 'Einstellungen',
     'profile' => 'Profil',
+    'logs' => 'Logs',
 ];

@@ -1,5 +1,6 @@
 <?php
 return [
+    'create' => 'New meeting',
     'title' => 'Title',
     'createdBy' => 'Created by',
     'createdAt' => 'Created on',

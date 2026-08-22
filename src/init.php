@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -27,3 +28,4 @@ $personRepository = $app->personRepository();
 $countryRepository = $app->countryRepository();
 $taskRepository = $app->taskRepository();
 $acl = $app->acl();
+$logRepository = $app->logRepository();

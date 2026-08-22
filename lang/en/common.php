@@ -29,4 +29,6 @@ return [
         'web' => 'Website',
     ],
     'localcourt' => 'Local court',
+    'clear_logs' => 'Clear logs',
+    'minutes' => 'Minutes',
 ];

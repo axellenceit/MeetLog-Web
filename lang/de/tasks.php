@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'view_all' => 'Alle Aufgaben anzeigen',
     'create' => 'Aufgabe erstellen',
     'my' => 'Meine Aufgaben',
     'no_tasks' => 'Keine Aufgaben vorhanden.',

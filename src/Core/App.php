@@ -19,6 +19,7 @@ use Src\Core\CountryRepository;
 use Src\Person\PersonRepository;
 use Src\User\ACL;
 use Src\Task\TaskRepository;
+use Src\Log\LogRepository;
 
 final class App
 {
@@ -42,6 +43,7 @@ final class App
     private CountryRepository $countryRepository;
     private ACL $acl;
     private TaskRepository $taskRepository; 
+    private LogRepository $logRepository;
 
     public function __construct()
     {
@@ -68,6 +70,7 @@ final class App
         $this->countryRepository = new CountryRepository($this->db);
         $this->acl = new ACL($this->userRepository, $this->organisationsFunktionRepository, $this->organisationsMitgliedRepository);
         $this->taskRepository = new TaskRepository($this->db);
+        $this->logRepository = new LogRepository($this->db);
     }
 
     public function config(): Config
@@ -178,5 +181,10 @@ final class App
     public function taskRepository(): TaskRepository
     {
         return $this->taskRepository;
+    }
+
+    public function logRepository(): LogRepository
+    {
+        return $this->logRepository;
     }
 }

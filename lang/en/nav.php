@@ -10,4 +10,5 @@ return [
     'meetings' => 'Meetings',
     'settings' => 'Settings',
     'profile' => 'Profile',
+    'logs' => 'Logs',
 ];

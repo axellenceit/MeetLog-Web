@@ -13,10 +13,11 @@ if (!$auth->isLoggedIn()) {
 
 use Src\User\User;
 use Src\Organisation\OrganisationsMitglied;
-use Src\Organisation\OrganisationMitgliedRepository;
 use Src\Person\Person;
+use Src\Besprechung\Besprechung;
 use Src\Besprechung\InvitationPdfBuilder;
 use Src\Task\Task;
+use Src\Log\Log;
 
 $action = $_GET['action'] ?? $_POST['action'] ?? null;
 
@@ -904,6 +905,76 @@ switch ($action) {
         $redirect->back();
         break;
 
+    case 'create_meeting':
+        try {
+            $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
+            $titel = trim((string) ($_POST['titel'] ?? ''));
+            $datum = trim((string) ($_POST['datum'] ?? ''));
+            $beginn = trim((string) ($_POST['beginn'] ?? ''));
+            $ende = trim((string) ($_POST['ende'] ?? ''));
+            $ort = trim((string) ($_POST['ort'] ?? ''));
+
+            if ($organisationId <= 0 || $titel === '' || $datum === '') {
+                $flash->addToast('Titel und Datum des Meetings sind erforderlich', 'danger');
+                $redirect->back();
+            }
+
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $datum) || !checkdate((int) substr($datum, 5, 2), (int) substr($datum, 8, 2), (int) substr($datum, 0, 4))) {
+                $flash->addToast('Ungültiges Datum', 'danger');
+                $redirect->back();
+            }
+
+            // Validierung der Zeitangaben - Sollte noch --:-- enthalten sein, dann abbruch
+            if ($beginn === '--:--') {
+                $flash->addToast('Ungültige Startzeit', 'danger');
+                $redirect->back();
+            }
+            if ($ende === '--:--') {
+                // Hier Hilfestellung, die Endezeit 30 Minuten nach Beginn zu setzen
+                $ende = date('H:i', strtotime($beginn . ' +30 minutes'));
+            }
+
+            $meetingId = $besprechungRepository->create(new Besprechung(
+                organisationId: $organisationId,
+                erstellerUserId: (int) $session->get('id'),
+                titel: $titel,
+                datum: $datum,
+                beginn: $beginn !== '' ? $beginn : null,
+                ende: $ende !== '' ? $ende : null,
+                ort: $ort !== '' ? $ort : null,
+                status: 'geplant',
+                istAktiviert: true,
+                istVeröffentlicht: false,
+            ));
+
+            if ($meetingId <= 0) {
+                $flash->addToast('Fehler beim Erstellen des Meetings', 'danger');
+                $logEntry = new Log(
+                    id: null,
+                    userId: (int) $_SESSION['id'],
+                    action: 'Fehler beim Erstellen des Meetings',
+                    severity: 'error',
+                    timestamp: date('Y-m-d H:i:s')
+                );
+                $logRepository->create($logEntry);
+            }
+
+            $flash->addToast('Meeting erfolgreich erstellt', 'success');
+            $logEntry = new Log(
+                id: null,
+                userId: (int) $_SESSION['id'],
+                action: 'Meeting erfolgreich erstellt',
+                severity: 'success',
+                timestamp: date('Y-m-d H:i:s')
+            );
+            $logRepository->create($logEntry);
+            $redirect->back();
+            break;
+        } catch (Exception $e) {
+            $flash->addToast('Fehler beim Erstellen des Meetings: ' . $e->getMessage(), 'danger');
+            $redirect->back();
+        }
+
     case 'create_task':
         $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
         $besprechungId = (int) ($_POST['besprechung_id'] ?? 0);
@@ -1127,61 +1198,95 @@ switch ($action) {
         break;
 
     case 'update_person':
-        $personId = (int) ($_POST['person_id'] ?? 0);
-        $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
+        try {
+            $personId = (int) ($_POST['person_id'] ?? 0);
+            $organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
 
-        if ($personId <= 0 || $organisationId <= 0) {
-            $flash->addToast('Person oder Organisation ungültig', 'danger');
+            if ($personId <= 0 || $organisationId <= 0) {
+                $flash->addToast('Person oder Organisation ungültig', 'danger');
+            }
+
+            $mitglied = $organisationsMitgliedRepository->findByPersonAndOrganisation($personId, $organisationId);
+            if (!$mitglied || $mitglied->istGeloescht) {
+                $flash->addToast('Person gehört nicht zur aktuellen Organisation', 'danger');
+            }
+
+            $person = $personRepository->findById($personId);
+            if (!$person || $person->istGeloescht) {
+                $flash->addToast('Person nicht gefunden', 'danger');
+            }
+
+            $vorname = trim((string) ($_POST['vorname'] ?? ''));
+            $nachname = trim((string) ($_POST['nachname'] ?? ''));
+            $mailAddress = trim((string) ($_POST['mail'] ?? ''));
+            $telefon = trim((string) ($_POST['telefon'] ?? ''));
+            $strasse = trim((string) ($_POST['strasse'] ?? ''));
+            $plz = trim((string) ($_POST['plz'] ?? ''));
+            $ort = trim((string) ($_POST['ort'] ?? ''));
+            $land = trim((string) ($_POST['land'] ?? ''));
+            $landId = ($land !== '' && ctype_digit($land)) ? (int) $land : null;
+            $funktionIdRaw = trim((string) ($_POST['funktion_id'] ?? ''));
+            $funktionId = ($funktionIdRaw !== '' && ctype_digit($funktionIdRaw)) ? (int) $funktionIdRaw : null;
+
+            if ($mailAddress !== '' && !filter_var($mailAddress, FILTER_VALIDATE_EMAIL)) {
+                $flash->addToast('Ungültige E-Mail-Adresse', 'danger');
+            }
+
+            $person->vorname = $vorname !== '' ? $vorname : null;
+            $person->nachname = $nachname !== '' ? $nachname : null;
+            $person->mail = $mailAddress !== '' ? $mailAddress : null;
+            $person->telefon = $telefon !== '' ? $telefon : null;
+            $person->strasse = $strasse !== '' ? $strasse : null;
+            $person->plz = $plz !== '' ? $plz : null;
+            $person->ort = $ort !== '' ? $ort : null;
+            $person->land = $landId;
+
+            // tblOrganisationsMitglied hält eine denormalisierte Kopie der Personendaten, die die Listenansicht anzeigt
+            $mitglied->funktion = $funktionId;
+            $mitglied->vorname = $person->vorname;
+            $mitglied->nachname = $person->nachname;
+            $mitglied->mail = $person->mail;
+            $mitglied->telefon = $person->telefon;
+            $mitglied->strasse = $person->strasse;
+            $mitglied->plz = $person->plz;
+            $mitglied->ort = $person->ort;
+            $mitglied->land = $person->land;
+
+            $result = $personRepository->update($person);
+
+            $logEntry = new Log(
+                id: null,
+                userId: (int) $_SESSION['id'],
+                action: 'Person aktualisiert: ID ' . $personId . ', Ergebnis: ' . $result,
+                severity: 'info',
+                timestamp: date('Y-m-d H:i:s')
+            );
+
+            $logRepository->create($logEntry);
+
+            if ($result) {
+                $result = $organisationsMitgliedRepository->updateMember($mitglied);
+                $flash->addToast('Person erfolgreich aktualisiert', 'success');
+            }
+
+            if (!$result) {
+                $flash->addToast('Fehler beim Aktualisieren der Person', 'danger');
+            }
+
+            $redirect->back();
+            break;
+        } catch (Exception $e) {
+            $flash->addToast('Fehler: ' . $e->getMessage(), 'danger');
+            $logEntry = new Log(
+                id: null,
+                userId: (int) $_SESSION['id'],
+                action: 'Fehler beim Aktualisieren der Person: ' . $e->getMessage(),
+                severity: 'error',
+                timestamp: date('Y-m-d H:i:s')
+            );
+            $logRepository->create($logEntry);
+            $redirect->back();
         }
-
-        $mitglied = $organisationsMitgliedRepository->findByPersonAndOrganisation($personId, $organisationId);
-        if (!$mitglied || $mitglied->istGeloescht) {
-            $flash->addToast('Person gehört nicht zur aktuellen Organisation', 'danger');
-        }
-
-        $person = $personRepository->findById($personId);
-        if (!$person || $person->istGeloescht) {
-            $flash->addToast('Person nicht gefunden', 'danger');
-        }
-
-        $vorname = trim((string) ($_POST['vorname'] ?? ''));
-        $nachname = trim((string) ($_POST['nachname'] ?? ''));
-        $mailAddress = trim((string) ($_POST['mail'] ?? ''));
-        $telefon = trim((string) ($_POST['telefon'] ?? ''));
-        $strasse = trim((string) ($_POST['strasse'] ?? ''));
-        $plz = trim((string) ($_POST['plz'] ?? ''));
-        $ort = trim((string) ($_POST['ort'] ?? ''));
-        $land = trim((string) ($_POST['land'] ?? ''));
-        $landId = ($land !== '' && ctype_digit($land)) ? (int) $land : null;
-        $funktionIdRaw = trim((string) ($_POST['funktion_id'] ?? ''));
-        $funktionId = ($funktionIdRaw !== '' && ctype_digit($funktionIdRaw)) ? (int) $funktionIdRaw : null;
-
-        if ($mailAddress !== '' && !filter_var($mailAddress, FILTER_VALIDATE_EMAIL)) {
-            $flash->addToast('Ungültige E-Mail-Adresse', 'danger');
-        }
-
-        $person->vorname = $vorname !== '' ? $vorname : null;
-        $person->nachname = $nachname !== '' ? $nachname : null;
-        $person->mail = $mailAddress !== '' ? $mailAddress : null;
-        $person->telefon = $telefon !== '' ? $telefon : null;
-        $person->strasse = $strasse !== '' ? $strasse : null;
-        $person->plz = $plz !== '' ? $plz : null;
-        $person->ort = $ort !== '' ? $ort : null;
-        $person->land = $landId;
-        $mitglied->funktion = $funktionId;
-
-        $result = $personRepository->update($person);
-
-        if ($result) {
-            $result = $organisationsMitgliedRepository->updateMember($mitglied);
-        }
-
-        if (!$result) {
-            $flash->addToast('Fehler beim Aktualisieren der Person', 'danger');
-        }
-
-        $redirect->back();
-        break;
 
     case 'disable_person':
     case 'enable_person':
@@ -1368,45 +1473,6 @@ switch ($action) {
         $redirect->back();
         break;
 
-    /*case 'create_user':
-        $member_id = $_GET['member_id'] ?? null;
-
-        if (!$member_id) {
-            $flash->addToast('MitgliedsID fehlt', 'danger');
-        }
-
-        $mitglied = $organisationsMitgliedRepository->findById((int) $member_id);
-
-        if (!$mitglied) {
-            $flash->addToast('Mitglied nicht gefunden', 'danger');
-        }
-
-        if ($mitglied->user) {
-            $flash->addToast('Mitglied hat bereits ein Benutzerkonto', 'danger');
-        }
-
-        $user = new User();
-        $user->vorname = $mitglied->vorname;
-        $user->nachname = $mitglied->nachname;
-        $user->mail = $mitglied->mail;
-        $tempPassword = bin2hex(random_bytes(12));
-        $user->password = password_hash($tempPassword, PASSWORD_DEFAULT);
-        $user->standardOrganisation = $mitglied->organisation;
-        $user->istAktiv = 1;
-        $result = $userRepository->addUser($user);
-
-        if (!$result) {
-            $flash->addToast('Fehler beim Erstellen des Benutzerkontos', 'danger');
-        } else {
-            // Sende die Willkommens-E-Mail mit dem temporären Passwort
-            $mail->sendWelcomeEmail($mitglied->mail, $mitglied->vorname, $mitglied->mail, $tempPassword, $mitglied->organisation);
-        }
-
-        $mitglied->user = $result;
-        $organisationsMitgliedRepository->update($mitglied);
-
-        $redirect->back();
-        break;*/
 
     case 'send_welcome_email':
         $memberId = $_GET['member_id'] ?? null;
@@ -1499,6 +1565,12 @@ switch ($action) {
             $flash->addToast('Vielen Dank für dein Feedback!\n' . ($decoded['message'] ?? ''), 'success');
         }
 
+        $redirect->back();
+        break;
+
+    case 'clear_logs':
+        $logRepository->clearLogs();
+        $flash->addToast('Logs erfolgreich gelöscht', 'success');
         $redirect->back();
         break;
 

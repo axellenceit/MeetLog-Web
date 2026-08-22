@@ -10,6 +10,11 @@ if (!$auth->isLoggedIn()) {
     $redirect->to('login.php');
 }
 
+use Src\User\Permission;
+
+$user = $userRepository->findById($session->get('id'));
+$authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$session->get('Organisation'), Permission::MANAGE_MEETINGS);
+
 ?>
 
 <!DOCTYPE html>
@@ -67,7 +72,21 @@ if (!$auth->isLoggedIn()) {
             <?php include_once 'header.php'; ?>
         </div>
 
-        <div class="container-xl">
+        <div class="container-xl py-3">
+
+            <div class="d-flex justify-content-between align-items-center mb-3 page-title-row">
+                <div>
+                    <h2 class="page-title mb-0">
+                        <?= htmlspecialchars($translator->t('nav.meetings'), ENT_QUOTES, 'UTF-8') ?>
+                    </h2>
+                </div>
+                <div>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-meeting-create">
+                        <?= $translator->t('meetings.create') ?>
+                    </button>
+                </div>
+            </div>
+
             <?php
 
             $anzahl = $_GET['anzahl'] ?? 10;
@@ -144,9 +163,15 @@ if (!$auth->isLoggedIn()) {
 
                 <?php
                 $datum = (new DateTime($besprechung->datum))->format('d.m.Y');
-                $zeiten = (new DateTime($besprechung->beginn))->format('H:i') . ' - ' . (new DateTime($besprechung->ende))->format('H:i');
-                $dauer = (new DateTime($besprechung->ende))->getTimestamp() - (new DateTime($besprechung->beginn))->getTimestamp();
-                $dauer = round($dauer / 60);
+                if ($besprechung->beginn && $besprechung->ende) {
+                    $zeiten = (new DateTime($besprechung->beginn))->format('H:i') . ' - ' . (new DateTime($besprechung->ende))->format('H:i');
+                    $dauer = (new DateTime($besprechung->ende))->getTimestamp() - (new DateTime($besprechung->beginn))->getTimestamp();
+                    $dauer = round($dauer / 60);
+                } else {
+                    $zeiten = '';
+                    $dauer = '';
+                }
+                // $zeiten = (new DateTime($besprechung->beginn))->format('H:i') . ' - ' . (new DateTime($besprechung->ende))->format('H:i');
                 $ersteller = $userRepository->findById((int) $besprechung->erstellerUserId);
                 ?>
 
@@ -212,6 +237,75 @@ if (!$auth->isLoggedIn()) {
         </div>
 
     </div>
+
+    <!-- Modaler Dialog für Besprechungen erstellen -->
+    <?php if ($authToManageMeetings) { ?>
+        <div class="modal modal-blur fade" id="modal-meeting-create" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <form method="post" action="actions.php?action=create_meeting">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><?= $translator->t('meetings.create'); ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="row mb-2">
+                                <div class="col-12 col-xl-6">
+                                    <label class="form-label" for="titel-create"><?= $translator->t('meetings.title'); ?></label>
+                                    <input type="text" name="titel" id="titel-create" class="form-control">
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 col-md-4">
+                                    <label class="form-label" for="datum-create"><?= $translator->t('meetings.date'); ?></label>
+                                    <input type="date" name="datum" id="datum-create" class="form-control">
+                                </div>
+                                <div class="col-4 col-md-4">
+                                    <label class="form-label" for="beginn-create"><?= $translator->t('meetings.start'); ?></label>
+                                    <select name="beginn" id="beginn-create" class="form-select">
+                                        <option value="">--:--</option>
+                                        <?php for ($hour = 0; $hour < 24; $hour++): ?>
+                                            <?php for ($minute = 0; $minute < 60; $minute += 15): ?>
+                                                <?php
+                                                $time = sprintf('%02d:%02d', $hour, $minute);
+                                                ?>
+                                                <option value="<?= $time; ?>"><?= $time; ?></option>
+                                            <?php endfor; ?>
+                                        <?php endfor; ?>
+                                    </select>
+                                </div>
+                                <div class="col-4 col-md-4">
+                                    <label class="form-label" for="ende-create"><?= $translator->t('meetings.end'); ?></label>
+                                    <select name="ende" id="ende-create" class="form-select">
+                                        <option value="">--:--</option>
+                                        <?php for ($hour = 0; $hour < 24; $hour++): ?>
+                                            <?php for ($minute = 0; $minute < 60; $minute += 15): ?>
+                                                <?php
+                                                $time = sprintf('%02d:%02d', $hour, $minute);
+                                                ?>
+                                                <option value="<?= $time; ?>"><?= $time; ?></option>
+                                            <?php endfor; ?>
+                                        <?php endfor; ?>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="ort-create"><?= $translator->t('meetings.location'); ?></label>
+                                <input type="text" name="ort" id="ort-create" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn me-auto" data-bs-dismiss="modal"><?= $translator->t('common.cancel'); ?></button>
+                            <button type="submit" class="btn btn-primary"><?= $translator->t('common.save'); ?></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <?php } ?>
 
     <?php include_once 'footer.php'; ?>
 

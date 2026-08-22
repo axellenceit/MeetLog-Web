@@ -223,4 +223,13 @@ CREATE TABLE `tblTask` (
   CONSTRAINT `chk_tblTask_istErledigt` CHECK (`istErledigt` in (0,1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
+CREATE TABLE `tblLog`(
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `UserId` int(11) NOT NULL,
+  `Action` varchar(255) NOT NULL,
+  `Timestamp` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_tblLog_User` FOREIGN KEY (`UserId`) REFERENCES `tblUser` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

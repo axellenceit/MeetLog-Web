@@ -29,4 +29,6 @@ return [
         'web' => 'Webseite',
     ],
     'localcourt' => 'Amtsgericht',
+    'clear_logs' => 'Logs löschen',
+    'minutes' => 'Minuten',
 ];

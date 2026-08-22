@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'view_all' => 'View All Tasks',
     'create' => 'Create Task',
     'my' => 'My Tasks',
     'no_tasks' => 'No tasks available.',

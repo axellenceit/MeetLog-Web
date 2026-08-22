@@ -1,5 +1,6 @@
 <?php
 return [
+    'create' => 'Neue Besprechung',
     'title' => 'Titel',
     'createdBy' => 'Erstellt von',
     'createdAt' => 'Erstellt am',

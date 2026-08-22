@@ -92,8 +92,8 @@ final class BesprechungRepository
     public function create(Besprechung $besprechung): int
     {
         $sql = "INSERT INTO tblBesprechung
-            (OrganisationID, ErstellerUserID, Titel, Beschreibung, Datum, Beginn, Ende, Ort, Status, istAktiviert, istVeröffentlicht)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            (OrganisationID, ErstellerUserID, Titel, Datum, Beginn, Ende, Ort, Status, istAktiviert, istVeröffentlicht)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $data = $besprechung->toDatabaseArray();
 
@@ -101,7 +101,6 @@ final class BesprechungRepository
             $data['OrganisationID'],
             $data['ErstellerUserID'],
             $data['Titel'],
-            $data['Beschreibung'],
             $data['Datum'],
             $data['Beginn'],
             $data['Ende'],
