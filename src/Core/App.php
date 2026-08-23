@@ -23,6 +23,7 @@ use Src\Log\LogRepository;
 
 final class App
 {
+
     private Config $config;
     private Session $session;
     private Database $db;
@@ -47,6 +48,8 @@ final class App
 
     public function __construct()
     {
+        date_default_timezone_set('Europe/Berlin');
+    
         $this->config = new Config(dirname(__DIR__, 1) . '/../static/meetlog.ini');
 
         $this->session = new Session();

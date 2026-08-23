@@ -68,8 +68,26 @@ $logs = $logRepository->findAll();
                             <?php else: ?>
                                 <?php foreach ($logs as $log): ?>
                                     <tr>
-                                        <td><?= $log->timestamp; ?></td>
-                                        <td><?= $log->userId ?></td>
+                                        <td>
+                                            <?php
+                                            $ts = DateTime::createFromFormat('d.m.Y H:i:s', $log->timestamp, new DateTimeZone('UTC'));
+                                            if ($ts === false) {
+                                                $ts = new DateTime($log->timestamp, new DateTimeZone('UTC'));
+                                            }
+                                            $ts->setTimezone(new DateTimeZone('Europe/Berlin'));
+                                            echo $ts->format('d.m.Y H:i:s');
+                                            ?>
+                                        </td>
+                                        <td>
+                                            <?php
+                                            $user = $userRepository->findById($log->userId);
+                                            if ($user) {
+                                                echo htmlspecialchars($user->vorname . ' ' . $user->nachname, ENT_QUOTES, 'UTF-8');
+                                            } else {
+                                                echo 'Unbekannt';
+                                            }
+                                            ?>
+                                        </td>
                                         <td><?= $log->action ?></td>
                                         <td>
                                             <?php

@@ -49,7 +49,18 @@ switch ($action) {
 
         if (!$result) {
             $flash->addToast('Foto konnte nicht gelöscht werden', 'danger');
+            $redirect->back();
         }
+
+        $flash->addToast('Foto erfolgreich gelöscht', 'success');
+        $logEntry = new Log(
+            id: null,
+            userId: (int) $_SESSION['id'],
+            action: 'Profilfoto zu ' . $_SESSION['id'] . ' gelöscht',
+            severity: 'info',
+            timestamp: date('Y-m-d H:i:s')
+        );
+        $logRepository->create($logEntry);
 
         $redirect->back();
         break;
@@ -58,6 +69,7 @@ switch ($action) {
 
         if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
             $flash->addToast('Bitte Foto auswählen', 'danger');
+            $redirect->back();
         }
 
         $file = $_FILES['file'];
@@ -65,6 +77,7 @@ switch ($action) {
 
         if ($file['size'] > $maxSize) {
             $flash->addToast('Datei zu groß. Maximal 2 MB', 'danger');
+            $redirect->back();
         }
 
         $finfo = new finfo(FILEINFO_MIME_TYPE);
@@ -79,6 +92,7 @@ switch ($action) {
 
         if (!isset($allowedMimeTypes[$mimeType])) {
             $flash->addToast('Nicht zulässiges Dateiformat', 'danger');
+            $redirect->back();
         }
 
         $extension = $allowedMimeTypes[$mimeType];
@@ -93,25 +107,39 @@ switch ($action) {
 
         if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
             $flash->addToast('Hochladen fehlgeschlagen', 'danger');
+            $redirect->back();
         }
 
-        $relativePath = (string) '/upload/user/' . $newFilename;
+        $relativePath = (string) './upload/user/' . $newFilename;
 
         $userRepository->addProfilePhoto($session->get('id'), $relativePath);
 
+        $flash->addToast('Foto erfolgreich hochgeladen', 'success');
+        $logEntry = new Log(
+            id: null,
+            userId: (int) $_SESSION['id'],
+            action: 'Profilfoto zu ' . $_SESSION['id'] . ' hochgeladen',
+            severity: 'info',
+            timestamp: date('Y-m-d H:i:s')
+        );
+        $logRepository->create($logEntry);
+
         $redirect->back();
+        break;
 
     case 'editMeeting':
         $meetingId = $_POST['editMeetingId'] ?? null;
 
         if (!$meetingId) {
             $flash->addToast('Meeting ID fehlt', 'danger');
+            $redirect->back();
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
             $flash->addToast('Meeting nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         $meeting->titel = $_POST['editMeetingTitle'] ?? $meeting->titel;
@@ -122,6 +150,16 @@ switch ($action) {
 
         $besprechungRepository->update($meeting);
 
+        $flash->addToast('Meeting erfolgreich geändert', 'success');
+        $logEntry = new Log(
+            id: null,
+            userId: (int) $_SESSION['id'],
+            action: 'Meeting ' . $meetingId . ' geändert',
+            severity: 'info',
+            timestamp: date('Y-m-d H:i:s')
+        );
+        $logRepository->create($logEntry);
+
         $redirect->back();
         break;
 
@@ -131,20 +169,33 @@ switch ($action) {
 
         if (!$meetingId || !$status) {
             $flash->addToast('Meeting ID oder Status fehlt', 'danger');
+            $redirect->back();
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
             $flash->addToast('Meeting nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         if (!in_array($status, ['geplant', 'live', 'beendet'])) {
             $flash->addToast('Ungültiger Status', 'danger');
+            $redirect->back();
         }
 
         $meeting->status = $status;
         $besprechungRepository->update($meeting);
+
+        $flash->addToast('Meeting erfolgreich geändert', 'success');
+        $logEntry = new Log(
+            id: null,
+            userId: (int) $_SESSION['id'],
+            action: 'Meeting ' . $meetingId . ' Status geändert zu ' . $status,
+            severity: 'info',
+            timestamp: date('Y-m-d H:i:s')
+        );
+        $logRepository->create($logEntry);
 
         $redirect->back();
         break;
@@ -154,21 +205,34 @@ switch ($action) {
 
         if (!$meetingId) {
             $flash->addToast('Meeting ID fehlt', 'danger');
+            $redirect->back();
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
             $flash->addToast('Meeting nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         if ($meeting->status !== 'beendet') {
             $flash->addToast('Nur Meetings mit Status "beendet" können veröffentlicht werden', 'danger');
+            $redirect->back();
         }
 
         $meeting->istVeröffentlicht = true;
         $meeting->public_code = bin2hex(random_bytes(8));
         $besprechungRepository->update($meeting);
+
+        $flash->addToast('Meeting erfolgreich veröffentlicht', 'success');
+        $logEntry = new Log(
+            id: null,
+            userId: (int) $_SESSION['id'],
+            action: 'Meeting ' . $meetingId . ' veröffentlicht',
+            severity: 'info',
+            timestamp: date('Y-m-d H:i:s')
+        );
+        $logRepository->create($logEntry);
 
         $redirect->back();
         break;
@@ -178,17 +242,29 @@ switch ($action) {
 
         if (!$meetingId) {
             $flash->addToast('Meeting ID fehlt', 'danger');
+            $redirect->back();
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
             $flash->addToast('Meeting nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         $meeting->istVeröffentlicht = false;
         $meeting->public_code = null;
         $besprechungRepository->update($meeting);
+
+        $flash->addToast('Meeting erfolgreich zurückgezogen', 'success');
+        $logEntry = new Log(
+            id: null,
+            userId: (int) $_SESSION['id'],
+            action: 'Meeting ' . $meetingId . ' zurückgezogen',
+            severity: 'info',
+            timestamp: date('Y-m-d H:i:s')
+        );
+        $logRepository->create($logEntry);
 
         $redirect->back();
         break;
@@ -198,17 +274,29 @@ switch ($action) {
 
         if (!$meetingId) {
             $flash->addToast('Meeting ID fehlt', 'danger');
+            $redirect->back();
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
             $flash->addToast('Meeting nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         $meeting->istAktiviert = false;
 
         $besprechungRepository->update($meeting);
+
+        $flash->addToast('Meeting erfolgreich gelöscht', 'success');
+        $logEntry = new Log(
+            id: null,
+            userId: (int) $_SESSION['id'],
+            action: 'Meeting ' . $meetingId . ' gelöscht',
+            severity: 'info',
+            timestamp: date('Y-m-d H:i:s')
+        );
+        $logRepository->create($logEntry);
 
         $redirect->back();
         break;
@@ -218,12 +306,14 @@ switch ($action) {
 
         if (!$meetingId) {
             $flash->addToast('Meeting ID fehlt', 'danger');
+            $redirect->back();
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
             $flash->addToast('Meeting nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         $parentId = (int)($_POST['newMeetingPointParent'] ?? 0);
@@ -250,7 +340,18 @@ switch ($action) {
 
         if (!$result) {
             $flash->addToast('Fehler beim Hinzufügen des Besprechungspunkts', 'danger');
+            $redirect->back();
         }
+
+        $flash->addToast('Besprechungspunkt erfolgreich hinzugefügt', 'success');
+        $logEntry = new Log(
+            id: null,
+            userId: (int) $_SESSION['id'],
+            action: 'Bei Meeting ' . $meetingId . ' Besprechungspunkt hinzugefügt',
+            severity: 'info',
+            timestamp: date('Y-m-d H:i:s')
+        );
+        $logRepository->create($logEntry);
 
         $redirect->back();
         break;
@@ -260,12 +361,14 @@ switch ($action) {
 
         if (!$meetingPointId) {
             $flash->addToast('Meeting Point ID fehlt', 'danger');
+            $redirect->back();
         }
 
         $meetingPoint = $besprechungspunktRepository->findById((int)$meetingPointId);
 
         if (!$meetingPoint) {
             $flash->addToast('Meeting Point nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         $meetingPoint->beschreibung = $_POST['editMeetingPointDescription'] ?? $meetingPoint->beschreibung;
@@ -279,6 +382,16 @@ switch ($action) {
 
         $result = $besprechungspunktRepository->update($meetingPoint);
 
+        $flash->addToast('Besprechungspunkt erfolgreich bearbeitet', 'success');
+        $logEntry = new Log(
+            id: null,
+            userId: (int) $_SESSION['id'],
+            action: 'Besprechungspunkt ' . $meetingPointId . ' bearbeitet',
+            severity: 'info',
+            timestamp: date('Y-m-d H:i:s')
+        );
+        $logRepository->create($logEntry);
+
         $redirect->back();
         break;
 
@@ -288,18 +401,21 @@ switch ($action) {
 
         if (!$meetingId || !$participantId) {
             $flash->addToast('Meeting ID oder Teilnehmer ID fehlt', 'danger');
+            $redirect->back();
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
             $flash->addToast('Meeting nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         $participant = $besprechungsteilnehmerRepository->findById((int)$participantId);
 
         if (!$participant) {
             $flash->addToast('Teilnehmer nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         // Setze den aktuellen Vorsitzenden auf false
@@ -322,18 +438,21 @@ switch ($action) {
 
         if (!$meetingId || !$participantId) {
             $flash->addToast('Meeting ID oder Teilnehmer ID fehlt', 'danger');
+            $redirect->back();
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
             $flash->addToast('Meeting nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         $participant = $besprechungsteilnehmerRepository->findById((int)$participantId);
 
         if (!$participant) {
             $flash->addToast('Teilnehmer nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         // Setze den aktuellen Protokollführer auf false
@@ -356,18 +475,21 @@ switch ($action) {
 
         if (!$meetingId || !$participantId) {
             $flash->addToast('Meeting ID oder Teilnehmer ID fehlt', 'danger');
+            $redirect->back();
         }
 
         $meeting = $besprechungRepository->findById((int)$meetingId);
 
         if (!$meeting) {
             $flash->addToast('Meeting nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         $participant = $besprechungsteilnehmerRepository->findById((int)$participantId);
 
         if (!$participant) {
             $flash->addToast('Teilnehmer nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         // Toggle the signing authorization
@@ -462,12 +584,14 @@ switch ($action) {
 
         if (!$orgId) {
             $flash->addToast('OrganisationsID fehlt', 'danger');
+            $redirect->back();
         }
 
         $org = $organisationRepository->findById((int) $orgId);
 
         if (!$org) {
             $flash->addToast('Organisation nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
@@ -476,6 +600,7 @@ switch ($action) {
 
             if ($file['size'] > $maxSize) {
                 $flash->addToast('Datei zu groß. Maximal 2 MB', 'danger');
+                $redirect->back();
             }
 
             $finfo = new finfo(FILEINFO_MIME_TYPE);
@@ -490,6 +615,7 @@ switch ($action) {
 
             if (!isset($allowedMimeTypes[$mimeType])) {
                 $flash->addToast('Nicht zulässiges Dateiformat', 'danger');
+                $redirect->back();
             }
 
             $extension = $allowedMimeTypes[$mimeType];
@@ -504,6 +630,7 @@ switch ($action) {
 
             if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
                 $flash->addToast('Hochladen fehlgeschlagen', 'danger');
+                $redirect->back();
             }
 
             $relativePath = (string) '/upload/organization/' . $newFilename;
@@ -535,6 +662,7 @@ switch ($action) {
 
         if (empty($data)) {
             $flash->addToast('Keine Daten zum speichern gefunden', 'danger');
+            $redirect->back();
         }
 
         foreach ($data as $name => $value) {
@@ -553,6 +681,16 @@ switch ($action) {
 
             $config->set($section, $key, $value);
         }
+
+        $flash->addToast('Konfiguration erfolgreich gespeichert', 'success');
+        $logEntry = new Log(
+            id: null,
+            userId: (int) $_SESSION['id'],
+            action: 'Konfiguration gespeichert',
+            severity: 'info',
+            timestamp: date('Y-m-d H:i:s')
+        );
+        $logRepository->create($logEntry);
 
         $config->save();
         $config->reload();
@@ -699,6 +837,7 @@ switch ($action) {
         if (!empty($email)) {
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $flash->addToast('Ungültige E-Mail-Adresse', 'danger');
+                $redirect->back();
             }
         }
 
@@ -719,6 +858,7 @@ switch ($action) {
 
         if (!$personId) {
             $flash->addToast('Fehler beim Erstellen der Personendaten', 'danger');
+            $redirect->back();
         }
 
         if (!empty($email)) {
@@ -739,6 +879,7 @@ switch ($action) {
 
             if (!$newUserId) {
                 $flash->addToast('Fehler beim Erstellen des Benutzerkontos', 'danger');
+                $redirect->back();
             }
         }
 
@@ -768,6 +909,16 @@ switch ($action) {
             $flash->addToast('Fehler beim Erstellen des Mitglieds', 'danger');
         }
 
+        $flash->addToast('Mitglied erfolgreich erstellt', 'success');
+        $logEntry = new Log(
+            id: null,
+            userId: (int) $_SESSION['id'],
+            action: 'Mitglied erstellt',
+            severity: 'info',
+            timestamp: date('Y-m-d H:i:s')
+        );
+        $logRepository->create($logEntry);
+
         $redirect->back();
         break;
 
@@ -778,18 +929,21 @@ switch ($action) {
 
         if (!$memberId) {
             $flash->addToast('MitgliedsID fehlt', 'danger');
+            $redirect->back();
         }
 
         $mitglied = $organisationsMitgliedRepository->findById((int) $memberId);
 
         if (!$mitglied) {
             $flash->addToast('Mitglied nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         $user = $userRepository->findById($mitglied->user);
 
         if ($user && $user->istAdmin && $action === 'disable_member') {
             $flash->addToast('Admin-Mitglied kann nicht deaktiviert werden', 'danger');
+            $redirect->back();
         }
 
         $mitglied->istAktiv = ($action === 'enable_member');
@@ -798,6 +952,16 @@ switch ($action) {
 
         if (!$result) {
             $flash->addToast('Fehler beim Aktualisieren des Mitgliedsstatus', 'danger');
+        } else {
+            $flash->addToast('Mitglied erfolgreich aktualisiert', 'success');
+            $logEntry = new Log(
+                id: null,
+                userId: (int) $_SESSION['id'],
+                action: 'Mitglied aktualisiert',
+                severity: 'info',
+                timestamp: date('Y-m-d H:i:s')
+            );
+            $logRepository->create($logEntry);
         }
 
         $redirect->back();
@@ -808,12 +972,14 @@ switch ($action) {
 
         if (!$memberId) {
             $flash->addToast('MitgliedsID fehlt', 'danger');
+            $redirect->back();
         }
 
         $mitglied = $organisationsMitgliedRepository->findById((int) $memberId);
 
         if (!$mitglied) {
             $flash->addToast('Mitglied nicht gefunden', 'danger');
+            $redirect->back();
         }
 
         $mitglied->vorname = trim((string) ($_POST['vorname'] ?? (string) $mitglied->vorname));
@@ -830,6 +996,7 @@ switch ($action) {
 
         if (!$result) {
             $flash->addToast('Fehler beim Aktualisieren des Mitglieds', 'danger');
+            $redirect->back();
         }
 
         if ($mitglied->user) {
@@ -849,6 +1016,16 @@ switch ($action) {
                 $userRepository->updateUser($user);
             }
         }
+
+        $flash->addToast('Mitglied erfolgreich aktualisiert', 'success');
+        $logEntry = new Log(
+            id: null,
+            userId: (int) $_SESSION['id'],
+            action: 'Mitglied aktualisiert',
+            severity: 'info',
+            timestamp: date('Y-m-d H:i:s')
+        );
+        $logRepository->create($logEntry);
 
         $redirect->back();
         break;
@@ -901,6 +1078,16 @@ switch ($action) {
         if ($mailaddress !== '') {
             $mail->sendDeletionEmail($mailaddress, $mitglied->organisation);
         }
+
+        $flash->addToast('Mitglied erfolgreich gelöscht', 'success');
+        $logEntry = new Log(
+            id: null,
+            userId: (int) $_SESSION['id'],
+            action: 'Mitglied gelöscht',
+            severity: 'info',
+            timestamp: date('Y-m-d H:i:s')
+        );
+        $logRepository->create($logEntry);
 
         $redirect->back();
         break;
@@ -964,14 +1151,23 @@ switch ($action) {
                 id: null,
                 userId: (int) $_SESSION['id'],
                 action: 'Meeting erfolgreich erstellt',
-                severity: 'success',
+                severity: 'info',
                 timestamp: date('Y-m-d H:i:s')
             );
             $logRepository->create($logEntry);
             $redirect->back();
             break;
+
         } catch (Exception $e) {
             $flash->addToast('Fehler beim Erstellen des Meetings: ' . $e->getMessage(), 'danger');
+            $logEntry = new Log(
+                id: null,
+                userId: (int) $_SESSION['id'],
+                action: 'Fehler beim Erstellen des Meetings: ' . $e->getMessage(),
+                severity: 'error',
+                timestamp: date('Y-m-d H:i:s')
+            );
+            $logRepository->create($logEntry);
             $redirect->back();
         }
 
