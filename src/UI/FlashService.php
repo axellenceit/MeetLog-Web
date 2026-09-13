@@ -22,6 +22,7 @@ final class FlashService
 
     public function addToast(string $message, string $type = 'success'): void
     {
+        $message = str_replace(["\r\n", '\r\n', '\n', '\r'], "\n", $message);
         $toasts = $this->session->get('toasts', []);
         $toasts[] = ['message' => $message, 'type' => $type];
         $this->session->set('toasts', $toasts);
@@ -34,4 +35,3 @@ final class FlashService
         return $toasts;
     }
 }
-?>

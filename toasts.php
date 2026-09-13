@@ -20,6 +20,9 @@
 
 <script>
     function showToast(message, type = 'success') {
+        if (typeof message === 'string') {
+            message = message.replace(/\\r\\n|\\n|\\r/g, '\n');
+        }
         const container = document.getElementById('toast-container');
 
         // Toast-Element erstellen

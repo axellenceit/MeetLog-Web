@@ -1157,7 +1157,6 @@ switch ($action) {
             $logRepository->create($logEntry);
             $redirect->back();
             break;
-
         } catch (Exception $e) {
             $flash->addToast('Fehler beim Erstellen des Meetings: ' . $e->getMessage(), 'danger');
             $logEntry = new Log(
@@ -1721,14 +1720,14 @@ switch ($action) {
         ];
 
         if (!function_exists('curl_init')) {
-            $flash->addToast('Da ist was schief gegangen\n' . '[Feedback/API] cURL nicht verfügbar', 'danger');
+            $flash->addToast("Da ist was schief gegangen\n[Feedback/API] cURL nicht verfügbar", 'danger');
             $redirect->back();
         }
 
         $curl = curl_init('https://process.axellence.cloud/webhook/meetlog-feedback');
 
         if ($curl === false) {
-            $flash->addToast('Da ist was schief gegangen\n' . '[Feedback/API] cURL nicht verfügbar', 'danger');
+            $flash->addToast("Da ist was schief gegangen\n[Feedback/API] cURL nicht verfügbar", 'danger');
             $redirect->back();
         }
 
@@ -1749,16 +1748,16 @@ switch ($action) {
         curl_close($curl);
 
         if ($response === false || $statusCode !== 201) {
-            $flash->addToast('Da ist was schief gegangen\n' . '[Feedback/API] Fehler \n HTTP ' . $statusCode . ' \n cURL: ' . ($curlError !== '' ? $curlError : 'kein cURL-Fehler') . ' \n Response: ' . (string)$response, 'danger');
+            $flash->addToast("Da ist was schief gegangen\n[Feedback/API] Fehler \n HTTP " . $statusCode . " \n cURL: " . ($curlError !== '' ? $curlError : 'kein cURL-Fehler') . " \n Response: " . (string)$response, 'danger');
             $redirect->back();
         }
 
         $decoded = json_decode((string)$response, true);
 
         if (!is_array($decoded) || !($decoded['ok'] ?? false)) {
-            $flash->addToast('Da ist was schief gegangen\n' . ($decoded['message'] ?? ''), 'danger');
+            $flash->addToast("Da ist was schief gegangen\n" . ($decoded['message'] ?? ''), 'danger');
         } else {
-            $flash->addToast('Vielen Dank für dein Feedback!\n' . ($decoded['message'] ?? ''), 'success');
+            $flash->addToast("Vielen Dank für dein Feedback!\n" . ($decoded['message'] ?? ''), 'success');
         }
 
         $redirect->back();
