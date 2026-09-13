@@ -1745,7 +1745,6 @@ switch ($action) {
         $response = curl_exec($curl);
         $curlError = curl_error($curl);
         $statusCode = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
 
         if ($response === false || $statusCode !== 201) {
             $flash->addToast("Da ist was schief gegangen\n[Feedback/API] Fehler \n HTTP " . $statusCode . " \n cURL: " . ($curlError !== '' ? $curlError : 'kein cURL-Fehler') . " \n Response: " . (string)$response, 'danger');

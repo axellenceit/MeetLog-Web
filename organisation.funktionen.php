@@ -271,7 +271,7 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
                             <div class="modal-content">
                                 <form method="post" action="">
                                     <div class="modal-header">
-                                        <h5 class="modal-title"><?= $translator->t('functions.edit') ?></h5>
+                                        <h5 class="modal-title"><?= $translator->t('organization.functions.edit') ?></h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"
                                             aria-label="<?= $translator->t('close'); ?>"></button>
                                     </div>
@@ -282,7 +282,7 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
 
                                         <div class="row g-3">
                                             <div class="col-12 col-md-8">
-                                                <label class="form-label" for="bezeichnung-<?= (int) $funktion->id ?>"><?= $translator->t('Designation'); ?></label>
+                                                <label class="form-label" for="bezeichnung-<?= (int) $funktion->id ?>"><?= $translator->t('organization.functions.designation'); ?></label>
                                                 <input
                                                     type="text"
                                                     name="bezeichnung"
@@ -292,7 +292,7 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
                                             </div>
 
                                             <div class="col-12">
-                                                <label class="form-label" for="beschreibung-<?= (int) $funktion->id ?>"><?= $translator->t('Description'); ?></label>
+                                                <label class="form-label" for="beschreibung-<?= (int) $funktion->id ?>"><?= $translator->t('organization.functions.description'); ?></label>
                                                 <textarea
                                                     name="beschreibung"
                                                     id="beschreibung-<?= (int) $funktion->id ?>"
@@ -301,14 +301,14 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
                                             </div>
 
                                             <div class="col-12 col-md-4 d-flex align-items-md-end">
-                                                <label class="form-check mb-2 mb-md-0">
-                                                    <input
-                                                        class="form-check-input"
-                                                        type="checkbox"
-                                                        name="istAktiv"
-                                                        value="1"
-                                                        <?= $funktion->istAktiv ? 'checked' : '' ?>>
-                                                    <span class="form-check-label"><?= $translator->t('organization.functions.active'); ?></span>
+                                                <label class="form-check mb-2 mb-md-0"><?= $translator->t('organization.functions.isActive'); ?></label>
+                                                <input
+                                                    class="form-check-input"
+                                                    type="checkbox"
+                                                    name="istAktiv"
+                                                    value="1"
+                                                    <?= $funktion->istAktiv ? 'checked' : '' ?>>
+                                                <span class="form-check-label"><?= $translator->t('organization.functions.active'); ?></span>
                                                 </label>
                                             </div>
 
@@ -351,8 +351,8 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
                                     </div>
 
                                     <div class="modal-footer">
-                                        <button type="button" class="btn me-auto" data-bs-dismiss="modal"><?= $translator->t('cancel'); ?></button>
-                                        <button type="submit" class="btn btn-primary"><?= $translator->t('save'); ?></button>
+                                        <button type="button" class="btn me-auto" data-bs-dismiss="modal"><?= $translator->t('common.cancel'); ?></button>
+                                        <button type="submit" class="btn btn-primary"><?= $translator->t('common.save'); ?></button>
                                     </div>
                                 </form>
                             </div>
@@ -365,7 +365,7 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
                         <div class="modal-content">
                             <form method="post" action="">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Neue Funktion</h5>
+                                    <h5 class="modal-title"><?= $translator->t('organization.functions.new'); ?></h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
                                         aria-label="Schließen"></button>
                                 </div>
@@ -375,34 +375,34 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
 
                                     <div class="row g-3">
                                         <div class="col-12 col-md-8">
-                                            <label class="form-label" for="bezeichnung-create"><?= $translator->t('Designation'); ?></label>
+                                            <label class="form-label" for="bezeichnung-create"><?= $translator->t('organization.functions.designation'); ?></label>
                                             <input type="text" name="bezeichnung" id="bezeichnung-create" class="form-control">
                                         </div>
 
                                         <div class="col-12 col-md-4 d-flex align-items-md-end">
                                             <label class="form-check mb-2 mb-md-0">
                                                 <input class="form-check-input" type="checkbox" name="istAktiv" value="1" checked>
-                                                <span class="form-check-label"><?= $translator->t('isActive'); ?></span>
+                                                <span class="form-check-label"><?= $translator->t('organization.functions.active'); ?></span>
                                             </label>
                                         </div>
 
                                         <div class="col-12 col-md-4 d-flex align-items-md-end">
                                             <label class="form-check mb-2 mb-md-0">
                                                 <input class="form-check-input" type="checkbox" name="darfUnterschreiben" value="1" checked>
-                                                <span class="form-check-label"><?= $translator->t('authToSign'); ?></span>
+                                                <span class="form-check-label"><?= $translator->t('organization.functions.authToSign'); ?></span>
                                             </label>
                                         </div>
 
                                         <div class="col-12">
-                                            <label class="form-label" for="beschreibung-create"><?= $translator->t('description'); ?></label>
+                                            <label class="form-label" for="beschreibung-create"><?= $translator->t('organization.functions.description'); ?></label>
                                             <textarea name="beschreibung" id="beschreibung-create" class="form-control" rows="4"></textarea>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="modal-footer">
-                                    <button type="button" class="btn me-auto" data-bs-dismiss="modal"><?= $translator->t('cancel'); ?></button>
-                                    <button type="submit" class="btn btn-primary"><?= $translator->t('save'); ?></button>
+                                    <button type="button" class="btn me-auto" data-bs-dismiss="modal"><?= $translator->t('common.cancel'); ?></button>
+                                    <button type="submit" class="btn btn-primary"><?= $translator->t('common.save'); ?></button>
                                 </div>
                             </form>
                         </div>

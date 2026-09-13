@@ -43,7 +43,8 @@ return [
     'functions' => [
         'root' => 'Funktionen',
         'nothingfound' => 'Keine Funktionen gefunden.',
-        'edit' => 'Bearbeiten',
+        'new' => 'Neue Funktion',
+        'edit' => 'Funktion bearbeiten',
         'delete' => 'Löschen',
         'designation' => 'Bezeichnung',
         'description' => 'Beschreibung',
@@ -56,11 +57,8 @@ return [
         'all' => 'Alle',
         'yes' => 'Ja',
         'no' => 'Nein',
-        'new' => 'Neue Funktion',
         'authToSign' => 'Darf unterschreiben',
         'authToManageOrganisation' => 'Darf Organisation verwalten',
         'authToManageMeetings' => 'Darf Besprechungen verwalten',
     ],
-]
-
-?>
+];
