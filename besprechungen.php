@@ -81,9 +81,9 @@ $authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$se
                     </h2>
                 </div>
                 <div>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-meeting-create">
+                    <a href="./neuebesprechung.php" class="btn btn-primary">
                         <?= $translator->t('meetings.create') ?>
-                    </button>
+                    </a>
                 </div>
             </div>
 
@@ -237,75 +237,7 @@ $authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$se
         </div>
 
     </div>
-
-    <!-- Modaler Dialog für Besprechungen erstellen -->
-    <?php if ($authToManageMeetings) { ?>
-        <div class="modal modal-blur fade" id="modal-meeting-create" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-                <div class="modal-content">
-                    <form method="post" action="actions.php?action=create_meeting">
-                        <div class="modal-header">
-                            <h5 class="modal-title"><?= $translator->t('meetings.create'); ?></h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-                        </div>
-
-                        <div class="modal-body">
-                            <div class="row mb-2">
-                                <div class="col-12 col-xl-6">
-                                    <label class="form-label" for="titel-create"><?= $translator->t('meetings.title'); ?></label>
-                                    <input type="text" name="titel" id="titel-create" class="form-control">
-                                </div>
-                            </div>
-                            <div class="row mb-2">
-                                <div class="col-4 col-md-4">
-                                    <label class="form-label" for="datum-create"><?= $translator->t('meetings.date'); ?></label>
-                                    <input type="date" name="datum" id="datum-create" class="form-control">
-                                </div>
-                                <div class="col-4 col-md-4">
-                                    <label class="form-label" for="beginn-create"><?= $translator->t('meetings.start'); ?></label>
-                                    <select name="beginn" id="beginn-create" class="form-select">
-                                        <option value="">--:--</option>
-                                        <?php for ($hour = 0; $hour < 24; $hour++): ?>
-                                            <?php for ($minute = 0; $minute < 60; $minute += 15): ?>
-                                                <?php
-                                                $time = sprintf('%02d:%02d', $hour, $minute);
-                                                ?>
-                                                <option value="<?= $time; ?>"><?= $time; ?></option>
-                                            <?php endfor; ?>
-                                        <?php endfor; ?>
-                                    </select>
-                                </div>
-                                <div class="col-4 col-md-4">
-                                    <label class="form-label" for="ende-create"><?= $translator->t('meetings.end'); ?></label>
-                                    <select name="ende" id="ende-create" class="form-select">
-                                        <option value="">--:--</option>
-                                        <?php for ($hour = 0; $hour < 24; $hour++): ?>
-                                            <?php for ($minute = 0; $minute < 60; $minute += 15): ?>
-                                                <?php
-                                                $time = sprintf('%02d:%02d', $hour, $minute);
-                                                ?>
-                                                <option value="<?= $time; ?>"><?= $time; ?></option>
-                                            <?php endfor; ?>
-                                        <?php endfor; ?>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-12 col-md-6">
-                                <label class="form-label" for="ort-create"><?= $translator->t('meetings.location'); ?></label>
-                                <input type="text" name="ort" id="ort-create" class="form-control">
-                            </div>
-                        </div>
-
-                        <div class="modal-footer">
-                            <button type="button" class="btn me-auto" data-bs-dismiss="modal"><?= $translator->t('common.cancel'); ?></button>
-                            <button type="submit" class="btn btn-primary"><?= $translator->t('common.save'); ?></button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    <?php } ?>
+    
 
     <?php include_once 'footer.php'; ?>
 

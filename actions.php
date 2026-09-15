@@ -1146,6 +1146,18 @@ switch ($action) {
                 $logRepository->create($logEntry);
             }
 
+            $teilnehmerIds = array_map('intval', (array) ($_POST['teilnehmer'] ?? []));
+            foreach ($teilnehmerIds as $teilnehmerUserId) {
+                if ($teilnehmerUserId <= 0) {
+                    continue;
+                }
+
+                $besprechungsteilnehmerRepository->addTeilnehmer($meetingId, new \Src\Besprechung\Besprechungsteilnehmer(
+                    besprechung: $meetingId,
+                    user: $teilnehmerUserId,
+                ));
+            }
+
             $flash->addToast('Meeting erfolgreich erstellt', 'success');
             $logEntry = new Log(
                 id: null,

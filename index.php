@@ -10,11 +10,13 @@ if (!file_exists(__DIR__ . '/install.done')) {
     $redirect->to('install/index.php');
 }
 
-use Src\Besprechung\BesprechungRepository;
+use Src\User\Permission;
 
 if (!$auth->isLoggedIn()) {
     $redirect->to('login.php');
 }
+
+$user = $userRepository->findById($session->get('id'));
 
 $naechstenBesprechungen = $besprechungRepository->findNextMeetings(5);
 $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
@@ -71,6 +73,7 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
                     <div class="card">
                         <div class="card-body">
                             <div id="calendar"></div>
+                            <span class="text-muted"><?= $translator->t('common.calendar.instructions'); ?></span>
                         </div>
                     </div>
                 </div>
@@ -236,8 +239,13 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
             initialView: 'dayGridMonth',
             timeZone: 'local',
             events: './api/fullcalendar_getEvents.php',
+            selectable: true,
+            select: function(info) {
+                window.location.href = './neuebesprechung.php?start=' + info.startStr;
+            },
             locale: '<?= $session->get('lang'); ?>',
             displayEventTime: false,
+            weekNumbers: true,
             eventClick: function(info) {
                 info.jsEvent.preventDefault();
                 window.location.href = './besprechung.php?id=' + info.event.id;

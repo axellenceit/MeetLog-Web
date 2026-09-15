@@ -8,8 +8,18 @@ use Src\Core\Database;
 
 final class PersonRepository
 {
-    public function __construct(private Database $db)
+    public function __construct(private Database $db) {}
+
+    public function findAll(bool $onlyActive = true): array
     {
+        $sql = 'SELECT * FROM tblPerson WHERE istGeloescht = 0';
+
+        if ($onlyActive) {
+            $sql .= ' AND istAktiv = 1';
+        }
+        $rows = $this->db->query($sql);
+
+        return array_map(fn($row) => Person::fromArray($row), $rows);
     }
 
     public function findById(int $id): ?Person

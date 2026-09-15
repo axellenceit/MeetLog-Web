@@ -31,4 +31,7 @@ return [
     'localcourt' => 'Local court',
     'clear_logs' => 'Clear logs',
     'minutes' => 'Minutes',
+    'calendar' => [
+        'instructions' => 'A click on an empty day creates a meeting. A click on a meeting opens it.',
+    ],
 ];

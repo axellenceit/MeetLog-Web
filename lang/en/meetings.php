@@ -39,6 +39,12 @@ return [
     'participants' => [
         'root' => 'Participants',
         'add' => 'Add participant',
+        'available' => 'Available users',
+        'selected' => 'Selected participants',
+        'addSelected' => 'Add',
+        'removeSelected' => 'Remove',
+        'addAll' => 'Add all',
+        'removeAll' => 'Remove all',
         'name' => 'Name',
         'email' => 'Email',
         'role' => 'Role',

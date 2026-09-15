@@ -42,6 +42,12 @@ return [
     'participants' => [
         'root' => 'Teilnehmer',
         'add' => 'Teilnehmer hinzufügen',
+        'available' => 'Verfügbare Benutzer',
+        'selected' => 'Ausgewählte Teilnehmer',
+        'addSelected' => 'Hinzufügen',
+        'removeSelected' => 'Entfernen',
+        'addAll' => 'Alle hinzufügen',
+        'removeAll' => 'Alle entfernen',
         'name' => 'Name',
         'email' => 'E-Mail',
         'role' => 'Rolle',

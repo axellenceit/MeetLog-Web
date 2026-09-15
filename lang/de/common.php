@@ -31,4 +31,7 @@ return [
     'localcourt' => 'Amtsgericht',
     'clear_logs' => 'Logs löschen',
     'minutes' => 'Minuten',
+    'calendar' => [
+        'instructions' => 'Ein Klick auf einen leeren Tag erstellt eine Besprechung. Ein Klicke auf eine Besprechung öffnet diese.',
+    ],
 ];
