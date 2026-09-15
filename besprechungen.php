@@ -94,7 +94,7 @@ $authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$se
             if (isset($_GET['showAll'])) {
                 $besprechungen = $besprechungRepository->findAll(true);
             } else {
-                $besprechungen = $besprechungRepository->findNextMeetings((int) $anzahl);
+                $besprechungen = $besprechungRepository->findOpenMeetings((int) $anzahl);
             }
 
 
@@ -237,7 +237,7 @@ $authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$se
         </div>
 
     </div>
-    
+
 
     <?php include_once 'footer.php'; ?>
 

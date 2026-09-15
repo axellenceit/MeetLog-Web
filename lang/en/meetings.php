@@ -17,6 +17,7 @@ return [
     'location' => 'Location',
     'published' => 'Published',
     'unpublished' => 'Unpublished',
+    'link' => 'Link',
     'next' => 'Upcoming meetings',
     'last' => 'Previous meetings',
     'toc' => 'Agenda items',
@@ -30,6 +31,7 @@ return [
     'unpublish' => 'Unpublish',
     'delete' => 'Delete',
     'edit' => 'Edit',
+    'includeParticipants' => 'Include participant list',
     'types' => [
         'information' => 'Information',
         'discussion' => 'Discussion',

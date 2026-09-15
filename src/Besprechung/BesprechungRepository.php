@@ -69,6 +69,17 @@ final class BesprechungRepository
         );
     }
 
+    public function findOpenMeetings(int $count): array
+    {
+        $sql = "SELECT * FROM tblBesprechung WHERE istAktiviert = 1 ORDER BY Datum ASC LIMIT ?";
+        $rows = $this->db->query($sql, [$count]);
+
+        return array_map(
+            static fn(array $row): Besprechung => Besprechung::fromArray($row),
+            $rows
+        );
+    }
+
     public function findByOrganisationId(int $organisationId, bool $onlyActive = true): array
     {
         $sql = "SELECT * FROM tblBesprechung WHERE OrganisationID = ?";

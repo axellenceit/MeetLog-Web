@@ -28,6 +28,7 @@ if (!class_exists('TCPDF')) {
 // Hole Organisationsdaten
 $organisation = $organisationRepository->findById($besprechung->organisationId);
 $besprechungspunkte = $besprechungspunktRepository->findByBesprechungId((int)$besprechung->id, false);
+$includeParticipants = isset($_GET['includeParticipants']) ? (bool)$_GET['includeParticipants'] : false;
 $teilnehmer = $besprechungsteilnehmerRepository->findByBesprechungID((int)$besprechung->id);
 
 $filename = 'Besprechungsprotokoll_' . str_replace('.', '', str_replace(' ', '_', $besprechung->titel)) . '_' . date('Y-m-d') . '.pdf';
@@ -507,97 +508,99 @@ if (!empty($unterschreibende)) {
     $pdf->Cell(0, 6, 'Name:         ' . str_repeat('_', 30), 0, 1, 'L');
 }
 
-// Anlage: Teilnehmerliste
-$pdf->AddPage();
+if ($includeParticipants) {
+    // Anlage: Teilnehmerliste
+    $pdf->AddPage();
 
-$pdf->SetFont('helvetica', 'B', 14);
-$pdf->SetTextColor(100, 100, 100);
-$pdf->Cell(0, 8, 'Anlage: Teilnehmerliste', 0, 1, 'L');
-$pdf->Ln(3);
+    $pdf->SetFont('helvetica', 'B', 14);
+    $pdf->SetTextColor(100, 100, 100);
+    $pdf->Cell(0, 8, 'Anlage: Teilnehmerliste', 0, 1, 'L');
+    $pdf->Ln(3);
 
-$margins = $pdf->getMargins();
-$tableLeftX = (float)$margins['left'];
-$tableRightX = $pdf->getPageWidth() - (float)$margins['right'];
-$tableWidth = $tableRightX - $tableLeftX;
+    $margins = $pdf->getMargins();
+    $tableLeftX = (float)$margins['left'];
+    $tableRightX = $pdf->getPageWidth() - (float)$margins['right'];
+    $tableWidth = $tableRightX - $tableLeftX;
 
-$nameColWidth = $tableWidth * 0.65;
-$statusColWidth = $tableWidth - $nameColWidth;
-$rowHeight = 8.0;
-$iconSize = 4.5;
-$iconGap = 1.5;
+    $nameColWidth = $tableWidth * 0.65;
+    $statusColWidth = $tableWidth - $nameColWidth;
+    $rowHeight = 8.0;
+    $iconSize = 4.5;
+    $iconGap = 1.5;
 
-$chairmanIconSvg = '@<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#4d4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21v-2a4 4 0 0 1 4 -4h2" /><path d="M22 16c0 4 -2.5 6 -3.5 6s-3.5 -2 -3.5 -6c1 0 2.5 -.5 3.5 -1.5c1 1 2.5 1.5 3.5 1.5" /><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /></svg>';
-$secretaryIconSvg = '@<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#4d4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" /><path d="M18.42 15.61a2.1 2.1 0 0 1 2.97 2.97l-3.39 3.42h-3v-3l3.42 -3.39" /></svg>';
-$signIconSvg = '@<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#4d4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c3.333 -3.333 5 -6 5 -8c0 -3 -1 -3 -2 -3s-2.032 1.085 -2 3c.034 2.048 1.658 4.877 2.5 6c1.5 2 2.5 2.5 3.5 1l2 -3c.333 2.667 1.333 4 3 4c.53 0 2.639 -2 3 -2c.517 0 1.517 .667 3 2" /></svg>';
+    $chairmanIconSvg = '@<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#4d4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21v-2a4 4 0 0 1 4 -4h2" /><path d="M22 16c0 4 -2.5 6 -3.5 6s-3.5 -2 -3.5 -6c1 0 2.5 -.5 3.5 -1.5c1 1 2.5 1.5 3.5 1.5" /><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /></svg>';
+    $secretaryIconSvg = '@<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#4d4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" /><path d="M18.42 15.61a2.1 2.1 0 0 1 2.97 2.97l-3.39 3.42h-3v-3l3.42 -3.39" /></svg>';
+    $signIconSvg = '@<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#4d4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c3.333 -3.333 5 -6 5 -8c0 -3 -1 -3 -2 -3s-2.032 1.085 -2 3c.034 2.048 1.658 4.877 2.5 6c1.5 2 2.5 2.5 3.5 1l2 -3c.333 2.667 1.333 4 3 4c.53 0 2.639 -2 3 -2c.517 0 1.517 .667 3 2" /></svg>';
 
-// Kopfzeile
-$pdf->SetFont('helvetica', 'B', 10);
-$pdf->SetFillColor(230, 230, 230);
-$pdf->SetTextColor(0, 0, 0);
-$pdf->SetXY($tableLeftX, $pdf->GetY());
-$pdf->Cell($nameColWidth, $rowHeight, 'Teilnehmer', 1, 0, 'L', true);
-$pdf->Cell($statusColWidth, $rowHeight, 'Status', 1, 1, 'C', true);
+    // Kopfzeile
+    $pdf->SetFont('helvetica', 'B', 10);
+    $pdf->SetFillColor(230, 230, 230);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetXY($tableLeftX, $pdf->GetY());
+    $pdf->Cell($nameColWidth, $rowHeight, 'Teilnehmer', 1, 0, 'L', true);
+    $pdf->Cell($statusColWidth, $rowHeight, 'Status', 1, 1, 'C', true);
 
-if (!empty($teilnehmer)) {
-    foreach ($teilnehmer as $t) {
-        $pdf->checkPageBreakPublic($rowHeight);
-        $rowY = $pdf->GetY();
+    if (!empty($teilnehmer)) {
+        foreach ($teilnehmer as $t) {
+            $pdf->checkPageBreakPublic($rowHeight);
+            $rowY = $pdf->GetY();
 
-        // Linke Spalte: Rahmen + Name
-        $pdf->SetXY($tableLeftX, $rowY);
-        $pdf->SetFont('helvetica', '', 10);
-        $pdf->SetTextColor(0, 0, 0);
-        $pdf->Cell($nameColWidth, $rowHeight, '', 1, 0, 'L');
-
-        $name = trim((string)($t->vorname ?? '') . ' ' . (string)($t->nachname ?? ''));
-        $textX = $tableLeftX + 2;
-        $textY = $rowY + (($rowHeight - 4) / 2);
-        $pdf->SetXY($textX, $textY);
-        $pdf->Cell($nameColWidth - 4, 4, $name, 0, 0, 'L');
-
-        // Icons für Funktionen (Vorsitz, Protokollführung, Unterschriftsberechtigung)
-        $iconX = $textX + $pdf->GetStringWidth($name) + 2.5;
-        $iconY = $rowY + (($rowHeight - $iconSize) / 2);
-
-        if ($t->istSitzungsleitung === true) {
-            $pdf->ImageSVG($chairmanIconSvg, $iconX, $iconY, $iconSize, $iconSize);
-            $iconX += $iconSize + $iconGap;
-        }
-        if ($t->istProtokollfuehrer === true) {
-            $pdf->ImageSVG($secretaryIconSvg, $iconX, $iconY, $iconSize, $iconSize);
-            $iconX += $iconSize + $iconGap;
-        }
-        if (!empty($t->darfUnterschreiben)) {
-            $pdf->ImageSVG($signIconSvg, $iconX, $iconY, $iconSize, $iconSize);
-            $iconX += $iconSize + $iconGap;
-        }
-
-        // Rechte Spalte: Rahmen + Status
-        $pdf->SetXY($tableLeftX + $nameColWidth, $rowY);
-        $pdf->Cell($statusColWidth, $rowHeight, '', 1, 0, 'C');
-
-        $statusCenterX = $tableLeftX + $nameColWidth + ($statusColWidth / 2);
-        $statusCenterY = $rowY + ($rowHeight / 2);
-
-        if (!empty($t->istAnwesend)) {
-            drawStatusCheckmark($pdf, $statusCenterX, $statusCenterY, 5.0);
-        } else {
-            $statusText = (!empty($t->istAbwesend) || !empty($t->istEntschuldigt))
-                ? '--- abwesend ---'
-                : '--- fehlt ---';
-
-            $pdf->SetFont('helvetica', '', 9);
-            $pdf->SetTextColor(120, 120, 120);
-            $pdf->SetXY($tableLeftX + $nameColWidth, $rowY);
-            $pdf->Cell($statusColWidth, $rowHeight, $statusText, 0, 0, 'C');
+            // Linke Spalte: Rahmen + Name
+            $pdf->SetXY($tableLeftX, $rowY);
+            $pdf->SetFont('helvetica', '', 10);
             $pdf->SetTextColor(0, 0, 0);
-        }
+            $pdf->Cell($nameColWidth, $rowHeight, '', 1, 0, 'L');
 
-        $pdf->SetXY($tableLeftX, $rowY + $rowHeight);
+            $name = trim((string)($t->vorname ?? '') . ' ' . (string)($t->nachname ?? ''));
+            $textX = $tableLeftX + 2;
+            $textY = $rowY + (($rowHeight - 4) / 2);
+            $pdf->SetXY($textX, $textY);
+            $pdf->Cell($nameColWidth - 4, 4, $name, 0, 0, 'L');
+
+            // Icons für Funktionen (Vorsitz, Protokollführung, Unterschriftsberechtigung)
+            $iconX = $textX + $pdf->GetStringWidth($name) + 2.5;
+            $iconY = $rowY + (($rowHeight - $iconSize) / 2);
+
+            if ($t->istSitzungsleitung === true) {
+                $pdf->ImageSVG($chairmanIconSvg, $iconX, $iconY, $iconSize, $iconSize);
+                $iconX += $iconSize + $iconGap;
+            }
+            if ($t->istProtokollfuehrer === true) {
+                $pdf->ImageSVG($secretaryIconSvg, $iconX, $iconY, $iconSize, $iconSize);
+                $iconX += $iconSize + $iconGap;
+            }
+            if (!empty($t->darfUnterschreiben)) {
+                $pdf->ImageSVG($signIconSvg, $iconX, $iconY, $iconSize, $iconSize);
+                $iconX += $iconSize + $iconGap;
+            }
+
+            // Rechte Spalte: Rahmen + Status
+            $pdf->SetXY($tableLeftX + $nameColWidth, $rowY);
+            $pdf->Cell($statusColWidth, $rowHeight, '', 1, 0, 'C');
+
+            $statusCenterX = $tableLeftX + $nameColWidth + ($statusColWidth / 2);
+            $statusCenterY = $rowY + ($rowHeight / 2);
+
+            if (!empty($t->istAnwesend)) {
+                drawStatusCheckmark($pdf, $statusCenterX, $statusCenterY, 5.0);
+            } else {
+                $statusText = (!empty($t->istAbwesend) || !empty($t->istEntschuldigt))
+                    ? '--- abwesend ---'
+                    : '--- fehlt ---';
+
+                $pdf->SetFont('helvetica', '', 9);
+                $pdf->SetTextColor(120, 120, 120);
+                $pdf->SetXY($tableLeftX + $nameColWidth, $rowY);
+                $pdf->Cell($statusColWidth, $rowHeight, $statusText, 0, 0, 'C');
+                $pdf->SetTextColor(0, 0, 0);
+            }
+
+            $pdf->SetXY($tableLeftX, $rowY + $rowHeight);
+        }
+    } else {
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->Cell($tableWidth, $rowHeight, 'Keine Teilnehmer erfasst', 1, 1, 'L');
     }
-} else {
-    $pdf->SetFont('helvetica', '', 10);
-    $pdf->Cell($tableWidth, $rowHeight, 'Keine Teilnehmer erfasst', 1, 1, 'L');
 }
 
 $pdf->Output($filename, 'I');

@@ -1167,7 +1167,7 @@ switch ($action) {
                 timestamp: date('Y-m-d H:i:s')
             );
             $logRepository->create($logEntry);
-            $redirect->back();
+            $redirect->to('besprechung.php?id=' . $meetingId);
             break;
         } catch (Exception $e) {
             $flash->addToast('Fehler beim Erstellen des Meetings: ' . $e->getMessage(), 'danger');

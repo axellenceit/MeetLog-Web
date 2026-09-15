@@ -18,6 +18,7 @@ return [
     'location' => 'Ort',
     'published' => 'Veröffentlicht',
     'unpublished' => 'Nicht veröffentlicht',
+    'link' => 'Link',
     'showAll' => 'Alle',
     'no_next' => 'Keine weiteren Besprechungen',
     'next' => 'Nächste Besprechungen',
@@ -33,6 +34,7 @@ return [
     'unpublish' => 'Nicht veröffentlichen',
     'delete' => 'Löschen',
     'edit' => 'Bearbeiten',
+    'includeParticipants' => 'Teilnehmerliste mit anhängen',
     'types' => [
         'information' => 'Information',
         'discussion' => 'Diskussion',

@@ -29,7 +29,7 @@ if (!$besprechung->istAktiviert) {
 }
 
 $datum = (new DateTime($besprechung->datum))->format('d.m.Y');
-if($besprechung->beginn && $besprechung->ende) {
+if ($besprechung->beginn && $besprechung->ende) {
     $zeiten = (new DateTime($besprechung->beginn))->format('H:i') . ' - ' . (new DateTime($besprechung->ende))->format('H:i');
     $dauer = (new DateTime($besprechung->ende))->getTimestamp() - (new DateTime($besprechung->beginn))->getTimestamp();
     $dauer = round($dauer / 60);
@@ -222,10 +222,11 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                     <?= $translator->t('meetings.participants.sentInvitation'); ?>
                                 </button>
 
-                                <a href="./api/getMeetingAsPDF.php?meetingId=<?= $besprechung->id ?>"
-                                    target="_blank"
+                                <a href="#"
                                     class="btn btn-outline-primary"
-                                    title="<?= $translator->t('meetings.printToPDF'); ?>">
+                                    title="<?= $translator->t('meetings.printToPDF'); ?>"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#printToPDF">
                                     <?= $translator->t('meetings.printToPDF'); ?>
                                 </a>
 
@@ -692,6 +693,29 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
         </div>
 
     </div>
+
+    <form action="api/getMeetingAsPDF.php" method="get" target="_blank" class="modal modal-blur fade" id="printToPDF" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?= $translator->t('meetings.printToPDF'); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="meetingId" id="meetingId" value="<?= $besprechung->id; ?>" />
+
+                    <input type="checkbox" class="form-check-input mb-2" name="includeParticipants" id="includeParticipants" value="1" />
+                    <label for="includeParticipants"><?= $translator->t('meetings.includeParticipants'); ?></label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"> <?= $translator->t('common.cancel'); ?> </button>
+                    <button type="submit" class="btn btn-primary btn-5 ms-auto"><?= $translator->t('meetings.printToPDF'); ?></button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+
     <?php if ($authToManageMeetings) { ?>
 
         <form action="actions.php?action=editMeeting" method="post" class="modal modal-blur fade" id="editMeeting" tabindex="-1" role="dialog" aria-hidden="true">
