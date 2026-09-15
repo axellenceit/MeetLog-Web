@@ -19,6 +19,8 @@ if (!empty($user->foto)) {
     $avatarStyle = 'background-image: url(' . htmlspecialchars((string)$user->foto, ENT_QUOTES, 'UTF-8') . ');';
 }
 
+$logRepository->logRotation((int)$config->get('general', 'logRotation'));
+
 $authToSign = $user->istAdmin || $acl->isPermitted($user->id, (int)$session->get('Organisation'), Permission::SIGN);
 $authToManageOrganisation = $user->istAdmin || $acl->isPermitted($user->id, (int)$session->get('Organisation'), Permission::MANAGE_ORGANISATION);
 $authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$session->get('Organisation'), Permission::MANAGE_MEETINGS);

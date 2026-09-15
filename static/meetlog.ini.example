@@ -13,9 +13,3 @@ usessl = false
 user = mail@example.com
 pass = "Password"
 from = mail@example.com
-
-[github]
-repository = "owner/repository"
-token = ""
-label_bug = "bug"
-label_improvement = "enhancement"

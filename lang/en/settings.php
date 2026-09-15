@@ -10,6 +10,7 @@ return [
             'url' => 'URL',
             'togglePublicMeeting' => 'Public Meetings',
             'file_logo' => 'Logo',
+            'logRotation' => 'Log rotation (days)',
         ],
         'database' => [
             'host' => 'Server',

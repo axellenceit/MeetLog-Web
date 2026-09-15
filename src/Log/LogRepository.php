@@ -43,4 +43,10 @@ final class LogRepository
         $sql = "DELETE FROM tblLog";
         $this->db->execute($sql);
     }
+
+    public function logRotation(int $days): void
+    {
+        $sql = "DELETE FROM tblLog WHERE Timestamp < NOW() - INTERVAL ? DAY";
+        $this->db->execute($sql, [$days]);
+    }
 }
