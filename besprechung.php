@@ -237,240 +237,222 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
 
             </div>
 
-            <div class="row g-3 align-items-stretch mb-2">
+            <div class="row g-3 align-items-stretch">
 
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title"><?= $translator->t('meetings.frame'); ?></h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-2 mb-2">
-                            <div class="col-5">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-book-2">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path d="M19 4v16h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12" />
-                                    <path d="M19 16h-12a2 2 0 0 0 -2 2" />
-                                    <path d="M9 8h6" />
-                                </svg><strong> <?= $translator->t('meetings.status.root'); ?></strong>
-                            </div>
-                            <div class="col-7">
-                                <?php
-                                if ($besprechung->status === 'geplant') {
-                                    echo '<span class="badge bg-secondary text-white">' . $translator->t('meetings.status.planned') . '</span>';
-                                } elseif ($besprechung->status === 'aktiv') {
-                                    echo '<span class="badge bg-success text-white">' . $translator->t('meetings.status.active') . '</span>';
-                                } elseif ($besprechung->status === 'beendet') {
-                                    echo '<span class="badge bg-dark text-white">' . $translator->t('meetings.status.finished') . '</span>';
-                                }
-                                ?>
-                                <?php if ($besprechung->istVeröffentlicht) { ?>
-                                    <span class="badge bg-success text-white"> <?= $translator->t('meetings.published'); ?></span>
-                                <?php } else { ?>
-                                    <span class="badge bg-danger text-white"> <?= $translator->t('meetings.unpublished'); ?></span>
-                                <?php } ?>
-                            </div>
+                <div class="col-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title"><?= $translator->t('meetings.frame'); ?></h3>
                         </div>
+                        <div class="card-body">
+                            <div class="row g-2 mb-2">
+                                <div class="col-5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-book-2">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M19 4v16h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12" />
+                                        <path d="M19 16h-12a2 2 0 0 0 -2 2" />
+                                        <path d="M9 8h6" />
+                                    </svg><strong> <?= $translator->t('meetings.status.root'); ?></strong>
+                                </div>
+                                <div class="col-7">
+                                    <?php
+                                    if ($besprechung->status === 'geplant') {
+                                        echo '<span class="badge bg-secondary text-white">' . $translator->t('meetings.status.planned') . '</span>';
+                                    } elseif ($besprechung->status === 'aktiv') {
+                                        echo '<span class="badge bg-success text-white">' . $translator->t('meetings.status.active') . '</span>';
+                                    } elseif ($besprechung->status === 'beendet') {
+                                        echo '<span class="badge bg-dark text-white">' . $translator->t('meetings.status.finished') . '</span>';
+                                    }
+                                    ?>
+                                    <?php if ($besprechung->istVeröffentlicht) { ?>
+                                        <span class="badge bg-success text-white"> <?= $translator->t('meetings.published'); ?></span>
+                                    <?php } else { ?>
+                                        <span class="badge bg-danger text-white"> <?= $translator->t('meetings.unpublished'); ?></span>
+                                    <?php } ?>
+                                </div>
+                            </div>
 
-                        <div class="row g-2 mb-2">
-                            <div class="col-5">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-calendar">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12" />
-                                    <path d="M16 3v4" />
-                                    <path d="M8 3v4" />
-                                    <path d="M4 11h16" />
-                                    <path d="M11 15h1" />
-                                    <path d="M12 15v3" />
-                                </svg><strong> <?= $translator->t('meetings.date'); ?>:</strong>
+                            <div class="row g-2 mb-2">
+                                <div class="col-5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-calendar">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12" />
+                                        <path d="M16 3v4" />
+                                        <path d="M8 3v4" />
+                                        <path d="M4 11h16" />
+                                        <path d="M11 15h1" />
+                                        <path d="M12 15v3" />
+                                    </svg><strong> <?= $translator->t('meetings.date'); ?>:</strong>
+                                </div>
+                                <div class="col-7">
+                                    <?= $datum; ?>
+                                </div>
                             </div>
-                            <div class="col-7">
-                                <?= $datum; ?>
-                            </div>
-                        </div>
 
-                        <div class="row g-2 mb-2">
-                            <div class="col-5">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-clock">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
-                                    <path d="M12 7v5l3 3" />
-                                </svg><strong> <?= $translator->t('meetings.time'); ?>:</strong>
+                            <div class="row g-2 mb-2">
+                                <div class="col-5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-clock">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                                        <path d="M12 7v5l3 3" />
+                                    </svg><strong> <?= $translator->t('meetings.time'); ?>:</strong>
+                                </div>
+                                <div class="col-7">
+                                    <?= $zeiten; ?>
+                                </div>
                             </div>
-                            <div class="col-7">
-                                <?= $zeiten; ?>
-                            </div>
-                        </div>
 
-                        <div class="row g-2 mb-2">
-                            <div class="col-5">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-hourglass-empty">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1" />
-                                    <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1" />
-                                </svg><strong> <?= $translator->t('meetings.duration'); ?>:</strong>
+                            <div class="row g-2 mb-2">
+                                <div class="col-5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-hourglass-empty">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1" />
+                                        <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1" />
+                                    </svg><strong> <?= $translator->t('meetings.duration'); ?>:</strong>
+                                </div>
+                                <div class="col-7">
+                                    <?= $dauer; ?> <?= $translator->t('common.minutes'); ?>
+                                </div>
                             </div>
-                            <div class="col-7">
-                                <?= $dauer; ?> <?= $translator->t('common.minutes'); ?>
-                            </div>
-                        </div>
 
-                        <div class="row g-2 mb-2">
-                            <div class="col-5">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-map-pin">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
-                                    <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0" />
-                                </svg><strong> <?= $translator->t('meetings.location'); ?>:</strong>
+                            <div class="row g-2 mb-2">
+                                <div class="col-5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-map-pin">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                                        <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0" />
+                                    </svg><strong> <?= $translator->t('meetings.location'); ?>:</strong>
+                                </div>
+                                <div class="col-7">
+                                    <?= $besprechung->ort; ?>
+                                </div>
                             </div>
-                            <div class="col-7">
-                                <?= $besprechung->ort; ?>
-                            </div>
-                        </div>
 
-                        <div class="row g-2 mb-2">
-                            <div class="col-5">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-link">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path d="M9 15l6 -6" />
-                                    <path d="M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464" />
-                                    <path d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463" />
-                                </svg><strong> <?= $translator->t('meetings.link'); ?>:</strong>
-                            </div>
-                            <div class="col-7">
-                                <?php if ($besprechung->istVeröffentlicht) { ?>
-                                    <a href="<?= $config->get('general', 'url'); ?>api/getMeetingAsPublic.php?besprechung=<?= $besprechung->public_code; ?>" target="_blank"><?= $besprechung->public_code; ?></a>
+                            <div class="row g-2 mb-2">
+                                <div class="col-5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-link">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M9 15l6 -6" />
+                                        <path d="M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464" />
+                                        <path d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463" />
+                                    </svg><strong> <?= $translator->t('meetings.link'); ?>:</strong>
+                                </div>
+                                <div class="col-7">
+                                    <?php if ($besprechung->istVeröffentlicht) { ?>
+                                        <a href="<?= $config->get('general', 'url'); ?>api/getMeetingAsPublic.php?besprechung=<?= $besprechung->public_code; ?>" target="_blank"><?= $besprechung->public_code; ?></a>
 
-                                <?php } else { ?>
-                                    -
-                                <?php } ?>
+                                    <?php } else { ?>
+                                        -
+                                    <?php } ?>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="row g-2 mb-2">
-                            <div class="col-5">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-event">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" />
-                                    <path d="M16 3l0 4" />
-                                    <path d="M8 3l0 4" />
-                                    <path d="M4 11l16 0" />
-                                    <path d="M8 15h2v2h-2l0 -2" />
-                                </svg><strong> <?= $translator->t('meetings.createdAt'); ?>:</strong>
+                            <div class="row g-2 mb-2">
+                                <div class="col-5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-event">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" />
+                                        <path d="M16 3l0 4" />
+                                        <path d="M8 3l0 4" />
+                                        <path d="M4 11l16 0" />
+                                        <path d="M8 15h2v2h-2l0 -2" />
+                                    </svg><strong> <?= $translator->t('meetings.createdAt'); ?>:</strong>
+                                </div>
+                                <div class="col-7">
+                                    <?= $besprechung->createdAt; ?>
+                                </div>
                             </div>
-                            <div class="col-7">
-                                <?= $besprechung->createdAt; ?>
-                            </div>
-                        </div>
 
-                        <div class="row g-2 mb-2">
-                            <div class="col-5">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-screen">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path d="M19.03 17.818a3 3 0 0 0 1.97 -2.818v-8a3 3 0 0 0 -3 -3h-12a3 3 0 0 0 -3 3v8c0 1.317 .85 2.436 2.03 2.84" />
-                                    <path d="M10 14a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
-                                    <path d="M8 21a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2" />
-                                </svg><strong> <?= $translator->t('meetings.createdBy'); ?>:</strong>
+                            <div class="row g-2 mb-2">
+                                <div class="col-5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-screen">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M19.03 17.818a3 3 0 0 0 1.97 -2.818v-8a3 3 0 0 0 -3 -3h-12a3 3 0 0 0 -3 3v8c0 1.317 .85 2.436 2.03 2.84" />
+                                        <path d="M10 14a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                        <path d="M8 21a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2" />
+                                    </svg><strong> <?= $translator->t('meetings.createdBy'); ?>:</strong>
+                                </div>
+                                <div class="col-7">
+                                    <?= $userRepository->findByID($besprechung->erstellerUserId)->vorname . ' ' . $userRepository->findByID($besprechung->erstellerUserId)->nachname; ?>
+                                </div>
                             </div>
-                            <div class="col-7">
-                                <?= $userRepository->findByID($besprechung->erstellerUserId)->vorname . ' ' . $userRepository->findByID($besprechung->erstellerUserId)->nachname; ?>
-                            </div>
-                        </div>
 
-                        <div class="row g-2 mb-2">
-                            <div class="col-5">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-event">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                    <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" />
-                                    <path d="M16 3l0 4" />
-                                    <path d="M8 3l0 4" />
-                                    <path d="M4 11l16 0" />
-                                    <path d="M8 15h2v2h-2l0 -2" />
-                                </svg><strong> <?= $translator->t('meetings.updatedAt'); ?>:</strong>
-                            </div>
-                            <div class="col-7">
-                                <?= $besprechung->updatedAt; ?>
+                            <div class="row g-2 mb-2">
+                                <div class="col-5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-event">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" />
+                                        <path d="M16 3l0 4" />
+                                        <path d="M8 3l0 4" />
+                                        <path d="M4 11l16 0" />
+                                        <path d="M8 15h2v2h-2l0 -2" />
+                                    </svg><strong> <?= $translator->t('meetings.updatedAt'); ?>:</strong>
+                                </div>
+                                <div class="col-7">
+                                    <?= $besprechung->updatedAt; ?>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-            </div>
-
-            <div class="hr-text">
-                <a
-                    href="#meetingParticipants"
-                    data-bs-toggle="collapse"
-                    role="button"
-                    aria-expanded="false"
-                    aria-controls="meetingParticipants"
-                    class="collapse-toggle">
-                    <?= $translator->t('meetings.participants.root'); ?>
-                    <span class="chevron" aria-hidden="true">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-compact-down">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <path d="M4 11l8 3l8 -3" />
-                        </svg>
-                    </span>
-                </a>
-            </div>
-
-            <div class="collapse" id="meetingParticipants">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title"><?= $translator->t('meetings.participants.root'); ?></h3>
-                        <div class="card-actions">
-                            <button class="btn btn-outline-primary" onclick="addParticipant(<?= $besprechung->id; ?>)">
-                                <?= $translator->t('meetings.participants.add'); ?>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-2">
-
-                            </div>
-                            <div class="col-10 d-flex flex-wrap justify-content-lg-end gap-1">
-                                <div class="badge bg-secondary text-white"><?= $translator->t('meetings.participants.invited'); ?></div>
-                                <div class="badge bg-success text-white"><?= $translator->t('meetings.participants.present'); ?></div>
-                                <div class="badge bg-warning text-white"><?= $translator->t('meetings.participants.excused'); ?></div>
-                                <div class="badge bg-danger text-white"><?= $translator->t('meetings.participants.absent'); ?></div>
+                <div class="col-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title"><?= $translator->t('meetings.participants.root'); ?></h3>
+                            <div class="card-actions">
+                                <button class="btn btn-outline-primary" onclick="addParticipant(<?= $besprechung->id; ?>)">
+                                    <?= $translator->t('meetings.participants.add'); ?>
+                                </button>
                             </div>
                         </div>
-                        <div>
-                            <ul class="list-group list-group-flush">
-                                <?php foreach ($teilnehmer as $t) { ?>
-                                    <li class="list-group-item d-flex align-items-center gap-2 participant-item">
-                                        <div class="d-flex align-items-center gap-2 flex-wrap participant-content">
-                                            <span class="badge bg-<?= $t->istAnwesend ? 'success' : ($t->istEntschuldigt ? 'warning' : ($t->istAbwesend ? 'danger' : 'secondary')); ?> text-white"></span>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-2">
 
-                                            <?php
-                                            $funktion = null;
-
-                                            if ($t->funktion !== null) {
-                                                $organisationsFunktionRepository = $app->organisationsFunktionRepository();
-                                                $funktion = $organisationsFunktionRepository->findById((int)$t->funktion);
-                                            }
-                                            ?>
-
-                                            <div class="d-flex align-items-center gap-2 flex-wrap participant-details">
+                                </div>
+                                <div class="col-10 d-flex flex-wrap justify-content-lg-end gap-1">
+                                    <div class="badge bg-secondary text-white"><?= $translator->t('meetings.participants.invited'); ?></div>
+                                    <div class="badge bg-success text-white"><?= $translator->t('meetings.participants.present'); ?></div>
+                                    <div class="badge bg-warning text-white"><?= $translator->t('meetings.participants.excused'); ?></div>
+                                    <div class="badge bg-danger text-white"><?= $translator->t('meetings.participants.absent'); ?></div>
+                                </div>
+                            </div>
+                            <div>
+                                <ul class="list-group list-group-flush">
+                                    <?php foreach ($teilnehmer as $t) { ?>
+                                        <li class="list-group-item d-flex align-items-center gap-2 participant-item">
+                                            <div class="d-flex align-items-center gap-2 flex-wrap participant-content">
+                                                <span class="badge bg-<?= $t->istAnwesend ? 'success' : ($t->istEntschuldigt ? 'warning' : ($t->istAbwesend ? 'danger' : 'secondary')); ?> text-white"></span>
 
                                                 <?php
+                                                $funktion = null;
 
-                                                $chairmanIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-shield">
+                                                if ($t->funktion !== null) {
+                                                    $organisationsFunktionRepository = $app->organisationsFunktionRepository();
+                                                    $funktion = $organisationsFunktionRepository->findById((int)$t->funktion);
+                                                }
+                                                ?>
+
+                                                <div class="d-flex align-items-center gap-2 flex-wrap participant-details">
+
+                                                    <?php
+
+                                                    $chairmanIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-shield">
                                                                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                                                     <path d="M6 21v-2a4 4 0 0 1 4 -4h2" />
                                                                     <path d="M22 16c0 4 -2.5 6 -3.5 6s-3.5 -2 -3.5 -6c1 0 2.5 -.5 3.5 -1.5c1 1 2.5 1.5 3.5 1.5" />
                                                                     <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
                                                                 </svg>';
 
-                                                $secretaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-edit">
+                                                    $secretaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-edit">
                                                                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                                                     <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
                                                                     <path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" />
                                                                     <path d="M18.42 15.61a2.1 2.1 0 0 1 2.97 2.97l-3.39 3.42h-3v-3l3.42 -3.39" />
                                                                 </svg>';
 
-                                                $signIcon = '<svg xmlns="http://www.w3.org/2000/svg"
+                                                    $signIcon = '<svg xmlns="http://www.w3.org/2000/svg"
                                                                             width="18"
                                                                             height="18"
                                                                             viewBox="0 0 24 24"
@@ -484,115 +466,118 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                                                             <path d="M3 17c3.333 -3.333 5 -6 5 -8c0 -3 -1 -3 -2 -3s-2.032 1.085 -2 3c.034 2.048 1.658 4.877 2.5 6c1.5 2 2.5 2.5 3.5 1l2 -3c.333 2.667 1.333 4 3 4c.53 0 2.639 -2 3 -2c.517 0 1.517 .667 3 2" />
                                                                         </svg>';
 
-                                                ?>
+                                                    ?>
 
-                                                <span><?= htmlspecialchars($t->vorname . ' ' . $t->nachname, ENT_QUOTES, 'UTF-8'); ?></span>
-                                                <span class="d-flex gap-2">
-                                                    <?php if ((int) $t->istSitzungsleitung === 1) { ?>
-                                                        <span title="<?= htmlspecialchars($translator->t('meetings.participants.chairman'), ENT_QUOTES, 'UTF-8'); ?>"><?= $chairmanIcon; ?></span>
-                                                    <?php } ?>
-                                                    <?php if ((int) $t->istProtokollfuehrer === 1) { ?>
-                                                        <span title="<?= htmlspecialchars($translator->t('meetings.participants.secretary'), ENT_QUOTES, 'UTF-8'); ?>"><?= $secretaryIcon; ?></span>
-                                                    <?php } ?>
-                                                    <?php if ((int) $t->darfUnterschreiben === 1) { ?>
-                                                        <span title="<?= htmlspecialchars($translator->t('meetings.participants.authToSign'), ENT_QUOTES, 'UTF-8'); ?>"><?= $signIcon; ?></span>
-                                                    <?php } ?>
-                                                </span>
-
-                                                <?php if ($funktion !== null): ?>
-                                                    <span class="text-muted">
-                                                        <?= htmlspecialchars($funktion->bezeichnung, ENT_QUOTES, 'UTF-8'); ?>
+                                                    <span><?= htmlspecialchars($t->vorname . ' ' . $t->nachname, ENT_QUOTES, 'UTF-8'); ?></span>
+                                                    <span class="d-flex gap-2">
+                                                        <?php if ((int) $t->istSitzungsleitung === 1) { ?>
+                                                            <span title="<?= htmlspecialchars($translator->t('meetings.participants.chairman'), ENT_QUOTES, 'UTF-8'); ?>" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= htmlspecialchars($translator->t('meetings.participants.chairman'), ENT_QUOTES, 'UTF-8'); ?>"><?= $chairmanIcon; ?></span>
+                                                        <?php } ?>
+                                                        <?php if ((int) $t->istProtokollfuehrer === 1) { ?>
+                                                            <span title="<?= htmlspecialchars($translator->t('meetings.participants.secretary'), ENT_QUOTES, 'UTF-8'); ?>" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= htmlspecialchars($translator->t('meetings.participants.secretary'), ENT_QUOTES, 'UTF-8'); ?>"><?= $secretaryIcon; ?></span>
+                                                        <?php } ?>
+                                                        <?php if ((int) $t->darfUnterschreiben === 1) { ?>
+                                                            <span title="<?= htmlspecialchars($translator->t('meetings.participants.authToSign'), ENT_QUOTES, 'UTF-8'); ?>" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= htmlspecialchars($translator->t('meetings.participants.authToSign'), ENT_QUOTES, 'UTF-8'); ?>"><?= $signIcon; ?></span>
+                                                        <?php } ?>
                                                     </span>
-                                                <?php endif; ?>
 
-                                            </div>
+                                                    <?php if ($funktion !== null): ?>
+                                                        <span class="text-muted">
+                                                            <?= htmlspecialchars($funktion->bezeichnung, ENT_QUOTES, 'UTF-8'); ?>
+                                                        </span>
+                                                    <?php endif; ?>
 
-                                            <div class="btn-list ms-auto gap-1 participant-actions">
-                                                <?php
-                                                $canSign = $funktion === null || !$funktion->darfUnterschreiben;
-                                                $isAbsentDisable = ((int) $t->istAbwesend === 1) ? 'disabled' : '';
-                                                ?>
+                                                </div>
 
-                                                <a href="./actions.php?action=meetingChairman&meetingId=<?= $besprechung->id; ?>&participantId=<?= $t->id; ?>" class="btn btn-action <?= $isAbsentDisable; ?>" title="<?= $translator->t('meetings.participants.chairman'); ?>">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-shield">
-                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                                        <path d="M6 21v-2a4 4 0 0 1 4 -4h2" />
-                                                        <path d="M22 16c0 4 -2.5 6 -3.5 6s-3.5 -2 -3.5 -6c1 0 2.5 -.5 3.5 -1.5c1 1 2.5 1.5 3.5 1.5" />
-                                                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
-                                                    </svg>
-                                                </a>
-                                                <a href="./actions.php?action=meetingSecretary&meetingId=<?= $besprechung->id; ?>&participantId=<?= $t->id; ?>" class="btn btn-action <?= $isAbsentDisable; ?>" title="<?= $translator->t('meetings.participants.secretary'); ?>">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-edit">
-                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
-                                                        <path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" />
-                                                        <path d="M18.42 15.61a2.1 2.1 0 0 1 2.97 2.97l-3.39 3.42h-3v-3l3.42 -3.39" />
-                                                    </svg>
-                                                </a>
-                                                <a href="./actions.php?action=<?= ((int) $t->darfUnterschreiben === 1) ? 'meetingUnsign' : 'meetingSign'; ?>&meetingId=<?= $besprechung->id; ?>&participantId=<?= $t->id; ?>" class="btn btn-action <?= $isAbsentDisable; ?>" title="<?= ((int) $t->darfUnterschreiben === 1) ? $translator->t('meetings.participants.notAuthToSign') : $translator->t('meetings.participants.AuthToSign'); ?>">
-                                                    <?php if ($t->darfUnterschreiben === 1) { ?>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-signature-off">
+                                                <div class="btn-list ms-auto gap-1 participant-actions">
+                                                    <?php
+                                                    $canSign = $funktion === null || !$funktion->darfUnterschreiben;
+                                                    $isAbsentDisable = ((int) $t->istAbwesend === 1) ? 'disabled' : '';
+                                                    ?>
+
+                                                    <a href="./actions.php?action=meetingChairman&meetingId=<?= $besprechung->id; ?>&participantId=<?= $t->id; ?>" class="btn btn-action <?= $isAbsentDisable; ?>" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= htmlspecialchars($translator->t('meetings.participants.chairman'), ENT_QUOTES, 'UTF-8'); ?>">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                            class="icon icon-tabler icons-tabler-outline icon-tabler-user-shield">
                                                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                                            <path d="M3 17c3.333 -3.333 5 -6 5 -8c0 -.394 -.017 -.735 -.05 -1.033m-1.95 -1.967c-1 0 -2.032 1.085 -2 3c.034 2.048 1.658 4.877 2.5 6c1.5 2 2.5 2.5 3.5 1l2 -3c.333 2.667 1.333 4 3 4c.219 0 .708 -.341 1.231 -.742m3.769 -.258c.303 .245 .64 .677 1 1" />
-                                                            <path d="M3 3l18 18" />
+                                                            <path d="M6 21v-2a4 4 0 0 1 4 -4h2" />
+                                                            <path d="M22 16c0 4 -2.5 6 -3.5 6s-3.5 -2 -3.5 -6c1 0 2.5 -.5 3.5 -1.5c1 1 2.5 1.5 3.5 1.5" />
+                                                            <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
                                                         </svg>
-                                                    <?php } else { ?>
-                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                            width="18"
-                                                            height="18"
-                                                            viewBox="0 0 24 24"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            stroke-width="2"
-                                                            stroke-linecap="round"
-                                                            stroke-linejoin="round"
-                                                            class="icon icon-tabler icons-tabler-outline icon-tabler-signature text-muted">
+                                                    </a>
+                                                    <a href="./actions.php?action=meetingSecretary&meetingId=<?= $besprechung->id; ?>&participantId=<?= $t->id; ?>" class="btn btn-action <?= $isAbsentDisable; ?>" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= htmlspecialchars($translator->t('meetings.participants.secretary'), ENT_QUOTES, 'UTF-8'); ?>">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-edit">
                                                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                                            <path d="M3 17c3.333 -3.333 5 -6 5 -8c0 -3 -1 -3 -2 -3s-2.032 1.085 -2 3c.034 2.048 1.658 4.877 2.5 6c1.5 2 2.5 2.5 3.5 1l2 -3c.333 2.667 1.333 4 3 4c.53 0 2.639 -2 3 -2c.517 0 1.517 .667 3 2" />
+                                                            <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                                            <path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" />
+                                                            <path d="M18.42 15.61a2.1 2.1 0 0 1 2.97 2.97l-3.39 3.42h-3v-3l3.42 -3.39" />
                                                         </svg>
-                                                    <?php } ?>
-                                                </a>
-                                                <div class="vr"></div>
-                                                <a href="./api/getMeetingSingleInvitationAsPDF.php?meetingId=<?= $besprechung->id ?>&participantId=<?= $t->id; ?>" class="btn btn-action" target="_blank" title="<?= $translator->t('meetings.invitationToPDF'); ?>">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-due">
-                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                                        <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" />
-                                                        <path d="M16 3v4" />
-                                                        <path d="M8 3v4" />
-                                                        <path d="M4 11h16" />
-                                                        <path d="M11 16a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
-                                                    </svg>
-                                                </a>
-                                                <div class="vr"></div>
-                                                <button type="button" class="btn btn-action" title="<?= $translator->t('meetings.participants.present'); ?>" onclick="setParticipantStatus(<?= $besprechung->id; ?>, <?= $t->id; ?>, 'present')"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-check">
-                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
-                                                        <path d="M6 21v-2a4 4 0 0 1 4 -4h4" />
-                                                        <path d="M15 19l2 2l4 -4" />
-                                                    </svg>
-                                                </button>
-                                                <button type="button" class="btn btn-action" title="<?= $translator->t('meetings.participants.excused'); ?>" onclick="setParticipantStatus(<?= $besprechung->id; ?>, <?= $t->id; ?>, 'excused')"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-cancel">
-                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
-                                                        <path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" />
-                                                        <path d="M16 19a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
-                                                        <path d="M17 21l4 -4" />
-                                                    </svg></button>
-                                                <button type="button" class="btn btn-action" title="<?= $translator->t('meetings.participants.absent'); ?>" onclick="setParticipantStatus(<?= $besprechung->id; ?>, <?= $t->id; ?>, 'absent')"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-down">
-                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
-                                                        <path d="M6 21v-2a4 4 0 0 1 4 -4h4c.342 0 .674 .043 .99 .124" />
-                                                        <path d="M19 16v6" />
-                                                        <path d="M22 19l-3 3l-3 -3" />
-                                                    </svg></button>
+                                                    </a>
+                                                    <a href="./actions.php?action=<?= ((int) $t->darfUnterschreiben === 1) ? 'meetingUnsign' : 'meetingSign'; ?>&meetingId=<?= $besprechung->id; ?>&participantId=<?= $t->id; ?>" class="btn btn-action <?= $isAbsentDisable; ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="<?= htmlspecialchars(((int) $t->darfUnterschreiben === 1) ? $translator->t('meetings.participants.notAuthToSign') : $translator->t('meetings.participants.AuthToSign'), ENT_QUOTES, 'UTF-8'); ?>">
+                                                        <?php if ($t->darfUnterschreiben === 1) { ?>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-signature-off">
+                                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                                <path d="M3 17c3.333 -3.333 5 -6 5 -8c0 -.394 -.017 -.735 -.05 -1.033m-1.95 -1.967c-1 0 -2.032 1.085 -2 3c.034 2.048 1.658 4.877 2.5 6c1.5 2 2.5 2.5 3.5 1l2 -3c.333 2.667 1.333 4 3 4c.219 0 .708 -.341 1.231 -.742m3.769 -.258c.303 .245 .64 .677 1 1" />
+                                                                <path d="M3 3l18 18" />
+                                                            </svg>
+                                                        <?php } else { ?>
+                                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                                width="18"
+                                                                height="18"
+                                                                viewBox="0 0 24 24"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                stroke-width="2"
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                class="icon icon-tabler icons-tabler-outline icon-tabler-signature text-muted">
+                                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                                <path d="M3 17c3.333 -3.333 5 -6 5 -8c0 -3 -1 -3 -2 -3s-2.032 1.085 -2 3c.034 2.048 1.658 4.877 2.5 6c1.5 2 2.5 2.5 3.5 1l2 -3c.333 2.667 1.333 4 3 4c.53 0 2.639 -2 3 -2c.517 0 1.517 .667 3 2" />
+                                                            </svg>
+                                                        <?php } ?>
+                                                    </a>
+                                                    <div class="vr"></div>
+                                                    <a href="./api/getMeetingSingleInvitationAsPDF.php?meetingId=<?= $besprechung->id ?>&participantId=<?= $t->id; ?>" class="btn btn-action" target="_blank" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= $translator->t('meetings.invitationToPDF'); ?>">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-due">
+                                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                            <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" />
+                                                            <path d="M16 3v4" />
+                                                            <path d="M8 3v4" />
+                                                            <path d="M4 11h16" />
+                                                            <path d="M11 16a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                                                        </svg>
+                                                    </a>
+                                                    <div class="vr"></div>
+                                                    <button type="button" class="btn btn-action" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= $translator->t('meetings.participants.present'); ?>" onclick="setParticipantStatus(<?= $besprechung->id; ?>, <?= $t->id; ?>, 'present')"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-check">
+                                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                            <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                                            <path d="M6 21v-2a4 4 0 0 1 4 -4h4" />
+                                                            <path d="M15 19l2 2l4 -4" />
+                                                        </svg>
+                                                    </button>
+                                                    <button type="button" class="btn btn-action" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= $translator->t('meetings.participants.excused'); ?>" onclick="setParticipantStatus(<?= $besprechung->id; ?>, <?= $t->id; ?>, 'excused')"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-cancel">
+                                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                            <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                                            <path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" />
+                                                            <path d="M16 19a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                                                            <path d="M17 21l4 -4" />
+                                                        </svg></button>
+                                                    <button type="button" class="btn btn-action" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= $translator->t('meetings.participants.absent'); ?>" onclick="setParticipantStatus(<?= $besprechung->id; ?>, <?= $t->id; ?>, 'absent')"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-down">
+                                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                            <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                                            <path d="M6 21v-2a4 4 0 0 1 4 -4h4c.342 0 .674 .043 .99 .124" />
+                                                            <path d="M19 16v6" />
+                                                            <path d="M22 19l-3 3l-3 -3" />
+                                                        </svg></button>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </li>
-                                <?php } ?>
-                            </ul>
+                                        </li>
+                                    <?php } ?>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
+
             </div>
 
             <div class="hr-text"><?= $translator->translate('meetings.topics') ?></div>
@@ -1184,10 +1169,7 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
 
 </body>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<!--<script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>-->
-<!-- Tabler wurde auskommentiert, da es zu Problemen mit der Bootstrap-Version 5.3.3 kommt. 
-Die Collapse-Funktion greift nicht mehr korrekt, wenn Tabler eingebunden ist.
- -->
+<script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/hugerte@1.0.10/hugerte.min.js"></script>
 

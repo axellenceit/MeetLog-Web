@@ -222,12 +222,16 @@ $tasks = array_values(array_filter(
                             </div>
                             <div class="modal-body">
                                 <div class="row g-3">
-                                    <div class="col-12 col-md-6"><label class="form-label" for="task-meeting-create">Besprechung</label><select class="form-select" name="besprechung_id" id="task-meeting-create" required>
-                                            <option value="">Bitte wählen</option><?php foreach ($meetings as $meeting): ?><option value="<?= (int) $meeting->id ?>"><?= htmlspecialchars($meeting->titel, ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?>
-                                        </select></div>
-                                    <div class="col-12 col-md-6"><label class="form-label" for="task-user-create">Verantwortlich</label><select class="form-select" name="verantwortlicher_user_id" id="task-user-create">
-                                            <option value="">Nicht zugewiesen</option><?php foreach ($users as $user): ?><option value="<?= (int) $user->id ?>"><?= htmlspecialchars(trim($user->vorname . ' ' . $user->nachname), ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?>
-                                        </select></div>
+                                    <div class="col-12 col-md-6"><label class="form-label" for="task-meeting-create">Besprechung</label>
+                                        <input type="hidden" name="besprechung_id" id="task-meeting-id-create">
+                                        <input class="form-control" id="task-meeting-create" autocomplete="off">
+                                    </div>
+                                    <div class="col-12 col-md-6"><label class="form-label" for="task-user-create">Verantwortlich</label>
+                                        <select class="form-select" name="verantwortlicher_user_id" id="task-user-create">
+                                            <option value="">Nicht zugewiesen</option>
+                                            <?php foreach ($users as $user): ?><option value="<?= (int) $user->id ?>"><?= htmlspecialchars(trim($user->vorname . ' ' . $user->nachname), ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?>
+                                        </select>
+                                    </div>
                                     <div class="col-12"><label class="form-label" for="task-title-create">Titel</label><input class="form-control" type="text" name="titel" id="task-title-create" maxlength="255" required></div>
                                     <div class="col-12"><label class="form-label" for="task-description-create">Beschreibung</label><textarea class="form-control" name="beschreibung" id="task-description-create" rows="4"></textarea></div>
                                     <div class="col-12 col-md-6"><label class="form-label" for="task-deadline-create">Fälligkeitsdatum</label><input class="form-control" type="date" name="deadline" id="task-deadline-create"></div>
@@ -250,7 +254,10 @@ $tasks = array_values(array_filter(
                                 <input type="hidden" name="task_id" id="task-id-edit">
                                 <div class="row g-3">
                                     <div class="col-12 col-md-6"><label class="form-label" for="task-meeting-edit">Besprechung</label><select class="form-select" name="besprechung_id" id="task-meeting-edit" required>
-                                            <option value="">Bitte wählen</option><?php foreach ($meetings as $meeting): ?><option value="<?= (int) $meeting->id ?>"><?= htmlspecialchars($meeting->titel, ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?>
+                                            <option value="">Bitte wählen</option>
+                                            <?php foreach ($meetings as $meeting): ?>
+                                                <option value="<?= (int) $meeting->id ?>"><?= htmlspecialchars($meeting->titel, ENT_QUOTES, 'UTF-8') ?></option>
+                                            <?php endforeach; ?>
                                         </select></div>
                                     <div class="col-12 col-md-6"><label class="form-label" for="task-user-edit">Verantwortlich</label><select class="form-select" name="verantwortlicher_user_id" id="task-user-edit">
                                             <option value="">Nicht zugewiesen</option><?php foreach ($users as $user): ?><option value="<?= (int) $user->id ?>"><?= htmlspecialchars(trim($user->vorname . ' ' . $user->nachname), ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?>
@@ -293,6 +300,30 @@ $tasks = array_values(array_filter(
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const meetingInput = document.getElementById('task-meeting-create');
+            const meetingIdInput = document.getElementById('task-meeting-id-create');
+            const meetings = <?= json_encode(array_map(static fn($meeting): array => ['id' => $meeting->id, 'title' => $meeting->titel], $meetings), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+
+            if (meetingInput && meetingIdInput) {
+                meetingInput.addEventListener('input', function() {
+                    const typedValue = this.value;
+                    meetingIdInput.value = '';
+
+                    const matchingMeeting = meetings.find(function(meeting) {
+                        return meeting.title.toLocaleLowerCase().startsWith(typedValue.toLocaleLowerCase());
+                    });
+
+                    if (typedValue !== '' && matchingMeeting) {
+                        meetingIdInput.value = matchingMeeting.id;
+
+                        if (matchingMeeting.title !== typedValue) {
+                            this.value = matchingMeeting.title;
+                            this.setSelectionRange(typedValue.length, matchingMeeting.title.length);
+                        }
+                    }
+                });
+            }
+
             const editModal = document.getElementById('modal-task-edit');
             const deleteModal = document.getElementById('modal-task-delete');
 
