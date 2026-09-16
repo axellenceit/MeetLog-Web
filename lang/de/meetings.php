@@ -73,6 +73,8 @@ return [
             'body' => 'im Anhang finden Sie die Einladung zur Besprechung "%s".',
             'closing' => 'Mit freundlichen Grüßen',
         ],
+        "blanklist" => 'Leere Teilnehmerliste',
+        'numberOfParticipants' => 'Anzahl der Teilnehmer',
     ],
     'add_participant' => 'Teilnehmer hinzufügen',
     'voting' => [

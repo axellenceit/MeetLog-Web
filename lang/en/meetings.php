@@ -70,6 +70,8 @@ return [
             'body' => 'please find attached the invitation to the meeting "%s".',
             'closing' => 'Kind regards',
         ],
+        "blanklist" => 'Blank participant list',
+        'numberOfParticipants' => 'Number of participants',
     ],
     'add_participant' => 'Add participant',
     'voting' => [

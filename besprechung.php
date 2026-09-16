@@ -401,6 +401,9 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                         <div class="card-header">
                             <h3 class="card-title"><?= $translator->t('meetings.participants.root'); ?></h3>
                             <div class="card-actions">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#blankParticipantList">
+                                    <?= $translator->t('meetings.participants.blanklist'); ?>
+                                </button>
                                 <button class="btn btn-outline-primary" onclick="addParticipant(<?= $besprechung->id; ?>)">
                                     <?= $translator->t('meetings.participants.add'); ?>
                                 </button>
@@ -688,7 +691,6 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                 </div>
                 <div class="modal-body">
                     <input type="hidden" name="meetingId" id="meetingId" value="<?= $besprechung->id; ?>" />
-
                     <input type="checkbox" class="form-check-input mb-2" name="includeParticipants" id="includeParticipants" value="1" />
                     <label for="includeParticipants"><?= $translator->t('meetings.includeParticipants'); ?></label>
                 </div>
@@ -700,6 +702,29 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
         </div>
     </form>
 
+    <form action="./api/getBlankParticipantList.php" method="get" target="_blank" class="modal modal-blur fade" id="blankParticipantList" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?= $translator->t('meetings.participants.blanklist'); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="meetingId" id="meetingId" value="<?= $besprechung->id; ?>" />
+
+                    <div class="input-group mb-2">
+                        <input type="number" class="form-control" name="numberOfParticipants" style="text-align: center;" id="numberOfParticipants" min="1" placeholder="<?= $translator->t('meetings.participants.numberOfParticipants'); ?>" value="12" required />
+                        <span class="input-group-text"><?= $translator->t('meetings.participants.root'); ?></span>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"> <?= $translator->t('common.cancel'); ?> </button>
+                    <button type="submit" class="btn btn-primary btn-5 ms-auto"><?= $translator->t('meetings.participants.blanklist'); ?></button>
+                </div>
+            </div>
+        </div>
+    </form>
 
     <?php if ($authToManageMeetings) { ?>
 

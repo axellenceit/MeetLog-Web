@@ -229,7 +229,7 @@ $pdf->SetPrintHeader(true);
 $pdf->SetPrintFooter(true);
 
 // Wichtig: genug Platz für Header und Footer reservieren
-$pdf->SetMargins(25, 45, 20);
+$pdf->SetMargins(25, 30, 20);
 $pdf->SetHeaderMargin(12);
 $pdf->SetFooterMargin(12);
 $pdf->SetAutoPageBreak(true, 28);
@@ -260,21 +260,6 @@ $pdf->SetFont('helvetica', 'B', 10);
 $pdf->Cell(35, 5, 'Sitzungsort:', 0, 0, 'L');
 $pdf->SetFont('helvetica', '', 10);
 $pdf->Cell(0, 5, $besprechung->ort ?? 'N/A', 0, 1, 'L');
-
-// Anwesende
-/*$anwesende = array_filter($teilnehmer, fn($t) => $t->istAnwesend);
-$pdf->SetFont('helvetica', 'B', 10);
-$pdf->Cell(35, 5, 'Anwesende:', 0, 0, 'L');
-$pdf->SetFont('helvetica', '', 10);
-if (!empty($anwesende)) {
-    $anwesendeText = implode(', ', array_map(
-        fn($t) => trim(($t->vorname ?? '') . ' ' . ($t->nachname ?? '')),
-        $anwesende
-    ));
-    $pdf->MultiCell(0, 5, $anwesendeText, 0, 'L');
-} else {
-    $pdf->Cell(0, 5, 'Keine Daten erfasst', 0, 1, 'L');
-}*/
 
 // Vorsitz
 $vorsitz = array_filter($teilnehmer, fn($t) => $t->istSitzungsleitung === true);
