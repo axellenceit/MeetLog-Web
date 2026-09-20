@@ -202,7 +202,12 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
                                                                 </span>
                                                             </div>
                                                             <div class="col text-truncate">
-                                                                <?= $task->titel; ?>
+                                                                <a href="#" class="task-title-link" data-bs-toggle="modal" data-bs-target="#modal-task-view"
+                                                                    data-task-id="<?= $task->id ?>"
+                                                                    data-task-title="<?= htmlspecialchars($task->titel, ENT_QUOTES, 'UTF-8') ?>"
+                                                                    data-task-description="<?= htmlspecialchars($task->beschreibung ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                                                    data-task-deadline="<?= htmlspecialchars($task->deadline ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                                                    data-task-completed="<?= $task->istErledigt ? '1' : '0' ?>"><?= $task->titel; ?></a>
                                                                 <div class="d-block text-secondary text-truncate mt-n1">
                                                                     <?= $task->beschreibung ?>
                                                                 </div>
@@ -225,7 +230,46 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
 
             </div>
 
+            <div class="modal modal-blur fade" id="modal-task-view" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><?= $translator->t('tasks.edit'); ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label" for="task-title-view"><?= $translator->t('tasks.title'); ?></label>
+                                    <input class="form-control" type="text" id="task-title-view" readonly>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="task-description-view"><?= $translator->t('tasks.description'); ?></label>
+                                    <textarea class="form-control" id="task-description-view" rows="4" readonly></textarea>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="task-deadline-view"><?= $translator->t('tasks.dueDate'); ?></label>
+                                    <input class="form-control" type="date" id="task-deadline-view" readonly>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="task-completed-view"><?= $translator->t('tasks.status'); ?></label>
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" id="task-completed-view" data-task-id="">
+                                        <label class="form-check-label" for="task-completed-view"><?= $translator->t('tasks.status'); ?></label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn me-auto" data-bs-dismiss="modal"><?= $translator->t('common.cancel'); ?></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <?php include_once 'footer.php'; ?>
+
+
 
 </body>
 <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
@@ -291,6 +335,51 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
                         this.checked = !this.checked; // Revert checkbox state
                     } else {
                         // reload the page to reflect the changes
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    alert('Fehler beim Aktualisieren des Aufgabenstatus.');
+                    this.checked = !this.checked; // Revert checkbox state
+                });
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const viewModal = document.getElementById('modal-task-view');
+        if (!viewModal) return;
+
+        const titleInput = document.getElementById('task-title-view');
+        const descriptionInput = document.getElementById('task-description-view');
+        const deadlineInput = document.getElementById('task-deadline-view');
+        const completedCheckbox = document.getElementById('task-completed-view');
+
+        viewModal.addEventListener('show.bs.modal', function(event) {
+            const link = event.relatedTarget;
+            if (!link) return;
+
+            titleInput.value = link.getAttribute('data-task-title') || '';
+            descriptionInput.value = link.getAttribute('data-task-description') || '';
+            deadlineInput.value = link.getAttribute('data-task-deadline') || '';
+            completedCheckbox.checked = link.getAttribute('data-task-completed') === '1';
+            completedCheckbox.dataset.taskId = link.getAttribute('data-task-id') || '';
+        });
+
+        completedCheckbox.addEventListener('change', function() {
+            const taskId = this.dataset.taskId;
+            const isChecked = this.checked ? 1 : 0;
+
+            fetch(`actions.php?action=update_task_status&task_id=${taskId}&ist_erledigt=${isChecked}`, {
+                    method: 'POST',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        alert('Fehler beim Aktualisieren des Aufgabenstatus.');
+                        this.checked = !this.checked; // Revert checkbox state
+                    } else {
                         location.reload();
                     }
                 })
