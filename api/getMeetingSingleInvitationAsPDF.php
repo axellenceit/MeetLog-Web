@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/../src/init.php';
 
-use Src\Besprechung\InvitationPdfBuilder;
+use Src\Meeting\InvitationPdfBuilder;
 
 if (!$auth->isLoggedIn()) {
     $redirect->to('../login.php');
@@ -12,9 +12,9 @@ if (!isset($_GET['meetingId'])) {
     $redirect->back();
 }
 
-$besprechung = $besprechungRepository->findById((int)($_GET['meetingId']));
+$meeting = $meetingRepository->findById((int)($_GET['meetingId']));
 
-if (!$besprechung || !$besprechung->istAktiviert) {
+if (!$meeting || !$meeting->isActive) {
     $flash->set('errorMsg', 'Diese Besprechung existiert nicht oder wurde gelöscht');
     $flash->set('errorColor', 'red');
     $flash->set('errorCode', '404');
@@ -22,15 +22,15 @@ if (!$besprechung || !$besprechung->istAktiviert) {
 }
 
 $participantId = (int)($_GET['participantId'] ?? 0);
-$teilnehmer = $besprechungsteilnehmerRepository->findById($participantId);
+$participant = $meetingParticipantRepository->findById($participantId);
 
-if (!$teilnehmer || $teilnehmer->besprechung !== $besprechung->id) {
+if (!$participant || $participant->meeting !== $meeting->id) {
     $flash->set('errorMsg', 'Teilnehmer nicht gefunden oder gehört nicht zu dieser Besprechung');
     $flash->set('errorColor', 'red');
     $flash->set('errorCode', '404');
     $redirect->to('../error.php');
 }
 
-[$pdf, $filename] = InvitationPdfBuilder::build($app, $besprechung, $teilnehmer);
+[$pdf, $filename] = InvitationPdfBuilder::build($app, $meeting, $participant);
 
 $pdf->Output($filename, 'I');

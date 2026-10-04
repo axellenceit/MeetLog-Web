@@ -58,7 +58,7 @@ return [
         'yes' => 'Ja',
         'no' => 'Nein',
         'authToSign' => 'Darf unterschreiben',
-        'authToManageOrganisation' => 'Darf Organisation verwalten',
+        'authToManageOrganization' => 'Darf Organisation verwalten',
         'authToManageMeetings' => 'Darf Besprechungen verwalten',
     ],
 ];

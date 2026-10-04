@@ -14,16 +14,16 @@ if (!$auth->isLoggedIn()) {
     exit;
 }
 
-$besprechungen = $besprechungRepository->findAll();
+$meetings = $meetingRepository->findAll();
 
-$events = array_map(function ($besprechung) {
+$events = array_map(function ($meeting) {
     return [
-        'id' => $besprechung->id,
-        'title' => $besprechung->titel,
-        'start' => date('Y-m-d\TH:i:s', strtotime($besprechung->datum . ' ' . $besprechung->beginn)),
-        'end' => date('Y-m-d\TH:i:s', strtotime($besprechung->datum . ' ' . $besprechung->ende)),
+        'id' => $meeting->id,
+        'title' => $meeting->title,
+        'start' => date('Y-m-d\TH:i:s', strtotime($meeting->date . ' ' . $meeting->startTime)),
+        'end' => date('Y-m-d\TH:i:s', strtotime($meeting->date . ' ' . $meeting->endTime)),
         'color' => '#007bff', // Standardfarbe für alle Besprechungen
     ];
-}, $besprechungen);
+}, $meetings);
 
 echo json_encode($events);

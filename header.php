@@ -11,19 +11,19 @@ $languages = $languageRepository->findActiveForSelector();
 $user = $userRepository->findById($session->get('id'));
 
 $fullName = trim(
-    (string)($session->get('Vorname') ?? '') . ' ' . (string)($session->get('Nachname') ?? '')
+    (string)($session->get('FirstName') ?? '') . ' ' . (string)($session->get('LastName') ?? '')
 );
 
 $avatarStyle = '';
-if (!empty($user->foto)) {
-    $avatarStyle = 'background-image: url(' . htmlspecialchars((string)$user->foto, ENT_QUOTES, 'UTF-8') . ');';
+if (!empty($user->photo)) {
+    $avatarStyle = 'background-image: url(' . htmlspecialchars((string)$user->photo, ENT_QUOTES, 'UTF-8') . ');';
 }
 
 $logRepository->logRotation((int)$config->get('general', 'logRotation'));
 
-$authToSign = $user->istAdmin || $acl->isPermitted($user->id, (int)$session->get('Organisation'), Permission::SIGN);
-$authToManageOrganisation = $user->istAdmin || $acl->isPermitted($user->id, (int)$session->get('Organisation'), Permission::MANAGE_ORGANISATION);
-$authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$session->get('Organisation'), Permission::MANAGE_MEETINGS);
+$authToSign = $user->isAdmin || $acl->isPermitted($user->id, (int)$session->get('Organization'), Permission::SIGN);
+$authToManageOrganization = $user->isAdmin || $acl->isPermitted($user->id, (int)$session->get('Organization'), Permission::MANAGE_ORGANIZATION);
+$authToManageMeetings = $user->isAdmin || $acl->isPermitted($user->id, (int)$session->get('Organization'), Permission::MANAGE_MEETINGS);
 
 function isActive(array $files, string $currentURL): string
 {
@@ -60,8 +60,8 @@ function isActive(array $files, string $currentURL): string
                         </a>
                     </li>
 
-                    <li class="nav-item <?= isActive(['besprechungen.php', 'besprechung.php'], $currentURL); ?>">
-                        <a class="nav-link" href="./besprechungen.php">
+                    <li class="nav-item <?= isActive(['meetings.php', 'meeting.php'], $currentURL); ?>">
+                        <a class="nav-link" href="./meetings.php">
                             <span class="nav-link-icon d-lg-inline-block">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-stats"
                                     width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -96,9 +96,9 @@ function isActive(array $files, string $currentURL): string
                         </a>
                     </li>
 
-                    <?php if ($authToManageOrganisation): ?>
-                        <li class="nav-item <?= isActive(['organisation.php', 'organisation.mitglieder.php', 'organisation.funktionen.php'], $currentURL); ?>">
-                            <a class="nav-link" href="./organisation.php">
+                    <?php if ($authToManageOrganization): ?>
+                        <li class="nav-item <?= isActive(['organization.php', 'organization.mitglieder.php', 'organization.functions.php'], $currentURL); ?>">
+                            <a class="nav-link" href="./organization.php">
                                 <span class="nav-link-icon d-lg-inline-block">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-sitemap"
                                         width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -131,7 +131,7 @@ function isActive(array $files, string $currentURL): string
                         </li>
                     <?php endif; ?>
 
-                    <?php if ($user->istAdmin): ?>
+                    <?php if ($user->isAdmin): ?>
                         <li class="nav-item <?= isActive(['einstellungen.php'], $currentURL); ?>">
                             <a class="nav-link" href="einstellungen.php"
                                 aria-controls="offcanvasSettings">
@@ -189,7 +189,7 @@ function isActive(array $files, string $currentURL): string
                             aria-expanded="false"
                             aria-label="Benutzermenü öffnen">
                             <span class="avatar avatar-sm me-2" style="<?= $avatarStyle; ?>">
-                                <?= empty($user->foto) ? htmlspecialchars((string)$user->avatar, ENT_QUOTES, 'UTF-8') : ''; ?>
+                                <?= empty($user->photo) ? htmlspecialchars((string)$user->avatar, ENT_QUOTES, 'UTF-8') : ''; ?>
                             </span>
                             <span class="d-block text-start">
                                 <?= htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8'); ?>

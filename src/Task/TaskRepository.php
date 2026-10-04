@@ -16,10 +16,10 @@ final class TaskRepository
         return $row ? Task::fromArray($row) : null;
     }
 
-    public function findByBesprechungId(int $besprechungId): array
+    public function findByMeetingId(int $meetingId): array
     {
-        $sql = "SELECT * FROM tblTask WHERE BesprechungID = ? ORDER BY Deadline ASC";
-        $rows = $this->db->query($sql, [$besprechungId]);
+        $sql = "SELECT * FROM tblTask WHERE MeetingID = ? ORDER BY Deadline ASC";
+        $rows = $this->db->query($sql, [$meetingId]);
 
         return array_map(
             static fn(array $row): Task => Task::fromArray($row),
@@ -27,25 +27,25 @@ final class TaskRepository
         );
     }
 
-    public function findAllWithFilter(?string $titel = null, ?int $userId = null, ?bool $istErledigt = null): array
+    public function findAllWithFilter(?string $title = null, ?int $userId = null, ?bool $isDone = null): array
     {
         $sql = "SELECT * FROM tblTask WHERE 1=1";
         $params = [];
 
-        if ($titel !== null) {
-            $sql .= " AND Titel LIKE ?";
-            $params[] = '%' . $titel . '%';
+        if ($title !== null) {
+            $sql .= " AND Title LIKE ?";
+            $params[] = '%' . $title . '%';
         }
 
         if ($userId !== null) {
-            $sql .= " AND (ErstellerUserID = ? OR VerantwortlicherUserID = ?)";
+            $sql .= " AND (CreatorUserID = ? OR AssigneeUserID = ?)";
             $params[] = $userId;
             $params[] = $userId;
         }
 
-        if ($istErledigt !== null) {
-            $sql .= " AND istErledigt = ?";
-            $params[] = (int)$istErledigt;
+        if ($isDone !== null) {
+            $sql .= " AND IsDone = ?";
+            $params[] = (int)$isDone;
         }
 
         $sql .= " ORDER BY Deadline ASC";
@@ -60,11 +60,11 @@ final class TaskRepository
 
     public function findAllByUserId(int $userId, bool $onlyOpen = true): array
     {
-        $sql = "SELECT * FROM tblTask WHERE VerantwortlicherUserID = ?";
+        $sql = "SELECT * FROM tblTask WHERE AssigneeUserID = ?";
         $params = [$userId];
 
         if ($onlyOpen) {
-            $sql .= " AND istErledigt = 0";
+            $sql .= " AND IsDone = 0";
         }
 
         $sql .= " ORDER BY Deadline ASC";
@@ -80,17 +80,17 @@ final class TaskRepository
     {
         $data = $task->toDatabaseArray();
         $sql = "INSERT INTO tblTask
-            (BesprechungID, ErstellerUserID, VerantwortlicherUserID, Titel, Beschreibung, Deadline, istErledigt)
+            (MeetingID, CreatorUserID, AssigneeUserID, Title, Description, Deadline, IsDone)
             VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         $this->db->execute($sql, [
-            $data['BesprechungID'],
-            $data['ErstellerUserID'],
-            $data['VerantwortlicherUserID'],
-            $data['Titel'],
-            $data['Beschreibung'],
+            $data['MeetingID'],
+            $data['CreatorUserID'],
+            $data['AssigneeUserID'],
+            $data['Title'],
+            $data['Description'],
             $data['Deadline'],
-            $data['istErledigt'],
+            $data['IsDone'],
         ]);
 
         return (int)$this->db->lastInsertId();
@@ -104,21 +104,21 @@ final class TaskRepository
 
         $data = $task->toDatabaseArray();
         $sql = "UPDATE tblTask SET
-            BesprechungID = ?,
-            VerantwortlicherUserID = ?,
-            Titel = ?,
-            Beschreibung = ?,
+            MeetingID = ?,
+            AssigneeUserID = ?,
+            Title = ?,
+            Description = ?,
             Deadline = ?,
-            istErledigt = ?
+            IsDone = ?
             WHERE id = ?";
 
         return $this->db->execute($sql, [
-            $data['BesprechungID'],
-            $data['VerantwortlicherUserID'],
-            $data['Titel'],
-            $data['Beschreibung'],
+            $data['MeetingID'],
+            $data['AssigneeUserID'],
+            $data['Title'],
+            $data['Description'],
             $data['Deadline'],
-            $data['istErledigt'],
+            $data['IsDone'],
             $task->id,
         ]);
     }

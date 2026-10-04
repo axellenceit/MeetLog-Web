@@ -8,45 +8,45 @@ final class Task
 {
     public function __construct(
         public ?int $id = null,
-        public ?int $besprechungId = null,
-        public ?int $erstellerUserId = null,
-        public ?int $verantwortlicherUserId = null, 
-        public string $titel = '',
-        public ?string $beschreibung = null,
+        public ?int $meetingId = null,
+        public ?int $creatorUserId = null,
+        public ?int $assigneeUserId = null,
+        public string $title = '',
+        public ?string $description = null,
         public ?string $deadline = null, // später evtl. DateTimeImmutable
         public ?string $createdAt = null,
         public ?string $updatedAt = null,
-        public bool $istErledigt = false,
+        public bool $isDone = false,
     ) {}
 
     public static function fromArray(array $row): self
     {
         return new self(
             id: isset($row['id']) ? (int)$row['id'] : null,
-            besprechungId: isset($row['BesprechungID']) ? (int)$row['BesprechungID'] : null,
-            erstellerUserId: isset($row['ErstellerUserID']) ? (int)$row['ErstellerUserID'] : null,
-            verantwortlicherUserId: isset($row['VerantwortlicherUserID']) ? (int)$row['VerantwortlicherUserID'] : null,
-            titel: (string)($row['Titel'] ?? ''),
-            beschreibung: $row['Beschreibung'] ?? null,
+            meetingId: isset($row['MeetingID']) ? (int)$row['MeetingID'] : null,
+            creatorUserId: isset($row['CreatorUserID']) ? (int)$row['CreatorUserID'] : null,
+            assigneeUserId: isset($row['AssigneeUserID']) ? (int)$row['AssigneeUserID'] : null,
+            title: (string)($row['Title'] ?? ''),
+            description: $row['Description'] ?? null,
             deadline: $row['Deadline'] ?? null,
-            createdAt: $row['erstelltAm'] ?? null,
-            updatedAt: $row['geaendertAm'] ?? null,
-            istErledigt: (bool)($row['istErledigt'] ?? false),
+            createdAt: $row['CreatedAt'] ?? null,
+            updatedAt: $row['UpdatedAt'] ?? null,
+            isDone: (bool)($row['IsDone'] ?? false),
         );
     }
 
     public function toDatabaseArray(): array
     {
         return [
-            'BesprechungID' => $this->besprechungId,
-            'ErstellerUserID' => $this->erstellerUserId,
-            'VerantwortlicherUserID' => $this->verantwortlicherUserId,
-            'Titel' => $this->titel,
-            'Beschreibung' => $this->beschreibung,
+            'MeetingID' => $this->meetingId,
+            'CreatorUserID' => $this->creatorUserId,
+            'AssigneeUserID' => $this->assigneeUserId,
+            'Title' => $this->title,
+            'Description' => $this->description,
             'Deadline' => $this->deadline,
-            'istErledigt' => $this->istErledigt ? 1 : 0,
-            'erstelltAm' => $this->createdAt,
-            'geaendertAm' => $this->updatedAt,
+            'IsDone' => $this->isDone ? 1 : 0,
+            'CreatedAt' => $this->createdAt,
+            'UpdatedAt' => $this->updatedAt,
         ];
     }
 }

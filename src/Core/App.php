@@ -6,16 +6,16 @@ namespace Src\Core;
 
 use Src\Auth\AuthService;
 use Src\User\UserRepository;
-use Src\Organisation\OrganisationRepository;
-use Src\Organisation\OrganisationsFunktionRepository;
-use Src\Organisation\OrganisationsMitgliedRepository;
+use Src\Organization\OrganizationRepository;
+use Src\Organization\OrganizationFunctionRepository;
+use Src\Organization\OrganizationMemberRepository;
 use Src\UI\FlashService;
 use Src\UI\Translator;
 use Src\UI\LanguageRepository;
-use Src\Besprechung\BesprechungRepository;
-use Src\Besprechung\BesprechungspunktRepository;
-use Src\Besprechung\BesprechungsteilnehmerRepository;
-use Src\Besprechung\BesprechungsanhangRepository;
+use Src\Meeting\MeetingRepository;
+use Src\Meeting\MeetingPointRepository;
+use Src\Meeting\MeetingParticipantRepository;
+use Src\Meeting\MeetingAttachmentRepository;
 use Src\Core\CountryRepository;
 use Src\Person\PersonRepository;
 use Src\User\ACL;
@@ -34,14 +34,14 @@ final class App
     private AuthService $auth;
     private Redirector $redirector;
     private Translator $translator;
-    private OrganisationRepository $organisationRepository;
-    private OrganisationsFunktionRepository $organisationsFunktionRepository;
-    private OrganisationsMitgliedRepository $organisationsMitgliedRepository;
+    private OrganizationRepository $organizationRepository;
+    private OrganizationFunctionRepository $organizationFunctionRepository;
+    private OrganizationMemberRepository $organizationMemberRepository;
     private LanguageRepository $languageRepository;
-    private BesprechungRepository $besprechungRepository;
-    private BesprechungspunktRepository $besprechungspunktRepository;
-    private BesprechungsteilnehmerRepository $besprechungsteilnehmerRepository;
-    private BesprechungsanhangRepository $besprechungsanhangRepository;
+    private MeetingRepository $meetingRepository;
+    private MeetingPointRepository $meetingPointRepository;
+    private MeetingParticipantRepository $meetingParticipantRepository;
+    private MeetingAttachmentRepository $meetingAttachmentRepository;
     private PersonRepository $personRepository;
     private CountryRepository $countryRepository;
     private ACL $acl;
@@ -59,22 +59,22 @@ final class App
 
         $this->db = new Database($this->config);
         $this->translator = new Translator();
-        $this->organisationRepository = new OrganisationRepository($this->db);
-        $this->mail = new Mail($this->config, $this->translator, $this->organisationRepository);
+        $this->organizationRepository = new OrganizationRepository($this->db);
+        $this->mail = new Mail($this->config, $this->translator, $this->organizationRepository);
         $this->flash = new FlashService($this->session);
         $this->userRepository = new UserRepository($this->db);
         $this->auth = new AuthService($this->userRepository, $this->session, $this->translator);
         $this->redirector = new Redirector();
-        $this->organisationsFunktionRepository = new OrganisationsFunktionRepository($this->db);
-        $this->organisationsMitgliedRepository = new OrganisationsMitgliedRepository($this->db);
+        $this->organizationFunctionRepository = new OrganizationFunctionRepository($this->db);
+        $this->organizationMemberRepository = new OrganizationMemberRepository($this->db);
         $this->languageRepository = new LanguageRepository($this->db, $this->translator);
-        $this->besprechungRepository = new BesprechungRepository($this->db);
-        $this->besprechungspunktRepository = new BesprechungspunktRepository($this->db);
-        $this->besprechungsteilnehmerRepository = new BesprechungsteilnehmerRepository($this->db);
-        $this->besprechungsanhangRepository = new BesprechungsanhangRepository($this->db);
+        $this->meetingRepository = new MeetingRepository($this->db);
+        $this->meetingPointRepository = new MeetingPointRepository($this->db);
+        $this->meetingParticipantRepository = new MeetingParticipantRepository($this->db);
+        $this->meetingAttachmentRepository = new MeetingAttachmentRepository($this->db);
         $this->personRepository = new PersonRepository($this->db);
         $this->countryRepository = new CountryRepository($this->db);
-        $this->acl = new ACL($this->userRepository, $this->organisationsFunktionRepository, $this->organisationsMitgliedRepository);
+        $this->acl = new ACL($this->userRepository, $this->organizationFunctionRepository, $this->organizationMemberRepository);
         $this->taskRepository = new TaskRepository($this->db);
         $this->logRepository = new LogRepository($this->db);
     }
@@ -124,19 +124,19 @@ final class App
         return $this->translator;
     }
 
-    public function organisationRepository(): OrganisationRepository
+    public function organizationRepository(): OrganizationRepository
     {
-        return $this->organisationRepository;
+        return $this->organizationRepository;
     }
 
-    public function organisationsMitgliedRepository(): OrganisationsMitgliedRepository
+    public function organizationMemberRepository(): OrganizationMemberRepository
     {
-        return $this->organisationsMitgliedRepository;
+        return $this->organizationMemberRepository;
     }
 
-    public function organisationsFunktionRepository(): OrganisationsFunktionRepository
+    public function organizationFunctionRepository(): OrganizationFunctionRepository
     {
-        return $this->organisationsFunktionRepository;
+        return $this->organizationFunctionRepository;
     }
 
     public function languageRepository(): LanguageRepository
@@ -144,24 +144,24 @@ final class App
         return $this->languageRepository;
     }
 
-    public function besprechungRepository(): BesprechungRepository
+    public function meetingRepository(): MeetingRepository
     {
-        return $this->besprechungRepository;
+        return $this->meetingRepository;
     }
 
-    public function besprechungspunktRepository(): BesprechungspunktRepository
+    public function meetingPointRepository(): MeetingPointRepository
     {
-        return $this->besprechungspunktRepository;
+        return $this->meetingPointRepository;
     }
 
-    public function besprechungsteilnehmerRepository(): BesprechungsteilnehmerRepository
+    public function meetingParticipantRepository(): MeetingParticipantRepository
     {
-        return $this->besprechungsteilnehmerRepository;
+        return $this->meetingParticipantRepository;
     }
 
-    public function besprechungsanhangRepository(): BesprechungsanhangRepository
+    public function meetingAttachmentRepository(): MeetingAttachmentRepository
     {
-        return $this->besprechungsanhangRepository;
+        return $this->meetingAttachmentRepository;
     }
 
     public function personRepository(): PersonRepository
@@ -174,9 +174,9 @@ final class App
 
         $user = $this->userRepository->findById((int) $this->session->get('id'));
         $config = $this->config();
-        $organisation = $this->organisationRepository()->findById((int) $user->standardOrganisation);
+        $organization = $this->organizationRepository()->findById((int) $user->defaultOrganization);
 
-        return (empty($organisation?->logo) ? $config->get('general', 'url') . 'img/meetlog_256.png' : $config->get('general', 'url') . $organisation->logo);
+        return (empty($organization?->logo) ? $config->get('general', 'url') . 'img/meetlog_256.png' : $config->get('general', 'url') . $organization->logo);
     }
 
     public function countryRepository(): CountryRepository

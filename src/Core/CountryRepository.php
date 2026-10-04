@@ -12,7 +12,7 @@ final class CountryRepository
 
     public function findById(int $id): ?Country
     {
-        $sql = "SELECT * FROM tblCountries WHERE countryId = ? LIMIT 1";
+        $sql = "SELECT * FROM tblCountry WHERE countryId = ? LIMIT 1";
         $row = $this->db->first($sql, [$id]);
 
         return $row ? Country::fromArray($row) : null;
@@ -20,11 +20,11 @@ final class CountryRepository
 
     public function findAll(bool $onlyActive = false): array
     {
-        $sql = "SELECT * FROM tblCountries";
+        $sql = "SELECT * FROM tblCountry";
         $params = [];
 
         if ($onlyActive) {
-            $sql .= " WHERE istAktiviert = ?";
+            $sql .= " WHERE isActive = ?";
             $params[] = 1;
         }
 
@@ -37,6 +37,4 @@ final class CountryRepository
             $rows
         );
     }
-
-    
 }

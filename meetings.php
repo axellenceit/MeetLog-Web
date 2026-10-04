@@ -13,7 +13,7 @@ if (!$auth->isLoggedIn()) {
 use Src\User\Permission;
 
 $user = $userRepository->findById($session->get('id'));
-$authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$session->get('Organisation'), Permission::MANAGE_MEETINGS);
+$authToManageMeetings = $user->isAdmin || $acl->isPermitted($user->id, (int)$session->get('Organization'), Permission::MANAGE_MEETINGS);
 
 ?>
 
@@ -81,7 +81,7 @@ $authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$se
                     </h2>
                 </div>
                 <div>
-                    <a href="./neuebesprechung.php" class="btn btn-primary">
+                    <a href="./newmeeting.php" class="btn btn-primary">
                         <?= $translator->t('meetings.create') ?>
                     </a>
                 </div>
@@ -92,9 +92,9 @@ $authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$se
             $anzahl = $_GET['anzahl'] ?? 10;
 
             if (isset($_GET['showAll'])) {
-                $besprechungen = $besprechungRepository->findAll(true);
+                $meetings = $meetingRepository->findAll(true);
             } else {
-                $besprechungen = $besprechungRepository->findOpenMeetings((int) $anzahl);
+                $meetings = $meetingRepository->findOpenMeetings((int) $anzahl);
             }
 
 
@@ -103,10 +103,10 @@ $authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$se
                 $filterBy = $_GET['filterBy'] ?? null;
 
                 switch ($filterBy) {
-                    case 'titel':
+                    case 'title':
                         $filterTerm = $_GET['filterTerm'] ?? '';
-                        $besprechungen = array_filter($besprechungen, function ($b) use ($filterTerm) {
-                            return $b->titel === $filterTerm;
+                        $meetings = array_filter($meetings, function ($b) use ($filterTerm) {
+                            return $b->title === $filterTerm;
                         });
 
                         break;
@@ -122,20 +122,20 @@ $authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$se
                         <div class="row g-3 align-items-end">
                             <div class="col-12 col-md-6 col-xl-3">
                                 <label class="form-label"><?= $translator->t('meetings.title'); ?></label>
-                                <input type="text" class="form-control" name="titel" placeholder="Titel"
-                                    value="<?= htmlspecialchars($_GET['titel'] ?? '') ?>">
+                                <input type="text" class="form-control" name="title" placeholder="Titel"
+                                    value="<?= htmlspecialchars($_GET['title'] ?? '') ?>">
                             </div>
 
                             <div class="col-12 col-md-6 col-xl-3">
                                 <label class="form-label"><?= $translator->t('meetings.date'); ?></label>
-                                <input type="datetime-local" class="form-control" name="datum"
-                                    value="<?= htmlspecialchars($_GET['datum'] ?? '') ?>">
+                                <input type="datetime-local" class="form-control" name="date"
+                                    value="<?= htmlspecialchars($_GET['date'] ?? '') ?>">
                             </div>
 
                             <div class="col-8 col-md-6 col-xl-2">
                                 <label class="form-label"><?= $translator->t('meetings.location'); ?></label>
-                                <input type="text" class="form-control" name="ort" placeholder="Ort"
-                                    value="<?= htmlspecialchars($_GET['ort'] ?? '') ?>">
+                                <input type="text" class="form-control" name="location" placeholder="Ort"
+                                    value="<?= htmlspecialchars($_GET['location'] ?? '') ?>">
                             </div>
 
                             <div class="col-6 col-md-3 col-xl-1">
@@ -159,37 +159,37 @@ $authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$se
                 </div>
             </form>
 
-            <?php foreach ($besprechungen as $besprechung) { ?>
+            <?php foreach ($meetings as $meeting) { ?>
 
                 <?php
-                $datum = (new DateTime($besprechung->datum))->format('d.m.Y');
-                if ($besprechung->beginn && $besprechung->ende) {
-                    $zeiten = (new DateTime($besprechung->beginn))->format('H:i') . ' - ' . (new DateTime($besprechung->ende))->format('H:i');
-                    $dauer = (new DateTime($besprechung->ende))->getTimestamp() - (new DateTime($besprechung->beginn))->getTimestamp();
+                $datum = (new DateTime($meeting->date))->format('d.m.Y');
+                if ($meeting->startTime && $meeting->endTime) {
+                    $zeiten = (new DateTime($meeting->startTime))->format('H:i') . ' - ' . (new DateTime($meeting->endTime))->format('H:i');
+                    $dauer = (new DateTime($meeting->endTime))->getTimestamp() - (new DateTime($meeting->startTime))->getTimestamp();
                     $dauer = round($dauer / 60);
                 } else {
                     $zeiten = '';
                     $dauer = '';
                 }
-                // $zeiten = (new DateTime($besprechung->beginn))->format('H:i') . ' - ' . (new DateTime($besprechung->ende))->format('H:i');
-                $ersteller = $userRepository->findById((int) $besprechung->erstellerUserId);
+                // $zeiten = (new DateTime($meeting->startTime))->format('H:i') . ' - ' . (new DateTime($meeting->endTime))->format('H:i');
+                $ersteller = $userRepository->findById((int) $meeting->creatorUserId);
                 ?>
 
                 <div class="card mb-3 shadow-sm">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span>
                             <h3 class="card-title mb-0">
-                                <a href="besprechung.php?id=<?= $besprechung->id; ?>" class="text-reset">
-                                    <?= htmlspecialchars($besprechung->titel); ?>
+                                <a href="meeting.php?id=<?= $meeting->id; ?>" class="text-reset">
+                                    <?= htmlspecialchars($meeting->title); ?>
                                 </a>
                             </h3>
                         </span>
                         <h3>
-                            <?php if ($besprechung->status === 'geplant'): ?>
+                            <?php if ($meeting->status === 'planned'): ?>
                                 <span class="badge bg-primary-lt"><?= $translator->t('meetings.status.planned'); ?></span>
-                            <?php elseif ($besprechung->status === 'aktiv'): ?>
+                            <?php elseif ($meeting->status === 'live'): ?>
                                 <span class="badge bg-success-lt"><?= $translator->t('meetings.status.active'); ?></span>
-                            <?php elseif ($besprechung->status === 'beendet'): ?>
+                            <?php elseif ($meeting->status === 'finished'): ?>
                                 <span class="badge bg-dark-lt"><?= $translator->t('meetings.status.finished'); ?></span>
                             <?php endif; ?>
                         </h3>
@@ -211,22 +211,22 @@ $authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$se
 
                             <div class="meeting-meta-item">
                                 <div class="meeting-meta-label"><?= $translator->t('meetings.location'); ?></div>
-                                <div class="meeting-meta-value"><?= htmlspecialchars($besprechung->ort); ?></div>
+                                <div class="meeting-meta-value"><?= htmlspecialchars($meeting->location); ?></div>
                             </div>
 
                             <div class="meeting-meta-item">
                                 <div class="meeting-meta-label"><?= $translator->t('meetings.createdBy'); ?></div>
-                                <div class="meeting-meta-value"><?= htmlspecialchars($ersteller->vorname . ' ' . $ersteller->nachname); ?></div>
+                                <div class="meeting-meta-value"><?= htmlspecialchars($ersteller->firstName . ' ' . $ersteller->lastName); ?></div>
                             </div>
 
                             <div class="meeting-meta-item">
                                 <div class="meeting-meta-label"><?= $translator->t('meetings.createdAt'); ?></div>
-                                <div class="meeting-meta-value"><?= htmlspecialchars($besprechung->createdAt); ?></div>
+                                <div class="meeting-meta-value"><?= htmlspecialchars($meeting->createdAt); ?></div>
                             </div>
 
                             <div class="meeting-meta-item">
                                 <div class="meeting-meta-label"><?= $translator->t('meetings.updatedAt'); ?></div>
-                                <div class="meeting-meta-value"><?= htmlspecialchars($besprechung->updatedAt); ?></div>
+                                <div class="meeting-meta-value"><?= htmlspecialchars($meeting->updatedAt); ?></div>
                             </div>
                         </div>
                     </div>

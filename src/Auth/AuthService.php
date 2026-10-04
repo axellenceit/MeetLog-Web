@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Src\Auth;
@@ -14,13 +15,12 @@ final class AuthService
         private Session $session,
         private Translator $translator
 
-    ) {
-    }
+    ) {}
 
-    public function login(string $mail, string $password): ?Array
+    public function login(string $mail, string $password): ?array
     {
-        
-        if($mail == '' || $password == '') {
+
+        if ($mail == '' || $password == '') {
             return null;
         }
 
@@ -28,28 +28,27 @@ final class AuthService
 
         $user = $this->userRepository->findActiveByEmail($mail);
 
-        if($user === null){
+        if ($user === null) {
             return null;
         }
 
         $passwordCheck = password_verify($password, $hashedPassword);
 
-        if(!$passwordCheck){
+        if (!$passwordCheck) {
             return null;
         }
 
         $this->session->set('id', $user->id);
         $this->session->set('user', $user);
-        $this->session->set('Vorname', $user->vorname ?? '');
-        $this->session->set('Nachname', $user->nachname ?? '');
+        $this->session->set('FirstName', $user->firstName ?? '');
+        $this->session->set('LastName', $user->lastName ?? '');
         $this->session->set('Mail', $user->mail ?? '');
-        $this->session->set('StandardOrganisation', (int)($user->standardOrganisation ?? 0));
-        $this->session->set('istAdmin', (int)($user->istAdmin ?? 0));
-        $this->session->set('lang', $user->language ?? 'de');
+        $this->session->set('DefaultOrganization', (int)($user->defaultOrganization ?? 0));
+        $this->session->set('IsAdmin', (int)($user->isAdmin ?? 0));
+        $this->session->set('lang', $user->lang ?? 'de');
         $this->translator->setLocale($this->session->get('lang'));
 
         return $user->toDatabaseArray();
-
     }
 
     public function logout(): void

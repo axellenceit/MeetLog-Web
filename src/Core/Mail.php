@@ -6,7 +6,7 @@ namespace Src\Core;
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-use Src\Organisation\OrganisationRepository;
+use Src\Organization\OrganizationRepository;
 use Src\UI\Translator;
 
 require __DIR__ . '/../../vendor/phpmailer/phpmailer/src/Exception.php';
@@ -18,9 +18,9 @@ final class Mail
 
     private Config $config;
     private Translator $translator;
-    private OrganisationRepository $orgRepository;
+    private OrganizationRepository $organizationRepository;
 
-    public function __construct(?Config $config = null, ?Translator $translator = null, ?OrganisationRepository $orgRepository = null)
+    public function __construct(?Config $config = null, ?Translator $translator = null, ?OrganizationRepository $organizationRepository = null)
     {
         if ($config === null) {
             $config = new Config(dirname(__DIR__, 2) . '/meetlog.ini');
@@ -28,7 +28,7 @@ final class Mail
 
         $this->config = $config;
         $this->translator = $translator;
-        $this->orgRepository = $orgRepository;
+        $this->organizationRepository = $organizationRepository;
     }
 
     /**
@@ -60,7 +60,7 @@ final class Mail
             $mail->setFrom($this->config->get('mail', 'from', $username), 'MeetLog');
             $mail->addAddress($to);
 
-            if($this->config->get('mail', 'toggleEveryCC', 'off') === 'on') {
+            if ($this->config->get('mail', 'toggleEveryCC', 'off') === 'on') {
                 $mail->addCC($this->config->get('mail', 'from', $username));
             }
 
@@ -82,9 +82,9 @@ final class Mail
 
     public function sendWelcomeEmail(string $to, string $name, string $username, string $password, int $orgId = 1): bool
     {
-        $subject = 'Willkommen bei ' . htmlspecialchars($this->orgRepository->findById($orgId)->name1);
+        $subject = 'Willkommen bei ' . htmlspecialchars($this->organizationRepository->findById($orgId)->name1);
         $message = $this->translator->t('mail.welcome.body_html');
-        $message = str_replace('{{organization_name}}', htmlspecialchars($this->orgRepository->findById($orgId)->name1), $message);
+        $message = str_replace('{{organization_name}}', htmlspecialchars($this->organizationRepository->findById($orgId)->name1), $message);
         $message = str_replace('{{name}}', htmlspecialchars($name), $message);
         $message = str_replace('{{username}}', htmlspecialchars($username), $message);
         $message = str_replace('{{password}}', htmlspecialchars($password), $message);
@@ -96,9 +96,9 @@ final class Mail
 
     public function sendDeletionEmail(string $to, int $orgId = 1): bool
     {
-        $subject = 'Benutzerkonto gelöscht bei ' . htmlspecialchars($this->orgRepository->findById($orgId)->name1);
+        $subject = 'Benutzerkonto gelöscht bei ' . htmlspecialchars($this->organizationRepository->findById($orgId)->name1);
         $message = $this->translator->t('mail.deletion.body_html');
-        $message = str_replace('{{organization_name}}', htmlspecialchars($this->orgRepository->findById($orgId)->name1), $message);
+        $message = str_replace('{{organization_name}}', htmlspecialchars($this->organizationRepository->findById($orgId)->name1), $message);
 
         $message .= $this->imprint($orgId);
 
@@ -108,15 +108,15 @@ final class Mail
     public function imprint(int $orgId): string
     {
 
-        $org = $this->orgRepository->findById($orgId);
+        $org = $this->organizationRepository->findById($orgId);
 
         return "<h4>{$this->translator->t('common.imprint')}</h4>
                 <p>{$org->name1}<br/>{$org->name2}</p>
-                <p>{$org->strasse} <br/>{$org->plz} {$org->ort}</p>
-                <p>{$this->translator->t('common.contact.phone')}: {$org->telefon}<br/>
+                <p>{$org->street} <br/>{$org->zipCode} {$org->city}</p>
+                <p>{$this->translator->t('common.contact.phone')}: {$org->phone}<br/>
                 {$this->translator->t('common.contact.mail')}: <a href=\"mailto:{$org->email}\">{$org->email}</a><br/>
                 {$this->translator->t('common.contact.web')}: <a href=\"{$org->homepage}\" target=\"_blank\">{$org->homepage}</a></p>
                 <p>MeetLog-URL: <a href=\"{$this->config->get('general', 'url', 'http://localhost/meetlog')}\" target=\"_blank\">{$this->config->get('general', 'url', 'http://localhost/meetlog')}</a></p>
-                <p>{$this->translator->t('common.localcourt')}: {$org->registergericht} - {$org->registereintrag}</p>";
+                <p>{$this->translator->t('common.localcourt')}: {$org->registryCourt} - {$org->registryEntry}</p>";
     }
 }

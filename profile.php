@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 ob_start();
@@ -90,15 +91,15 @@ if (!$auth->isLoggedIn()) {
                                         <label class="form-label">
                                             <?= htmlspecialchars($translator->t('profile.vorname'), ENT_QUOTES, 'UTF-8') ?>
                                         </label>
-                                        <input type="text" name="Vorname" id="Vorname" class="form-control"
-                                            value="<?= htmlspecialchars((string) ($user->vorname ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                        <input type="text" name="firstName" id="firstName" class="form-control"
+                                            value="<?= htmlspecialchars((string) ($user->firstName ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                     </div>
                                     <div class="col">
                                         <label class="form-label">
                                             <?= htmlspecialchars($translator->t('profile.nachname'), ENT_QUOTES, 'UTF-8') ?>
                                         </label>
-                                        <input type="text" name="Nachname" id="Nachname" class="form-control"
-                                            value="<?= htmlspecialchars((string) ($user->nachname ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                        <input type="text" name="lastName" id="lastName" class="form-control"
+                                            value="<?= htmlspecialchars((string) ($user->lastName ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                     </div>
                                 </div>
 
@@ -107,14 +108,14 @@ if (!$auth->isLoggedIn()) {
                                         <label class="form-label">
                                             <?= htmlspecialchars($translator->t('profile.mailaddress'), ENT_QUOTES, 'UTF-8') ?>
                                         </label>
-                                        <input type="text" name="EMail" id="EMail" class="form-control"
+                                        <input type="text" name="mail" id="mail" class="form-control"
                                             value="<?= htmlspecialchars((string) ($session->get('Mail') ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                     </div>
                                     <div class="col">
                                         <label class="form-label">
                                             <?= htmlspecialchars($translator->t('profile.password'), ENT_QUOTES, 'UTF-8') ?>
                                         </label>
-                                        <input type="password" name="Passwort" id="Passwort" class="form-control"
+                                        <input type="password" name="password" id="password" class="form-control"
                                             autocomplete="off" value="">
                                     </div>
                                 </div>
@@ -145,12 +146,12 @@ if (!$auth->isLoggedIn()) {
                                 </div>
                             </div>
                             <div class="card-body">
-                                <?php if ($user->foto == ''): ?>
+                                <?php if ($user->photo == ''): ?>
                                     <input name="file" type="file" class="form-control"
                                         placeholder="<?= htmlspecialchars($translator->t('profile.text.photoupload'), ENT_QUOTES, 'UTF-8') ?>" />
                                 <?php else: ?>
                                     <div class="profile-photo">
-                                        <img src="<?= htmlspecialchars($user->foto, ENT_QUOTES, 'UTF-8') ?>"
+                                        <img src="<?= htmlspecialchars($user->photo, ENT_QUOTES, 'UTF-8') ?>"
                                             alt="Profilfoto">
                                         <button type="button" class="delete-photo-btn" title="Profilfoto löschen"
                                             onclick="deleteProfilePhoto()">

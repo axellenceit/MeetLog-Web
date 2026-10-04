@@ -15,26 +15,26 @@ if (!class_exists('TCPDF')) {
 $meetingId = isset($_GET['meetingId']) ? (int)$_GET['meetingId'] : 0;
 $numberOfParticipants = isset($_GET['numberOfParticipants']) ? max(1, (int)$_GET['numberOfParticipants']) : 12;
 
-$besprechung = null;
+$meeting = null;
 if ($meetingId > 0) {
-    $besprechung = $besprechungRepository->findById($meetingId);
+    $meeting = $meetingRepository->findById($meetingId);
 }
 
-$organisation = null;
-if ($besprechung && isset($besprechung->organisationId)) {
-    $organisation = $organisationRepository->findById((int)$besprechung->organisationId);
+$organization = null;
+if ($meeting && isset($meeting->organizationId)) {
+    $organization = $organizationRepository->findById((int)$meeting->organizationId);
 }
 
 class MeetingPDF extends TCPDF
 {
-    private ?object $organisation = null;
+    private ?object $organization = null;
     private string $meetingTitle = '';
     private string $printDate = '';
     private string $baseDir = '';
 
-    public function setOrganisation(?object $organisation): void
+    public function setOrganization(?object $organization): void
     {
-        $this->organisation = $organisation;
+        $this->organization = $organization;
     }
 
     public function setMeetingTitle(string $meetingTitle): void
@@ -70,37 +70,37 @@ class MeetingPDF extends TCPDF
 
         $bottomContentY = $textY;
 
-        if ($this->organisation) {
+        if ($this->organization) {
             $this->SetFont('helvetica', 'B', 12);
             $this->SetTextColor(64, 64, 64);
             $this->SetXY($textX, $textY);
-            $this->Cell($textWidth, 5, (string)($this->organisation->name1 ?? ''), 0, 1, 'L', false);
+            $this->Cell($textWidth, 5, (string)($this->organization->name1 ?? ''), 0, 1, 'L', false);
 
             $this->SetFont('helvetica', '', 10);
-            $strasse = trim((string)($this->organisation->strasse ?? ''));
-            $plz = trim((string)($this->organisation->plz ?? ''));
-            $ort = trim((string)($this->organisation->ort ?? ''));
+            $street = trim((string)($this->organization->street ?? ''));
+            $zipCode = trim((string)($this->organization->zipCode ?? ''));
+            $city = trim((string)($this->organization->city ?? ''));
 
-            $line2 = trim($strasse . ' • ' . $plz . ' ' . $ort, ' •');
+            $line2 = trim($street . ' • ' . $zipCode . ' ' . $city, ' •');
             if ($line2 !== '') {
                 $this->setX($textX);
                 $this->Cell($textWidth, 5, $line2, 0, 1, 'L', false);
             }
 
-            $homepage = trim((string)($this->organisation->homepage ?? ''));
-            $email = trim((string)($this->organisation->email ?? ''));
+            $homepage = trim((string)($this->organization->homepage ?? ''));
+            $email = trim((string)($this->organization->email ?? ''));
             if ($homepage !== '' || $email !== '') {
                 $line3 = trim($homepage . ' • ' . $email, ' •');
                 $this->setX($textX);
                 $this->Cell($textWidth, 5, $line3, 0, 1, 'L', false);
             }
 
-            $registergericht = trim((string)($this->organisation->registergericht ?? ''));
-            $registereintrag = trim((string)($this->organisation->registereintrag ?? ''));
-            if ($registergericht !== '' || $registereintrag !== '') {
-                $registerText = 'Amtsgericht: ' . $registergericht;
-                if ($registereintrag !== '') {
-                    $registerText .= ' • ' . $registereintrag;
+            $registryCourt = trim((string)($this->organization->registryCourt ?? ''));
+            $registryEntry = trim((string)($this->organization->registryEntry ?? ''));
+            if ($registryCourt !== '' || $registryEntry !== '') {
+                $registerText = 'Amtsgericht: ' . $registryCourt;
+                if ($registryEntry !== '') {
+                    $registerText .= ' • ' . $registryEntry;
                 }
 
                 $this->setX($textX);
@@ -109,8 +109,8 @@ class MeetingPDF extends TCPDF
 
             $bottomContentY = $this->GetY();
 
-            if (!empty($this->organisation->logo)) {
-                $logoFile = $this->baseDir . $this->organisation->logo;
+            if (!empty($this->organization->logo)) {
+                $logoFile = $this->baseDir . $this->organization->logo;
 
                 if (is_file($logoFile)) {
                     $logoX = $pageWidth - $rightMargin - $logoWidth;
@@ -195,8 +195,8 @@ $pdf->setHeaderFont(['helvetica', '', 12]);
 $pdf->setFooterFont(['helvetica', '', 8]);
 $pdf->SetDefaultMonospacedFont('courier');
 
-$pdf->setOrganisation($organisation);
-$pdf->setMeetingTitle(($besprechung ? $besprechung->titel : 'Teilnehmerliste blanko'));
+$pdf->setOrganization($organization);
+$pdf->setMeetingTitle(($meeting ? $meeting->title : 'Teilnehmerliste blanko'));
 $pdf->setPrintDate(date('d.m.Y'));
 $pdf->setBaseDir(__DIR__);
 
@@ -217,7 +217,7 @@ for ($firstParticipant = 0; $firstParticipant < $numberOfParticipants; $firstPar
     // Meeting title
     $pdf->SetFont('helvetica', 'B', 20);
     $pdf->SetTextColor(100, 100, 100);
-    $pdf->MultiCell(0, 8, $besprechung ? $besprechung->titel : 'Teilnehmerliste blanko', 0, 'C');
+    $pdf->MultiCell(0, 8, $meeting ? $meeting->title : 'Teilnehmerliste blanko', 0, 'C');
 
     $pdf->SetFont('helvetica', '', 11);
     $pdf->SetTextColor(0, 0, 0);

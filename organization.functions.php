@@ -10,37 +10,37 @@ if (!$auth->isLoggedIn()) {
     $redirect->to('login.php');
 }
 
-use Src\Organisation\OrganisationsFunktion;
+use Src\Organization\OrganizationFunction;
 
 $currentURL = basename($_SERVER['SCRIPT_NAME']);
-$organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
+$organizationId = (int) ($session->get('DefaultOrganization') ?? 0);
 
-if ($organisationId <= 0) {
-    $flash->set('organisation_error', 'Keine gültige Standardorganisation gesetzt.');
+if ($organizationId <= 0) {
+    $flash->set('organization_error', 'Keine gültige Standardorganisation gesetzt.');
     $redirect->to($currentURL . '?page=overview');
 }
 
-$organisation = $organisationRepository->findById($organisationId);
-if ($organisation === null) {
-    $flash->set('organisation_error', 'Organisation nicht gefunden.');
+$organization = $organizationRepository->findById($organizationId);
+if ($organization === null) {
+    $flash->set('organization_error', 'Organisation nicht gefunden.');
     $redirect->to($currentURL . '?page=overview');
 }
 
-$organisationsFunktionen = $organisationsFunktionRepository->findAllByOrganisation($organisationId, false);
+$organizationFunctions = $organizationFunctionRepository->findAllByOrganization($organizationId, false);
 
-$rollenFilterBezeichnung = trim($_GET['f_bezeichnung'] ?? '');
-$rollenFilterAktiv = trim($_GET['f_aktiv'] ?? '');
+$roleFilterName = trim($_GET['f_name'] ?? '');
+$roleFilterActive = trim($_GET['f_isActive'] ?? '');
 
-$organisationsFunktionenGefiltert = array_values(array_filter(
-    $organisationsFunktionen,
-    static function ($funktion) use ($rollenFilterBezeichnung, $rollenFilterAktiv): bool {
-        if ($rollenFilterBezeichnung !== '' && stripos((string) ($funktion->bezeichnung ?? ''), $rollenFilterBezeichnung) === false) {
+$organizationFunctionsFiltered = array_values(array_filter(
+    $organizationFunctions,
+    static function ($function) use ($roleFilterName, $roleFilterActive): bool {
+        if ($roleFilterName !== '' && stripos((string) ($function->name ?? ''), $roleFilterName) === false) {
             return false;
         }
 
-        if ($rollenFilterAktiv !== '') {
-            $isActive = $funktion->istAktiv ? '1' : '0';
-            if ($isActive !== $rollenFilterAktiv) {
+        if ($roleFilterActive !== '') {
+            $isActive = $function->isActive ? '1' : '0';
+            if ($isActive !== $roleFilterActive) {
                 return false;
             }
         }
@@ -98,12 +98,12 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
             <div class="container-xl py-3">
                 <ul class="nav nav-bordered mb-4 flex-nowrap overflow-auto">
                     <li class="nav-item">
-                        <a class="nav-link" aria-current="page" href="./organisation.php">
+                        <a class="nav-link" aria-current="page" href="./organization.php">
                             <?= htmlspecialchars($translator->t('organization.overview'), ENT_QUOTES, 'UTF-8') ?>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="./organisation.funktionen.php">
+                        <a class="nav-link active" href="./organization.functions.php">
                             <?= htmlspecialchars($translator->t('organization.functions.root'), ENT_QUOTES, 'UTF-8') ?>
                         </a>
                     </li>
@@ -129,21 +129,21 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
 
                             <div class="row g-3 align-items-end">
                                 <div class="col-12 col-md-6 col-lg-5">
-                                    <label for="f_bezeichnung" class="form-label"><?= $translator->t('organization.functions.designation') ?></label>
+                                    <label for="f_name" class="form-label"><?= $translator->t('organization.functions.designation') ?></label>
                                     <input
                                         type="text"
-                                        name="f_bezeichnung"
-                                        id="f_bezeichnung"
+                                        name="f_name"
+                                        id="f_name"
                                         class="form-control"
-                                        value="<?= htmlspecialchars($rollenFilterBezeichnung, ENT_QUOTES, 'UTF-8') ?>">
+                                        value="<?= htmlspecialchars($roleFilterName, ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
 
                                 <div class="col-12 col-md-6 col-lg-3">
-                                    <label for="f_aktiv" class="form-label"><?= $translator->t('organization.functions.active') ?></label>
-                                    <select name="f_aktiv" id="f_aktiv" class="form-select">
+                                    <label for="f_isActive" class="form-label"><?= $translator->t('organization.functions.active') ?></label>
+                                    <select name="f_isActive" id="f_isActive" class="form-select">
                                         <option value=""><?= $translator->t('organization.functions.all') ?></option>
-                                        <option value="1" <?= $rollenFilterAktiv === '1' ? 'selected' : '' ?>><?= $translator->t('organization.functions.yes') ?></option>
-                                        <option value="0" <?= $rollenFilterAktiv === '0' ? 'selected' : '' ?>><?= $translator->t('organization.functions.no') ?></option>
+                                        <option value="1" <?= $roleFilterActive === '1' ? 'selected' : '' ?>><?= $translator->t('organization.functions.yes') ?></option>
+                                        <option value="0" <?= $roleFilterActive === '0' ? 'selected' : '' ?>><?= $translator->t('organization.functions.no') ?></option>
                                     </select>
                                 </div>
 
@@ -174,7 +174,7 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php if ($organisationsFunktionenGefiltert === []): ?>
+                                <?php if ($organizationFunctionsFiltered === []): ?>
                                     <tr>
                                         <td colspan="5" class="text-secondary text-center py-4">
                                             <?= $translator->t('functions.nothingfound') ?>
@@ -182,19 +182,19 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
                                     </tr>
                                 <?php endif; ?>
 
-                                <?php foreach ($organisationsFunktionenGefiltert as $funktion): ?>
+                                <?php foreach ($organizationFunctionsFiltered as $function): ?>
                                     <tr>
-                                        <td><?= (int) $funktion->id ?></td>
+                                        <td><?= (int) $function->id ?></td>
                                         <td>
-                                            <?= htmlspecialchars((string) $funktion->bezeichnung, ENT_QUOTES, 'UTF-8') ?>
-                                            <?php if ($funktion->darfUnterschreiben): ?>
+                                            <?= htmlspecialchars((string) $function->name, ENT_QUOTES, 'UTF-8') ?>
+                                            <?php if ($function->maySign): ?>
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-signature" data-bs-toggle="tooltip" data-bs-original-title="<?= $translator->t('organization.functions.authToSign') ?>">
                                                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                                     <path d="M3 17c3.333 -3.333 5 -6 5 -8c0 -3 -1 -3 -2 -3s-2.032 1.085 -2 3c.034 2.048 1.658 4.877 2.5 6c1.5 2 2.5 2.5 3.5 1l2 -3c.333 2.667 1.333 4 3 4c.53 0 2.639 -2 3 -2c.517 0 1.517 .667 3 2" />
                                                 </svg>
                                             <?php endif; ?>
-                                            <?php if ($funktion->darfOrganisationVerwalten): ?>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-building-cog" data-bs-toggle="tooltip" data-bs-original-title="<?= $translator->t('organization.functions.authToManageOrganisation') ?>">
+                                            <?php if ($function->mayManageOrganization): ?>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-building-cog" data-bs-toggle="tooltip" data-bs-original-title="<?= $translator->t('organization.functions.authToManageOrganization') ?>">
                                                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                                     <path d="M3 21h9" />
                                                     <path d="M9 8h1" />
@@ -212,7 +212,7 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
                                                     <path d="M19.733 19l1.3 .75" />
                                                 </svg>
                                             <?php endif; ?>
-                                            <?php if ($funktion->darfBesprechungenVerwalten): ?>
+                                            <?php if ($function->mayManageMeetings): ?>
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-cog" data-bs-toggle="tooltip" data-bs-original-title="<?= $translator->t('organization.functions.authToManageMeetings') ?>">
                                                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                                     <path d="M12 21h-6a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v5" />
@@ -229,9 +229,9 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
                                                 </svg>
                                             <?php endif; ?>
                                         </td>
-                                        <td><?= htmlspecialchars((string) ($funktion->beschreibung ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                        <td><?= htmlspecialchars((string) ($function->description ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                                         <td>
-                                            <?php if ($funktion->istAktiv): ?>
+                                            <?php if ($function->isActive): ?>
                                                 <span class="badge bg-green-lt"><?= $translator->t('organization.functions.active'); ?></span>
                                             <?php else: ?>
                                                 <span class="badge bg-secondary-lt"><?= $translator->t('organization.functions.inactive'); ?></span>
@@ -244,13 +244,13 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
                                                     type="button"
                                                     class="btn btn-sm btn-outline-primary"
                                                     data-bs-toggle="modal"
-                                                    data-bs-target="#modal-role-edit-<?= (int) $funktion->id ?>">
+                                                    data-bs-target="#modal-role-edit-<?= (int) $function->id ?>">
                                                     <?= $translator->t('organization.functions.edit') ?>
                                                 </button>
 
                                                 <form method="post" action="" onsubmit="return confirm('<?= $translator->t('organization.functions.delete') ?>?');">
                                                     <input type="hidden" name="role_action" value="delete">
-                                                    <input type="hidden" name="id" value="<?= (int) $funktion->id ?>">
+                                                    <input type="hidden" name="id" value="<?= (int) $function->id ?>">
                                                     <button type="submit" class="btn btn-sm btn-outline-danger">
                                                         <?= $translator->t('organization.functions.delete') ?>
                                                     </button>
@@ -264,8 +264,8 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
                     </div>
                 </div>
 
-                <?php foreach ($organisationsFunktionenGefiltert as $funktion): ?>
-                    <div class="modal modal-blur fade" id="modal-role-edit-<?= (int) $funktion->id ?>" tabindex="-1"
+                <?php foreach ($organizationFunctionsFiltered as $function): ?>
+                    <div class="modal modal-blur fade" id="modal-role-edit-<?= (int) $function->id ?>" tabindex="-1"
                         aria-hidden="true">
                         <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
                             <div class="modal-content">
@@ -278,26 +278,26 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
 
                                     <div class="modal-body">
                                         <input type="hidden" name="role_action" value="save">
-                                        <input type="hidden" name="id" value="<?= (int) $funktion->id ?>">
+                                        <input type="hidden" name="id" value="<?= (int) $function->id ?>">
 
                                         <div class="row g-3">
                                             <div class="col-12 col-md-8">
-                                                <label class="form-label" for="bezeichnung-<?= (int) $funktion->id ?>"><?= $translator->t('organization.functions.designation'); ?></label>
+                                                <label class="form-label" for="name-<?= (int) $function->id ?>"><?= $translator->t('organization.functions.designation'); ?></label>
                                                 <input
                                                     type="text"
-                                                    name="bezeichnung"
-                                                    id="bezeichnung-<?= (int) $funktion->id ?>"
+                                                    name="name"
+                                                    id="name-<?= (int) $function->id ?>"
                                                     class="form-control"
-                                                    value="<?= htmlspecialchars((string) $funktion->bezeichnung, ENT_QUOTES, 'UTF-8') ?>">
+                                                    value="<?= htmlspecialchars((string) $function->name, ENT_QUOTES, 'UTF-8') ?>">
                                             </div>
 
                                             <div class="col-12">
-                                                <label class="form-label" for="beschreibung-<?= (int) $funktion->id ?>"><?= $translator->t('organization.functions.description'); ?></label>
+                                                <label class="form-label" for="description-<?= (int) $function->id ?>"><?= $translator->t('organization.functions.description'); ?></label>
                                                 <textarea
-                                                    name="beschreibung"
-                                                    id="beschreibung-<?= (int) $funktion->id ?>"
+                                                    name="description"
+                                                    id="description-<?= (int) $function->id ?>"
                                                     class="form-control"
-                                                    rows="4"><?= htmlspecialchars((string) ($funktion->beschreibung ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
+                                                    rows="4"><?= htmlspecialchars((string) ($function->description ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
                                             </div>
 
                                             <div class="col-12 col-md-4 d-flex align-items-md-end">
@@ -305,9 +305,9 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
                                                 <input
                                                     class="form-check-input"
                                                     type="checkbox"
-                                                    name="istAktiv"
+                                                    name="isActive"
                                                     value="1"
-                                                    <?= $funktion->istAktiv ? 'checked' : '' ?>>
+                                                    <?= $function->isActive ? 'checked' : '' ?>>
                                                 <span class="form-check-label"><?= $translator->t('organization.functions.active'); ?></span>
                                                 </label>
                                             </div>
@@ -317,9 +317,9 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
                                                     <input
                                                         class="form-check-input"
                                                         type="checkbox"
-                                                        name="darfUnterschreiben"
+                                                        name="maySign"
                                                         value="1"
-                                                        <?= $funktion->darfUnterschreiben ? 'checked' : '' ?>>
+                                                        <?= $function->maySign ? 'checked' : '' ?>>
                                                     <span class="form-check-label"><?= $translator->t('organization.functions.authToSign'); ?></span>
                                                 </label>
                                             </div>
@@ -329,10 +329,10 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
                                                     <input
                                                         class="form-check-input"
                                                         type="checkbox"
-                                                        name="darfOrganisationVerwalten"
+                                                        name="mayManageOrganization"
                                                         value="1"
-                                                        <?= $funktion->darfOrganisationVerwalten ? 'checked' : '' ?>>
-                                                    <span class="form-check-label"><?= $translator->t('organization.functions.authToManageOrganisation'); ?></span>
+                                                        <?= $function->mayManageOrganization ? 'checked' : '' ?>>
+                                                    <span class="form-check-label"><?= $translator->t('organization.functions.authToManageOrganization'); ?></span>
                                                 </label>
                                             </div>
 
@@ -341,9 +341,9 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
                                                     <input
                                                         class="form-check-input"
                                                         type="checkbox"
-                                                        name="darfBesprechungenVerwalten"
+                                                        name="mayManageMeetings"
                                                         value="1"
-                                                        <?= $funktion->darfBesprechungenVerwalten ? 'checked' : '' ?>>
+                                                        <?= $function->mayManageMeetings ? 'checked' : '' ?>>
                                                     <span class="form-check-label"><?= $translator->t('organization.functions.authToManageMeetings'); ?></span>
                                                 </label>
                                             </div>
@@ -375,27 +375,27 @@ $organisationsFunktionenGefiltert = array_values(array_filter(
 
                                     <div class="row g-3">
                                         <div class="col-12 col-md-8">
-                                            <label class="form-label" for="bezeichnung-create"><?= $translator->t('organization.functions.designation'); ?></label>
-                                            <input type="text" name="bezeichnung" id="bezeichnung-create" class="form-control">
+                                            <label class="form-label" for="name-create"><?= $translator->t('organization.functions.designation'); ?></label>
+                                            <input type="text" name="name" id="name-create" class="form-control">
                                         </div>
 
                                         <div class="col-12 col-md-4 d-flex align-items-md-end">
                                             <label class="form-check mb-2 mb-md-0">
-                                                <input class="form-check-input" type="checkbox" name="istAktiv" value="1" checked>
+                                                <input class="form-check-input" type="checkbox" name="isActive" value="1" checked>
                                                 <span class="form-check-label"><?= $translator->t('organization.functions.active'); ?></span>
                                             </label>
                                         </div>
 
                                         <div class="col-12 col-md-4 d-flex align-items-md-end">
                                             <label class="form-check mb-2 mb-md-0">
-                                                <input class="form-check-input" type="checkbox" name="darfUnterschreiben" value="1" checked>
+                                                <input class="form-check-input" type="checkbox" name="maySign" value="1" checked>
                                                 <span class="form-check-label"><?= $translator->t('organization.functions.authToSign'); ?></span>
                                             </label>
                                         </div>
 
                                         <div class="col-12">
-                                            <label class="form-label" for="beschreibung-create"><?= $translator->t('organization.functions.description'); ?></label>
-                                            <textarea name="beschreibung" id="beschreibung-create" class="form-control" rows="4"></textarea>
+                                            <label class="form-label" for="description-create"><?= $translator->t('organization.functions.description'); ?></label>
+                                            <textarea name="description" id="description-create" class="form-control" rows="4"></textarea>
                                         </div>
                                     </div>
                                 </div>

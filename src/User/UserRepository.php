@@ -17,10 +17,10 @@ final class UserRepository
 
     public function findById(int $id): ?User
     {
-        $sql = "SELECT u.*, p.Vorname, p.Nachname, p.Mail
+        $sql = "SELECT u.*, p.FirstName, p.LastName, p.Mail
                 FROM tblUser u
                 LEFT JOIN tblPerson p ON p.id = u.Person
-                WHERE u.id = ? AND u.istGeloescht = 0
+                WHERE u.id = ? AND u.IsDeleted = 0
                 LIMIT 1";
         $row = $this->db->first($sql, [$id]);
 
@@ -29,18 +29,18 @@ final class UserRepository
 
     public function findAll(bool $onlyActive = false): array
     {
-        $sql = "SELECT u.*, p.Vorname, p.Nachname, p.Mail
+        $sql = "SELECT u.*, p.FirstName, p.LastName, p.Mail
                 FROM tblUser u
                 LEFT JOIN tblPerson p ON p.id = u.Person
-                WHERE u.istGeloescht = 0";
+                WHERE u.IsDeleted = 0";
         $params = [];
 
         if ($onlyActive) {
-            $sql .= " AND u.istAktiv = ?";
+            $sql .= " AND u.IsActive = ?";
             $params[] = 1;
         }
 
-        $sql .= " ORDER BY p.Nachname ASC, p.Vorname ASC, u.id ASC";
+        $sql .= " ORDER BY p.LastName ASC, p.FirstName ASC, u.id ASC";
 
         $rows = $this->db->query($sql, $params);
 
@@ -52,10 +52,10 @@ final class UserRepository
 
     public function findActiveByEmail(string $email): ?User
     {
-        $sql = "SELECT u.*, p.Vorname, p.Nachname, p.Mail
+        $sql = "SELECT u.*, p.FirstName, p.LastName, p.Mail
                 FROM tblUser u
                 INNER JOIN tblPerson p ON p.id = u.Person
-                WHERE p.Mail = ? AND u.istAktiv = 1 AND u.istGeloescht = 0
+                WHERE p.Mail = ? AND u.IsActive = 1 AND u.IsDeleted = 0
                 LIMIT 1";
 
         $row = $this->db->first($sql, [$email]);
@@ -64,10 +64,10 @@ final class UserRepository
 
     public function findByPersonId(int $personId): ?User
     {
-        $sql = "SELECT u.*, p.Vorname, p.Nachname, p.Mail
+        $sql = "SELECT u.*, p.FirstName, p.LastName, p.Mail
                 FROM tblUser u
                 LEFT JOIN tblPerson p ON p.id = u.Person
-                WHERE u.Person = ? AND u.istGeloescht = 0
+                WHERE u.Person = ? AND u.IsDeleted = 0
                 LIMIT 1";
         $row = $this->db->first($sql, [$personId]);
 
@@ -76,7 +76,7 @@ final class UserRepository
 
     public function updatePasswordHash(int $userId, string $hash): bool
     {
-        $sql = "UPDATE tblUser SET Pass = ? WHERE ID = ?";
+        $sql = "UPDATE tblUser SET Password = ? WHERE ID = ?";
         return $this->db->execute($sql, [$hash, $userId]);
     }
 
@@ -86,24 +86,24 @@ final class UserRepository
 
         if ($personId === null) {
             $personId = $this->personRepository->create(new Person(
-                vorname: $user->vorname !== '' ? $user->vorname : null,
-                nachname: $user->nachname !== '' ? $user->nachname : null,
+                firstName: $user->firstName !== '' ? $user->firstName : null,
+                lastName: $user->lastName !== '' ? $user->lastName : null,
                 mail: $user->mail !== '' ? $user->mail : null,
-                istAktiv: $user->istAktiv ? 1 : 0,
-                istGeloescht: $user->istGeloescht ? 1 : 0,
+                isActive: $user->isActive ? 1 : 0,
+                isDeleted: $user->isDeleted ? 1 : 0,
             ));
         }
 
-        $sql = "INSERT INTO tblUser (Person, Pass, StandardOrganisation, Foto, lang, istAktiv, istAdmin, istGeloescht) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO tblUser (Person, Password, DefaultOrganization, Photo, Lang, IsActive, IsAdmin, IsDeleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         $this->db->execute($sql, [
             $personId,
             $user->password,
-            $user->standardOrganisation ? $user->standardOrganisation : 1,
-            $user->foto !== '' ? $user->foto : null,
+            $user->defaultOrganization ? $user->defaultOrganization : 1,
+            $user->photo !== '' ? $user->photo : null,
             $user->lang !== '' ? $user->lang : 'de',
-            $user->istAktiv ? 1 : 0,
-            $user->istAdmin ? 1 : 0,
-            $user->istGeloescht ? 1 : 0
+            $user->isActive ? 1 : 0,
+            $user->isAdmin ? 1 : 0,
+            $user->isDeleted ? 1 : 0
         ]);
 
         return (int)$this->db->lastInsertId();
@@ -123,32 +123,32 @@ final class UserRepository
         $personId = $user->person ?? $existing->person;
         if ($personId === null) {
             $personId = $this->personRepository->create(new Person(
-                vorname: $user->vorname !== '' ? $user->vorname : null,
-                nachname: $user->nachname !== '' ? $user->nachname : null,
+                firstName: $user->firstName !== '' ? $user->firstName : null,
+                lastName: $user->lastName !== '' ? $user->lastName : null,
                 mail: $user->mail !== '' ? $user->mail : null,
-                istAktiv: $user->istAktiv ? 1 : 0,
-                istGeloescht: $user->istGeloescht ? 1 : 0,
+                isActive: $user->isActive ? 1 : 0,
+                isDeleted: $user->isDeleted ? 1 : 0,
             ));
         } else {
             $person = $this->personRepository->findById($personId) ?? new Person(id: $personId);
-            $person->vorname = $user->vorname !== '' ? $user->vorname : $person->vorname;
-            $person->nachname = $user->nachname !== '' ? $user->nachname : $person->nachname;
+            $person->firstName = $user->firstName !== '' ? $user->firstName : $person->firstName;
+            $person->lastName = $user->lastName !== '' ? $user->lastName : $person->lastName;
             $person->mail = $user->mail !== '' ? $user->mail : $person->mail;
-            $person->istAktiv = $user->istAktiv ? 1 : 0;
-            $person->istGeloescht = $user->istGeloescht ? 1 : 0;
+            $person->isActive = $user->isActive ? 1 : 0;
+            $person->isDeleted = $user->isDeleted ? 1 : 0;
             $this->personRepository->update($person);
         }
 
-        $sql = "UPDATE tblUser SET Person = ?, Pass = ?, StandardOrganisation = ?, Foto = ?, lang = ?, istAktiv = ?, istAdmin = ?, istGeloescht = ? WHERE ID = ?";
+        $sql = "UPDATE tblUser SET Person = ?, Password = ?, DefaultOrganization = ?, Photo = ?, Lang = ?, IsActive = ?, IsAdmin = ?, IsDeleted = ? WHERE ID = ?";
         return $this->db->execute($sql, [
             $personId,
             $user->password !== '' ? $user->password : $existing->password,
-            $user->standardOrganisation ?: $existing->standardOrganisation,
-            $user->foto !== '' ? $user->foto : $existing->foto,
+            $user->defaultOrganization ?: $existing->defaultOrganization,
+            $user->photo !== '' ? $user->photo : $existing->photo,
             $user->lang !== '' ? $user->lang : $existing->lang,
-            $user->istAktiv ? 1 : 0,
-            $user->istAdmin ? 1 : 0,
-            $user->istGeloescht ? 1 : 0,
+            $user->isActive ? 1 : 0,
+            $user->isAdmin ? 1 : 0,
+            $user->isDeleted ? 1 : 0,
             $user->id
         ]);
     }
@@ -160,28 +160,25 @@ final class UserRepository
 
     public function deleteProfilePhoto(int $userId): bool
     {
-        
-        $sql = "SELECT Foto FROM tblUser WHERE ID = ?";
-        $foto = $this->db->query($sql, [$userId]);
-        $path = __DIR__ . '/../..' . $foto[0]['Foto'];
+
+        $sql = "SELECT Photo FROM tblUser WHERE ID = ?";
+        $photo = $this->db->query($sql, [$userId]);
+        $path = __DIR__ . '/../..' . $photo[0]['Photo'];
 
         if (is_file($path)) {
             unlink($path);
 
-            $sql = "UPDATE tblUser SET Foto = NULL WHERE ID = ?";
+            $sql = "UPDATE tblUser SET Photo = NULL WHERE ID = ?";
             return $this->db->execute($sql, [$userId]);
         }
 
         return false;
-
     }
 
-    public function addProfilePhoto(int $userId, string $path): bool{
-        $sql = "UPDATE tblUser SET FOTO = ? WHERE ID = ?";
+    public function addProfilePhoto(int $userId, string $path): bool
+    {
+        $sql = "UPDATE tblUser SET Photo = ? WHERE ID = ?";
 
         return $this->db->execute($sql, [$path, $userId]);
     }
-
 }
-
-?>

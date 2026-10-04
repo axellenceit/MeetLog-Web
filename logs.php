@@ -82,7 +82,7 @@ $logs = $logRepository->findAll();
                                             <?php
                                             $user = $userRepository->findById($log->userId);
                                             if ($user) {
-                                                echo htmlspecialchars($user->vorname . ' ' . $user->nachname, ENT_QUOTES, 'UTF-8');
+                                                echo htmlspecialchars($user->firstName . ' ' . $user->lastName, ENT_QUOTES, 'UTF-8');
                                             } else {
                                                 echo 'Unbekannt';
                                             }

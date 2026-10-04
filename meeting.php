@@ -13,47 +13,47 @@ if (!$auth->isLoggedIn()) {
 }
 
 if (!isset($_GET['id'])) {
-    $redirect->to('besprechungen.php');
+    $redirect->to('meetings.php');
 }
 
 $user = $userRepository->findById($session->get('id'));
-$authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$session->get('Organisation'), Permission::MANAGE_MEETINGS);
+$authToManageMeetings = $user->isAdmin || $acl->isPermitted($user->id, (int)$session->get('Organization'), Permission::MANAGE_MEETINGS);
 
-$besprechung = $besprechungRepository->findById((int)($_GET['id']));
+$meeting = $meetingRepository->findById((int)($_GET['id']));
 
-if (!$besprechung->istAktiviert) {
+if (!$meeting->isActive) {
     $flash->set('errorMsg', 'Diese Besprechung wurde gelöscht');
     $flash->set('errorColor', 'red');
     $flash->set('errorCode', '403');
     $redirect->to('error.php');
 }
 
-$datum = (new DateTime($besprechung->datum))->format('d.m.Y');
-if ($besprechung->beginn && $besprechung->ende) {
-    $zeiten = (new DateTime($besprechung->beginn))->format('H:i') . ' - ' . (new DateTime($besprechung->ende))->format('H:i');
-    $dauer = (new DateTime($besprechung->ende))->getTimestamp() - (new DateTime($besprechung->beginn))->getTimestamp();
+$datum = (new DateTime($meeting->date))->format('d.m.Y');
+if ($meeting->startTime && $meeting->endTime) {
+    $zeiten = (new DateTime($meeting->startTime))->format('H:i') . ' - ' . (new DateTime($meeting->endTime))->format('H:i');
+    $dauer = (new DateTime($meeting->endTime))->getTimestamp() - (new DateTime($meeting->startTime))->getTimestamp();
     $dauer = round($dauer / 60);
 } else {
     $zeiten = '';
     $dauer = '';
 }
 
-$tops = $besprechungspunktRepository->findByBesprechungId($besprechung->id);
+$tops = $meetingPointRepository->findByMeetingId($meeting->id);
 
-$teilnehmer = $besprechungsteilnehmerRepository->findByBesprechungId($besprechung->id);
-$anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
-    return $t->istAnwesend;
+$participants = $meetingParticipantRepository->findByMeetingId($meeting->id);
+$anwesendeTeilnehmer = array_filter($participants, function ($t) {
+    return $t->isPresent;
 });
 
-$teilnehmerPersonIds = array_filter(array_map(static fn($t) => $t->person, $teilnehmer));
+$teilnehmerPersonIds = array_filter(array_map(static fn($t) => $t->person, $participants));
 $verfuegbarePersonen = array_filter(
     $personRepository->findAll(),
     static fn($p) => !in_array($p->id, $teilnehmerPersonIds, true)
 );
 
-$tasks = $taskRepository->findByBesprechungId($besprechung->id);
+$tasks = $taskRepository->findByMeetingId($meeting->id);
 
-$anhaenge = $besprechungsanhangRepository->findByBesprechungId($besprechung->id);
+$attachments = $meetingAttachmentRepository->findByMeetingId($meeting->id);
 
 $alleBenutzer = $userRepository->findAll(true);
 
@@ -167,7 +167,7 @@ $alleBenutzer = $userRepository->findAll(true);
                         <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
 
                             <div class="d-flex align-items-center gap-3 min-w-0">
-                                <a href="besprechungen.php"
+                                <a href="meetings.php"
                                     title="<?= $translator->t('meetings.back_to_overview'); ?>"
                                     class="btn btn-icon btn-outline-primary flex-shrink-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-arrow-left">
@@ -179,21 +179,21 @@ $alleBenutzer = $userRepository->findAll(true);
                                 </a>
 
                                 <div class="min-w-0">
-                                    <h1 class="mb-0"><?= htmlspecialchars($besprechung->titel, ENT_QUOTES, 'UTF-8'); ?></h1>
+                                    <h1 class="mb-0"><?= htmlspecialchars($meeting->title, ENT_QUOTES, 'UTF-8'); ?></h1>
                                 </div>
                             </div>
 
                             <div class="d-flex flex-wrap justify-content-start justify-content-lg-end gap-2">
                                 <?php if ($authToManageMeetings) { ?>
 
-                                    <?php if ($besprechung->istVeröffentlicht) { ?>
-                                        <button type="button" class="btn btn-outline-warning <?php if ($besprechung->status === 'beendet' && !$user->istAdmin) {
+                                    <?php if ($meeting->isPublished) { ?>
+                                        <button type="button" class="btn btn-outline-warning <?php if ($meeting->status === 'finished' && !$user->isAdmin) {
                                                                                                     echo 'disabled';
                                                                                                 } ?>" data-bs-target="#unpublishMeetingModal" data-bs-toggle="modal">
                                             <?= $translator->t('meetings.unpublish'); ?>
                                         </button>
                                     <?php } else { ?>
-                                        <button type="button" class="btn btn-outline-success <?php if ($besprechung->status === 'beendet' && !$user->istAdmin) {
+                                        <button type="button" class="btn btn-outline-success <?php if ($meeting->status === 'finished' && !$user->isAdmin) {
                                                                                                     echo 'disabled';
                                                                                                 } ?>" title="<?= $translator->t('meetings.publish'); ?>" data-bs-toggle="modal" data-bs-target="#publishMeetingModal">
                                             <?= $translator->t('meetings.publish'); ?>
@@ -201,7 +201,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                     <?php } ?>
 
                                     <button type="button"
-                                        class="btn btn-outline-primary <?php if ($besprechung->status === 'beendet' && !$user->istAdmin) {
+                                        class="btn btn-outline-primary <?php if ($meeting->status === 'finished' && !$user->isAdmin) {
                                                                             echo 'disabled';
                                                                         } ?>"
                                         title="<?= $translator->t('meetings.edit'); ?>"
@@ -211,7 +211,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                     </button>
 
                                     <button type="button"
-                                        class="btn btn-outline-danger <?php if ($besprechung->status === 'beendet' && !$user->istAdmin) {
+                                        class="btn btn-outline-danger <?php if ($meeting->status === 'finished' && !$user->isAdmin) {
                                                                             echo 'disabled';
                                                                         } ?>"
                                         title="<?= $translator->t('meetings.delete'); ?>"
@@ -225,7 +225,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                 <div class="vr"></div>
 
                                 <button type="button"
-                                    class="btn btn-outline-primary <?php if ($besprechung->status != 'geplant') {
+                                    class="btn btn-outline-primary <?php if ($meeting->status != 'planned') {
                                                                         echo 'disabled';
                                                                     } ?>"
                                     title="<?= $translator->t('meetings.participants.sentInvitation'); ?>"
@@ -268,15 +268,15 @@ $alleBenutzer = $userRepository->findAll(true);
                                 </div>
                                 <div class="col-7">
                                     <?php
-                                    if ($besprechung->status === 'geplant') {
+                                    if ($meeting->status === 'planned') {
                                         echo '<span class="badge bg-secondary text-white">' . $translator->t('meetings.status.planned') . '</span>';
-                                    } elseif ($besprechung->status === 'aktiv') {
+                                    } elseif ($meeting->status === 'live') {
                                         echo '<span class="badge bg-success text-white">' . $translator->t('meetings.status.active') . '</span>';
-                                    } elseif ($besprechung->status === 'beendet') {
+                                    } elseif ($meeting->status === 'finished') {
                                         echo '<span class="badge bg-dark text-white">' . $translator->t('meetings.status.finished') . '</span>';
                                     }
                                     ?>
-                                    <?php if ($besprechung->istVeröffentlicht) { ?>
+                                    <?php if ($meeting->isPublished) { ?>
                                         <span class="badge bg-success text-white"> <?= $translator->t('meetings.published'); ?></span>
                                     <?php } else { ?>
                                         <span class="badge bg-danger text-white"> <?= $translator->t('meetings.unpublished'); ?></span>
@@ -336,7 +336,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                     </svg><strong> <?= $translator->t('meetings.location'); ?>:</strong>
                                 </div>
                                 <div class="col-7">
-                                    <?= $besprechung->ort; ?>
+                                    <?= $meeting->location; ?>
                                 </div>
                             </div>
 
@@ -350,8 +350,8 @@ $alleBenutzer = $userRepository->findAll(true);
                                     </svg><strong> <?= $translator->t('meetings.link'); ?>:</strong>
                                 </div>
                                 <div class="col-7">
-                                    <?php if ($besprechung->istVeröffentlicht) { ?>
-                                        <a href="<?= $config->get('general', 'url'); ?>api/getMeetingAsPublic.php?besprechung=<?= $besprechung->public_code; ?>" target="_blank"><?= $besprechung->public_code; ?></a>
+                                    <?php if ($meeting->isPublished) { ?>
+                                        <a href="<?= $config->get('general', 'url'); ?>api/getMeetingAsPublic.php?meeting=<?= $meeting->publicCode; ?>" target="_blank"><?= $meeting->publicCode; ?></a>
 
                                     <?php } else { ?>
                                         -
@@ -371,7 +371,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                     </svg><strong> <?= $translator->t('meetings.createdAt'); ?>:</strong>
                                 </div>
                                 <div class="col-7">
-                                    <?= $besprechung->createdAt; ?>
+                                    <?= $meeting->createdAt; ?>
                                 </div>
                             </div>
 
@@ -385,7 +385,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                     </svg><strong> <?= $translator->t('meetings.createdBy'); ?>:</strong>
                                 </div>
                                 <div class="col-7">
-                                    <?= $userRepository->findByID($besprechung->erstellerUserId)->vorname . ' ' . $userRepository->findByID($besprechung->erstellerUserId)->nachname; ?>
+                                    <?= $userRepository->findByID($meeting->creatorUserId)->firstName . ' ' . $userRepository->findByID($meeting->creatorUserId)->lastName; ?>
                                 </div>
                             </div>
 
@@ -401,7 +401,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                     </svg><strong> <?= $translator->t('meetings.updatedAt'); ?>:</strong>
                                 </div>
                                 <div class="col-7">
-                                    <?= $besprechung->updatedAt; ?>
+                                    <?= $meeting->updatedAt; ?>
                                 </div>
                             </div>
                         </div>
@@ -435,17 +435,17 @@ $alleBenutzer = $userRepository->findAll(true);
                             </div>
                             <div>
                                 <ul class="list-group list-group-flush">
-                                    <?php foreach ($teilnehmer as $t) { ?>
+                                    <?php foreach ($participants as $t) { ?>
                                         <li class="list-group-item d-flex align-items-center gap-2 participant-item">
                                             <div class="d-flex align-items-center gap-2 flex-wrap participant-content">
-                                                <span class="badge bg-<?= $t->istAnwesend ? 'success' : ($t->istEntschuldigt ? 'warning' : ($t->istAbwesend ? 'danger' : 'secondary')); ?> text-white"></span>
+                                                <span class="badge bg-<?= $t->isPresent ? 'success' : ($t->isExcused ? 'warning' : ($t->isAbsent ? 'danger' : 'secondary')); ?> text-white"></span>
 
                                                 <?php
-                                                $funktion = null;
+                                                $function = null;
 
-                                                if ($t->funktion !== null) {
-                                                    $organisationsFunktionRepository = $app->organisationsFunktionRepository();
-                                                    $funktion = $organisationsFunktionRepository->findById((int)$t->funktion);
+                                                if ($t->function !== null) {
+                                                    $organizationFunctionRepository = $app->organizationFunctionRepository();
+                                                    $function = $organizationFunctionRepository->findById((int)$t->function);
                                                 }
                                                 ?>
 
@@ -483,22 +483,22 @@ $alleBenutzer = $userRepository->findAll(true);
 
                                                     ?>
 
-                                                    <span><?= htmlspecialchars($t->vorname . ' ' . $t->nachname, ENT_QUOTES, 'UTF-8'); ?></span>
+                                                    <span><?= htmlspecialchars($t->firstName . ' ' . $t->lastName, ENT_QUOTES, 'UTF-8'); ?></span>
                                                     <span class="d-flex gap-2">
-                                                        <?php if ((int) $t->istSitzungsleitung === 1) { ?>
+                                                        <?php if ((int) $t->isChair === 1) { ?>
                                                             <span title="<?= htmlspecialchars($translator->t('meetings.participants.chairman'), ENT_QUOTES, 'UTF-8'); ?>" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= htmlspecialchars($translator->t('meetings.participants.chairman'), ENT_QUOTES, 'UTF-8'); ?>"><?= $chairmanIcon; ?></span>
                                                         <?php } ?>
-                                                        <?php if ((int) $t->istProtokollfuehrer === 1) { ?>
+                                                        <?php if ((int) $t->isMinuteTaker === 1) { ?>
                                                             <span title="<?= htmlspecialchars($translator->t('meetings.participants.secretary'), ENT_QUOTES, 'UTF-8'); ?>" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= htmlspecialchars($translator->t('meetings.participants.secretary'), ENT_QUOTES, 'UTF-8'); ?>"><?= $secretaryIcon; ?></span>
                                                         <?php } ?>
-                                                        <?php if ((int) $t->darfUnterschreiben === 1) { ?>
+                                                        <?php if ((int) $t->maySign === 1) { ?>
                                                             <span title="<?= htmlspecialchars($translator->t('meetings.participants.authToSign'), ENT_QUOTES, 'UTF-8'); ?>" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= htmlspecialchars($translator->t('meetings.participants.authToSign'), ENT_QUOTES, 'UTF-8'); ?>"><?= $signIcon; ?></span>
                                                         <?php } ?>
                                                     </span>
 
-                                                    <?php if ($funktion !== null): ?>
+                                                    <?php if ($function !== null): ?>
                                                         <span class="text-muted">
-                                                            <?= htmlspecialchars($funktion->bezeichnung, ENT_QUOTES, 'UTF-8'); ?>
+                                                            <?= htmlspecialchars($function->name, ENT_QUOTES, 'UTF-8'); ?>
                                                         </span>
                                                     <?php endif; ?>
 
@@ -506,11 +506,11 @@ $alleBenutzer = $userRepository->findAll(true);
 
                                                 <div class="btn-list ms-auto gap-1 participant-actions">
                                                     <?php
-                                                    $canSign = $funktion === null || !$funktion->darfUnterschreiben;
-                                                    $isAbsentDisable = ((int) $t->istAbwesend === 1) ? 'disabled' : '';
+                                                    $canSign = $function === null || !$function->maySign;
+                                                    $isAbsentDisable = ((int) $t->isAbsent === 1) ? 'disabled' : '';
                                                     ?>
 
-                                                    <a href="./actions.php?action=meetingChairman&meetingId=<?= $besprechung->id; ?>&participantId=<?= $t->id; ?>" class="btn btn-action <?= $isAbsentDisable; ?>" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= htmlspecialchars($translator->t('meetings.participants.chairman'), ENT_QUOTES, 'UTF-8'); ?>">
+                                                    <a href="./actions.php?action=meetingChairman&meetingId=<?= $meeting->id; ?>&participantId=<?= $t->id; ?>" class="btn btn-action <?= $isAbsentDisable; ?>" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= htmlspecialchars($translator->t('meetings.participants.chairman'), ENT_QUOTES, 'UTF-8'); ?>">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                                             class="icon icon-tabler icons-tabler-outline icon-tabler-user-shield">
                                                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -519,7 +519,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                                             <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
                                                         </svg>
                                                     </a>
-                                                    <a href="./actions.php?action=meetingSecretary&meetingId=<?= $besprechung->id; ?>&participantId=<?= $t->id; ?>" class="btn btn-action <?= $isAbsentDisable; ?>" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= htmlspecialchars($translator->t('meetings.participants.secretary'), ENT_QUOTES, 'UTF-8'); ?>">
+                                                    <a href="./actions.php?action=meetingSecretary&meetingId=<?= $meeting->id; ?>&participantId=<?= $t->id; ?>" class="btn btn-action <?= $isAbsentDisable; ?>" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= htmlspecialchars($translator->t('meetings.participants.secretary'), ENT_QUOTES, 'UTF-8'); ?>">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-edit">
                                                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                                             <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
@@ -527,8 +527,8 @@ $alleBenutzer = $userRepository->findAll(true);
                                                             <path d="M18.42 15.61a2.1 2.1 0 0 1 2.97 2.97l-3.39 3.42h-3v-3l3.42 -3.39" />
                                                         </svg>
                                                     </a>
-                                                    <a href="./actions.php?action=<?= ((int) $t->darfUnterschreiben === 1) ? 'meetingUnsign' : 'meetingSign'; ?>&meetingId=<?= $besprechung->id; ?>&participantId=<?= $t->id; ?>" class="btn btn-action <?= $isAbsentDisable; ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="<?= htmlspecialchars(((int) $t->darfUnterschreiben === 1) ? $translator->t('meetings.participants.notAuthToSign') : $translator->t('meetings.participants.AuthToSign'), ENT_QUOTES, 'UTF-8'); ?>">
-                                                        <?php if ($t->darfUnterschreiben === 1) { ?>
+                                                    <a href="./actions.php?action=<?= ((int) $t->maySign === 1) ? 'meetingUnsign' : 'meetingSign'; ?>&meetingId=<?= $meeting->id; ?>&participantId=<?= $t->id; ?>" class="btn btn-action <?= $isAbsentDisable; ?>" data-bs-toggle="tooltip" data-bs-placement="right" title="<?= htmlspecialchars(((int) $t->maySign === 1) ? $translator->t('meetings.participants.notAuthToSign') : $translator->t('meetings.participants.AuthToSign'), ENT_QUOTES, 'UTF-8'); ?>">
+                                                        <?php if ($t->maySign) { ?>
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-signature-off">
                                                                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                                                 <path d="M3 17c3.333 -3.333 5 -6 5 -8c0 -.394 -.017 -.735 -.05 -1.033m-1.95 -1.967c-1 0 -2.032 1.085 -2 3c.034 2.048 1.658 4.877 2.5 6c1.5 2 2.5 2.5 3.5 1l2 -3c.333 2.667 1.333 4 3 4c.219 0 .708 -.341 1.231 -.742m3.769 -.258c.303 .245 .64 .677 1 1" />
@@ -551,7 +551,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                                         <?php } ?>
                                                     </a>
                                                     <div class="vr"></div>
-                                                    <a href="./api/getMeetingSingleInvitationAsPDF.php?meetingId=<?= $besprechung->id ?>&participantId=<?= $t->id; ?>" class="btn btn-action" target="_blank" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= $translator->t('meetings.invitationToPDF'); ?>">
+                                                    <a href="./api/getMeetingSingleInvitationAsPDF.php?meetingId=<?= $meeting->id ?>&participantId=<?= $t->id; ?>" class="btn btn-action" target="_blank" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= $translator->t('meetings.invitationToPDF'); ?>">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-due">
                                                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                                             <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2l0 -12" />
@@ -562,21 +562,21 @@ $alleBenutzer = $userRepository->findAll(true);
                                                         </svg>
                                                     </a>
                                                     <div class="vr"></div>
-                                                    <button type="button" class="btn btn-action" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= $translator->t('meetings.participants.present'); ?>" onclick="setParticipantStatus(<?= $besprechung->id; ?>, <?= $t->id; ?>, 'present')"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-check">
+                                                    <button type="button" class="btn btn-action" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= $translator->t('meetings.participants.present'); ?>" onclick="setParticipantStatus(<?= $meeting->id; ?>, <?= $t->id; ?>, 'present')"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-check">
                                                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                                             <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
                                                             <path d="M6 21v-2a4 4 0 0 1 4 -4h4" />
                                                             <path d="M15 19l2 2l4 -4" />
                                                         </svg>
                                                     </button>
-                                                    <button type="button" class="btn btn-action" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= $translator->t('meetings.participants.excused'); ?>" onclick="setParticipantStatus(<?= $besprechung->id; ?>, <?= $t->id; ?>, 'excused')"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-cancel">
+                                                    <button type="button" class="btn btn-action" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= $translator->t('meetings.participants.excused'); ?>" onclick="setParticipantStatus(<?= $meeting->id; ?>, <?= $t->id; ?>, 'excused')"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-cancel">
                                                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                                             <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
                                                             <path d="M6 21v-2a4 4 0 0 1 4 -4h3.5" />
                                                             <path d="M16 19a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
                                                             <path d="M17 21l4 -4" />
                                                         </svg></button>
-                                                    <button type="button" class="btn btn-action" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= $translator->t('meetings.participants.absent'); ?>" onclick="setParticipantStatus(<?= $besprechung->id; ?>, <?= $t->id; ?>, 'absent')"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-down">
+                                                    <button type="button" class="btn btn-action" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="<?= $translator->t('meetings.participants.absent'); ?>" onclick="setParticipantStatus(<?= $meeting->id; ?>, <?= $t->id; ?>, 'absent')"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-down">
                                                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                                             <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
                                                             <path d="M6 21v-2a4 4 0 0 1 4 -4h4c.342 0 .674 .043 .99 .124" />
@@ -605,7 +605,7 @@ $alleBenutzer = $userRepository->findAll(true);
 
                 foreach ($tops as $t) {
 
-                    if (empty($t->elternPosition) || $t->elternPosition == 0):
+                    if (empty($t->parentPosition) || $t->parentPosition == 0):
 
                         $main++;
                         $child = 0;
@@ -623,10 +623,10 @@ $alleBenutzer = $userRepository->findAll(true);
                 ?>
                     <div class="card mb-2" id="topic-<?= $prefix ?>">
                         <div class="card-header">
-                            <h3 class="card-title"><b><?= $prefix; ?> • <?= $t->titel; ?></b></h3>
+                            <h3 class="card-title"><b><?= $prefix; ?> • <?= $t->title; ?></b></h3>
                             <?php if ($authToManageMeetings) { ?>
                                 <div class="card-actions">
-                                    <button type="button" class="btn btn-icon btn-outline-primary <?php if ($besprechung->status === 'beendet') {
+                                    <button type="button" class="btn btn-icon btn-outline-primary <?php if ($meeting->status === 'finished') {
                                                                                                         echo 'disabled';
                                                                                                     } ?>" title="<?= $translator->translate('meetings.editMeetingPoint') ?>" onclick="event.preventDefault(); editMeetingPoint(<?= $t->id ?>)">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-edit">
@@ -635,7 +635,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                             <path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" />
                                             <line x1="16" y1="5" x2="19" y2="8" />
                                         </svg></button>
-                                    <button type="button" class="btn btn-icon btn-outline-danger <?php if ($besprechung->status === 'beendet') {
+                                    <button type="button" class="btn btn-icon btn-outline-danger <?php if ($meeting->status === 'finished') {
                                                                                                         echo 'disabled';
                                                                                                     } ?>" title="<?= $translator->translate('meetings.deleteMeetingPoint') ?>" onclick="deleteMeetingPoint(<?= $t->id ?>)">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-trash">
@@ -650,28 +650,28 @@ $alleBenutzer = $userRepository->findAll(true);
                             <?php } ?>
                         </div>
                         <div class="card-body">
-                            <p><?= $t->beschreibung; ?></p>
-                            <?php if ($t->ergebnis) { ?>
+                            <p><?= $t->description; ?></p>
+                            <?php if ($t->result) { ?>
                                 <div class="alert alert-success d-flex align-items-center" role="alert">
                                     <div>
-                                        <?= str_replace("<p>", "<p class='mb-0'>", $t->ergebnis); ?>
+                                        <?= str_replace("<p>", "<p class='mb-0'>", $t->result); ?>
                                     </div>
                                 </div>
                             <?php } ?>
                         </div>
-                        <?php if ($t->typ == 'abstimmung') { ?>
+                        <?php if ($t->type == 'voting') { ?>
                             <div class="card-footer">
                                 <div class="btn-list gap-1 text-center">
                                     <?php
-                                    $gesamtStimmen = ($t->ergebnis_zustimmung ?? 0) + ($t->ergebnis_ablehnung ?? 0) + ($t->ergebnis_enthaltung ?? 0);
-                                    $jaProzent = $gesamtStimmen > 0 ? round(($t->ergebnis_zustimmung ?? 0) / $gesamtStimmen * 100) : 0;
-                                    $neinProzent = $gesamtStimmen > 0 ? round(($t->ergebnis_ablehnung ?? 0) / $gesamtStimmen * 100) : 0;
+                                    $gesamtStimmen = ($t->resultApproval ?? 0) + ($t->resultRejection ?? 0) + ($t->resultAbstention ?? 0);
+                                    $jaProzent = $gesamtStimmen > 0 ? round(($t->resultApproval ?? 0) / $gesamtStimmen * 100) : 0;
+                                    $neinProzent = $gesamtStimmen > 0 ? round(($t->resultRejection ?? 0) / $gesamtStimmen * 100) : 0;
                                     $ergebnis = $jaProzent > $neinProzent ? 'approved' : ($neinProzent > $jaProzent ? 'rejected' : 'tie');
                                     $ergebnisText = $jaProzent > $neinProzent ? $translator->t('meetings.voting.result.approved') : ($neinProzent > $jaProzent ? $translator->t('meetings.voting.result.rejected') : $translator->t('meetings.voting.result.tie'));
                                     ?>
-                                    <button type="button" class="btn btn-outline-success"><?= $t->ergebnis_zustimmung ?? 0 ?> <?= $translator->t('meetings.voting.yes') ?></button>
-                                    <button type="button" class="btn btn-outline-danger"><?= $t->ergebnis_ablehnung ?? 0 ?> <?= $translator->t('meetings.voting.no') ?></button>
-                                    <button type="button" class="btn btn-outline-secondary me-auto"><?= $t->ergebnis_enthaltung ?? 0 ?> <?= $translator->t('meetings.voting.abstain') ?></button>
+                                    <button type="button" class="btn btn-outline-success"><?= $t->resultApproval ?? 0 ?> <?= $translator->t('meetings.voting.yes') ?></button>
+                                    <button type="button" class="btn btn-outline-danger"><?= $t->resultRejection ?? 0 ?> <?= $translator->t('meetings.voting.no') ?></button>
+                                    <button type="button" class="btn btn-outline-secondary me-auto"><?= $t->resultAbstention ?? 0 ?> <?= $translator->t('meetings.voting.abstain') ?></button>
                                     <button type="button" class="btn btn-<?= ($ergebnis === 'approved') ? 'success' : (($ergebnis === 'rejected') ? 'danger' : 'secondary') ?>"> <?= $ergebnisText; ?></button>
                                 </div>
 
@@ -682,7 +682,7 @@ $alleBenutzer = $userRepository->findAll(true);
                 <?php } ?>
             </div>
 
-            <?php if (!$besprechung->istVeröffentlicht) { ?>
+            <?php if (!$meeting->isPublished) { ?>
                 <div class="hr-text"><?= $translator->translate('meetings.newMeetingPoint') ?></div>
                 <div class="text-center">
                     <button class="btn btn-lg btn-success mb-5" data-bs-toggle="modal" data-bs-target="#newMeetingPointModal"><?= $translator->t('meetings.newMeetingPoint') ?></button>
@@ -695,15 +695,15 @@ $alleBenutzer = $userRepository->findAll(true);
             <?php foreach ($tasks as $task) { ?>
                 <div class="card mb-3">
                     <div class="card-header">
-                        <h3 class="card-title"><?= htmlspecialchars($task->titel) ?></h3>
+                        <h3 class="card-title"><?= htmlspecialchars($task->title) ?></h3>
                         <div class="card-actions">
                             <a href="#" class="btn btn-icon btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-task-edit"
                                 data-task-id="<?= (int) $task->id ?>"
-                                data-task-user-id="<?= (int) ($task->verantwortlicherUserId ?? 0) ?>"
-                                data-task-title="<?= htmlspecialchars($task->titel, ENT_QUOTES, 'UTF-8') ?>"
-                                data-task-description="<?= htmlspecialchars($task->beschreibung ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                data-task-user-id="<?= (int) ($task->assigneeUserId ?? 0) ?>"
+                                data-task-title="<?= htmlspecialchars($task->title, ENT_QUOTES, 'UTF-8') ?>"
+                                data-task-description="<?= htmlspecialchars($task->description ?? '', ENT_QUOTES, 'UTF-8') ?>"
                                 data-task-deadline="<?= htmlspecialchars($task->deadline ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                                data-task-completed="<?= $task->istErledigt ? '1' : '0' ?>">
+                                data-task-completed="<?= $task->isDone ? '1' : '0' ?>">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-edit">
                                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                     <path d="M9 7h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" />
@@ -730,14 +730,14 @@ $alleBenutzer = $userRepository->findAll(true);
                         </div>
                     </div>
                     <div class="card-body">
-                        <p class="card-text"><?= htmlspecialchars((string)($task->beschreibung ?? '')) ?></p>
+                        <p class="card-text"><?= htmlspecialchars((string)($task->description ?? '')) ?></p>
                         <p class="card-text"><small class="text-muted"><?= $translator->t('meetings.tasks.deadline') ?>: <?= $task->deadline ? htmlspecialchars((new DateTime($task->deadline))->format('d.m.Y')) : '' ?></small></p>
                     </div>
                 </div>
             <?php } ?>
 
 
-            <?php if (!$besprechung->istVeröffentlicht) { ?>
+            <?php if (!$meeting->isPublished) { ?>
                 <div class="hr-text"><?= $translator->translate('meetings.tasks.new') ?></div>
                 <div class="text-center">
                     <button class="btn btn-lg btn-success mb-5" data-bs-toggle="modal" data-bs-target="#newTaskModal"><?= $translator->t('meetings.tasks.new') ?></button>
@@ -761,28 +761,28 @@ $alleBenutzer = $userRepository->findAll(true);
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if (empty($anhaenge)) { ?>
+                            <?php if (empty($attachments)) { ?>
                                 <tr>
                                     <td colspan="6" class="text-center text-muted"><?= $translator->t('meetings.attachments.empty') ?></td>
                                 </tr>
                             <?php } else { ?>
-                                <?php foreach ($anhaenge as $anhang) { ?>
+                                <?php foreach ($attachments as $attachment) { ?>
                                     <tr>
                                         <td>
-                                            <a href="<?= htmlspecialchars((string)$anhang->dateipfad, ENT_QUOTES, 'UTF-8'); ?>" target="_blank"><?= htmlspecialchars($anhang->originalDateiname, ENT_QUOTES, 'UTF-8'); ?></a>
+                                            <a href="<?= htmlspecialchars((string)$attachment->filePath, ENT_QUOTES, 'UTF-8'); ?>" target="_blank"><?= htmlspecialchars($attachment->originalFileName, ENT_QUOTES, 'UTF-8'); ?></a>
                                         </td>
-                                        <td class="text-muted"><?= htmlspecialchars((string)($anhang->beschreibung ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
-                                        <td class="text-muted"><?= $anhang->formatierteGroesse(); ?></td>
+                                        <td class="text-muted"><?= htmlspecialchars((string)($attachment->description ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td class="text-muted"><?= $attachment->formattedSize(); ?></td>
                                         <td colspan="2">
                                             <form method="post" action="actions.php?action=updateMeetingAttachmentFlags" class="d-flex justify-content-around align-items-center">
-                                                <input type="hidden" name="attachmentId" value="<?= (int)$anhang->id; ?>" />
-                                                <input type="hidden" name="meetingId" value="<?= (int)$besprechung->id; ?>" />
-                                                <input type="checkbox" class="form-check-input" name="druckenBeiEinladung" value="1" <?= $anhang->druckenBeiEinladung ? 'checked' : ''; ?> onchange="this.form.submit()" data-bs-toggle="tooltip" data-bs-title="<?= $translator->t('meetings.attachments.printInvitation') ?>" />
-                                                <input type="checkbox" class="form-check-input" name="druckenBeiProtokoll" value="1" <?= $anhang->druckenBeiProtokoll ? 'checked' : ''; ?> onchange="this.form.submit()" data-bs-toggle="tooltip" data-bs-title="<?= $translator->t('meetings.attachments.printProtocol') ?>" />
+                                                <input type="hidden" name="attachmentId" value="<?= (int)$attachment->id; ?>" />
+                                                <input type="hidden" name="meetingId" value="<?= (int)$meeting->id; ?>" />
+                                                <input type="checkbox" class="form-check-input" name="printWithInvitation" value="1" <?= $attachment->printWithInvitation ? 'checked' : ''; ?> onchange="this.form.submit()" data-bs-toggle="tooltip" data-bs-title="<?= $translator->t('meetings.attachments.printInvitation') ?>" />
+                                                <input type="checkbox" class="form-check-input" name="printWithMinutes" value="1" <?= $attachment->printWithMinutes ? 'checked' : ''; ?> onchange="this.form.submit()" data-bs-toggle="tooltip" data-bs-title="<?= $translator->t('meetings.attachments.printProtocol') ?>" />
                                             </form>
                                         </td>
                                         <td>
-                                            <a href="./actions.php?action=deleteMeetingAttachment&attachmentId=<?= (int)$anhang->id; ?>&meetingId=<?= (int)$besprechung->id; ?>" class="btn btn-icon btn-outline-danger" data-bs-toggle="tooltip" data-bs-title="<?= $translator->t('meetings.attachments.delete'); ?>">
+                                            <a href="./actions.php?action=deleteMeetingAttachment&attachmentId=<?= (int)$attachment->id; ?>&meetingId=<?= (int)$meeting->id; ?>" class="btn btn-icon btn-outline-danger" data-bs-toggle="tooltip" data-bs-title="<?= $translator->t('meetings.attachments.delete'); ?>">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
                                                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                                     <line x1="4" y1="7" x2="20" y2="7" />
@@ -801,7 +801,7 @@ $alleBenutzer = $userRepository->findAll(true);
                 </div>
             </div>
 
-            <?php if (!$besprechung->istVeröffentlicht) { ?>
+            <?php if (!$meeting->isPublished) { ?>
                 <div class="text-center">
                     <button class="btn btn-lg btn-success mb-5" data-bs-toggle="modal" data-bs-target="#uploadAttachmentModal"><?= $translator->t('meetings.attachments.new') ?></button>
                 </div>
@@ -819,7 +819,7 @@ $alleBenutzer = $userRepository->findAll(true);
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="meetingId" value="<?= (int)$besprechung->id; ?>" />
+                    <input type="hidden" name="meetingId" value="<?= (int)$meeting->id; ?>" />
                     <div class="mb-3">
                         <label class="form-label"><?= $translator->t('meetings.attachments.file'); ?></label>
                         <input type="file" class="form-control" name="file" accept=".pdf" required />
@@ -827,15 +827,15 @@ $alleBenutzer = $userRepository->findAll(true);
                     </div>
                     <div class="mb-3">
                         <label class="form-label"><?= $translator->t('meetings.attachments.description'); ?></label>
-                        <input type="text" class="form-control" name="beschreibung" maxlength="255" />
+                        <input type="text" class="form-control" name="description" maxlength="255" />
                     </div>
                     <div class="mb-3">
                         <label class="form-check">
-                            <input type="checkbox" class="form-check-input" name="druckenBeiEinladung" value="1" />
+                            <input type="checkbox" class="form-check-input" name="printWithInvitation" value="1" />
                             <span class="form-check-label"><?= $translator->t('meetings.attachments.printWithInvitation'); ?></span>
                         </label>
                         <label class="form-check">
-                            <input type="checkbox" class="form-check-input" name="druckenBeiProtokoll" value="1" />
+                            <input type="checkbox" class="form-check-input" name="printWithMinutes" value="1" />
                             <span class="form-check-label"><?= $translator->t('meetings.attachments.printWithProtocol'); ?></span>
                         </label>
                     </div>
@@ -856,7 +856,7 @@ $alleBenutzer = $userRepository->findAll(true);
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="meetingId" id="meetingId" value="<?= $besprechung->id; ?>" />
+                    <input type="hidden" name="meetingId" id="meetingId" value="<?= $meeting->id; ?>" />
                     <input type="checkbox" class="form-check-input mb-2" name="includeParticipants" id="includeParticipants" value="1" />
                     <label for="includeParticipants"><?= $translator->t('meetings.includeParticipants'); ?></label>
                 </div>
@@ -876,7 +876,7 @@ $alleBenutzer = $userRepository->findAll(true);
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="meetingId" id="meetingId" value="<?= $besprechung->id; ?>" />
+                    <input type="hidden" name="meetingId" id="meetingId" value="<?= $meeting->id; ?>" />
 
                     <div class="input-group mb-2">
                         <input type="number" class="form-control" name="numberOfParticipants" style="text-align: center;" id="numberOfParticipants" min="1" placeholder="<?= $translator->t('meetings.participants.numberOfParticipants'); ?>" value="12" required />
@@ -901,22 +901,22 @@ $alleBenutzer = $userRepository->findAll(true);
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" name="besprechung_id" value="<?= $besprechung->id; ?>">
+                        <input type="hidden" name="meeting_id" value="<?= $meeting->id; ?>">
                         <div class="row g-3">
                             <div class="col-12">
                                 <label class="form-label" for="task-title-create"><?= $translator->t('tasks.title'); ?></label>
-                                <input class="form-control" type="text" name="titel" id="task-title-create" maxlength="255" required>
+                                <input class="form-control" type="text" name="title" id="task-title-create" maxlength="255" required>
                             </div>
                             <div class="col-12">
                                 <label class="form-label" for="task-description-create"><?= $translator->t('tasks.description'); ?></label>
-                                <textarea class="form-control" name="beschreibung" id="task-description-create" rows="4"></textarea>
+                                <textarea class="form-control" name="description" id="task-description-create" rows="4"></textarea>
                             </div>
                             <div class="col-12 col-md-6">
                                 <label class="form-label" for="task-user-create"><?= $translator->t('tasks.assignedTo'); ?></label>
-                                <select class="form-select" name="verantwortlicher_user_id" id="task-user-create">
+                                <select class="form-select" name="assignee_user_id" id="task-user-create">
                                     <option value="">-</option>
                                     <?php foreach ($alleBenutzer as $benutzer): ?>
-                                        <option value="<?= (int) $benutzer->id ?>"><?= htmlspecialchars(trim($benutzer->vorname . ' ' . $benutzer->nachname), ENT_QUOTES, 'UTF-8') ?></option>
+                                        <option value="<?= (int) $benutzer->id ?>"><?= htmlspecialchars(trim($benutzer->firstName . ' ' . $benutzer->lastName), ENT_QUOTES, 'UTF-8') ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -992,22 +992,22 @@ $alleBenutzer = $userRepository->findAll(true);
                     </div>
                     <div class="modal-body">
                         <input type="hidden" name="task_id" id="task-id-edit">
-                        <input type="hidden" name="besprechung_id" value="<?= $besprechung->id; ?>">
+                        <input type="hidden" name="meeting_id" value="<?= $meeting->id; ?>">
                         <div class="row g-3">
                             <div class="col-12">
                                 <label class="form-label" for="task-title-edit"><?= $translator->t('tasks.title'); ?></label>
-                                <input class="form-control" type="text" name="titel" id="task-title-edit" maxlength="255" required>
+                                <input class="form-control" type="text" name="title" id="task-title-edit" maxlength="255" required>
                             </div>
                             <div class="col-12">
                                 <label class="form-label" for="task-description-edit"><?= $translator->t('tasks.description'); ?></label>
-                                <textarea class="form-control" name="beschreibung" id="task-description-edit" rows="4"></textarea>
+                                <textarea class="form-control" name="description" id="task-description-edit" rows="4"></textarea>
                             </div>
                             <div class="col-12 col-md-6">
                                 <label class="form-label" for="task-user-edit"><?= $translator->t('tasks.assignedTo'); ?></label>
-                                <select class="form-select" name="verantwortlicher_user_id" id="task-user-edit">
+                                <select class="form-select" name="assignee_user_id" id="task-user-edit">
                                     <option value="">-</option>
                                     <?php foreach ($alleBenutzer as $benutzer): ?>
-                                        <option value="<?= (int) $benutzer->id ?>"><?= htmlspecialchars(trim($benutzer->vorname . ' ' . $benutzer->nachname), ENT_QUOTES, 'UTF-8') ?></option>
+                                        <option value="<?= (int) $benutzer->id ?>"><?= htmlspecialchars(trim($benutzer->firstName . ' ' . $benutzer->lastName), ENT_QUOTES, 'UTF-8') ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -1017,7 +1017,7 @@ $alleBenutzer = $userRepository->findAll(true);
                             </div>
                             <div class="col-12 col-md-6">
                                 <label class="form-label" for="task-completed-edit"><?= $translator->t('tasks.status'); ?></label>
-                                <select class="form-select" name="ist_erledigt" id="task-completed-edit">
+                                <select class="form-select" name="is_done" id="task-completed-edit">
                                     <option value="0"><?= $translator->t('meetings.tasks.incomplete'); ?></option>
                                     <option value="1"><?= $translator->t('meetings.tasks.complete'); ?></option>
                                 </select>
@@ -1043,27 +1043,27 @@ $alleBenutzer = $userRepository->findAll(true);
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" name="editMeetingId" id="editMeetingId" value="<?= $besprechung->id; ?>" />
+                        <input type="hidden" name="editMeetingId" id="editMeetingId" value="<?= $meeting->id; ?>" />
                         <div class="mb-3">
                             <label class="form-label"><?= $translator->t('meetings.title'); ?></label>
-                            <input type="text" class="form-control" name="editMeetingTitle" id="editMeetingTitle" placeholder="Titel" value="<?= $besprechung->titel; ?>" />
+                            <input type="text" class="form-control" name="editMeetingTitle" id="editMeetingTitle" placeholder="Titel" value="<?= $meeting->title; ?>" />
                         </div>
                         <div class="mb-3">
                             <label class="form-label"><?= $translator->t('meetings.location'); ?></label>
-                            <input type="text" class="form-control" name="editMeetingLocation" id="editMeetingLocation" placeholder="Ort" value="<?= $besprechung->ort; ?>" />
+                            <input type="text" class="form-control" name="editMeetingLocation" id="editMeetingLocation" placeholder="Ort" value="<?= $meeting->location; ?>" />
                         </div>
                         <div class="row g-2">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label"><?= $translator->t('meetings.date'); ?></label>
-                                <input type="date" class="form-control" name="editMeetingDate" id="editMeetingDate" value="<?= $besprechung->datum; ?>" />
+                                <input type="date" class="form-control" name="editMeetingDate" id="editMeetingDate" value="<?= $meeting->date; ?>" />
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label"><?= $translator->t('meetings.start'); ?></label>
-                                <input type="time" class="form-control" name="editMeetingBegin" id="editMeetingBegin" value="<?= $besprechung->beginn; ?>" />
+                                <input type="time" class="form-control" name="editMeetingStartTime" id="editMeetingStartTime" value="<?= $meeting->startTime; ?>" />
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label"><?= $translator->t('meetings.end'); ?></label>
-                                <input type="time" class="form-control" name="editMeetingEnde" id="editMeetingEnde" value="<?= $besprechung->ende; ?>" />
+                                <input type="time" class="form-control" name="editMeetingEndTime" id="editMeetingEndTime" value="<?= $meeting->endTime; ?>" />
                             </div>
                         </div>
                     </div>
@@ -1100,7 +1100,7 @@ $alleBenutzer = $userRepository->findAll(true);
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" name="deleteMeetingId" id="deleteMeetingId" value="<?= $besprechung->id; ?>" />
+                        <input type="hidden" name="deleteMeetingId" id="deleteMeetingId" value="<?= $meeting->id; ?>" />
                         <div class="mb-3">
                             <label class="form-label">
                                 <?= $translator->t('text.deleteMeeting'); ?>
@@ -1149,7 +1149,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                         <?= $translator->t('meetings.types.information'); ?></span>
                                 </label>
                                 <label class="form-selectgroup-item">
-                                    <input type="radio" name="editMeetingPointType" value="diskussion" class="form-selectgroup-input">
+                                    <input type="radio" name="editMeetingPointType" value="discussion" class="form-selectgroup-input">
                                     <span class="form-selectgroup-label"><!-- Download SVG icon from http://tabler.io/icons/icon/user -->
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-users-group">
                                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -1163,7 +1163,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                         <?= $translator->t('meetings.types.discussion'); ?></span>
                                 </label>
                                 <label class="form-selectgroup-item">
-                                    <input type="radio" name="editMeetingPointType" value="abstimmung" class="form-selectgroup-input">
+                                    <input type="radio" name="editMeetingPointType" value="voting" class="form-selectgroup-input">
                                     <span class="form-selectgroup-label"><!-- Download SVG icon from http://tabler.io/icons/icon/circle -->
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-circle-dashed-check">
                                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -1191,7 +1191,7 @@ $alleBenutzer = $userRepository->findAll(true);
                             <select class="form-select" name="editMeetingPointParent" id="editMeetingPointParent">
                                 <option value="0"><?= $translator->t('meetings.noParentTopic'); ?></option>
                                 <?php foreach ($tops as $t) { ?>
-                                    <option value="<?= $t->id; ?>"><?= $t->titel; ?></option>
+                                    <option value="<?= $t->id; ?>"><?= $t->title; ?></option>
                                 <?php } ?>
                             </select>
                         </div>
@@ -1251,7 +1251,7 @@ $alleBenutzer = $userRepository->findAll(true);
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" name="newMeetingPointId" id="newMeetingPointId" value="<?= $besprechung->id; ?>" />
+                        <input type="hidden" name="newMeetingPointId" id="newMeetingPointId" value="<?= $meeting->id; ?>" />
                         <div class="mb-3">
                             <label class="form-label"><b><?= $translator->t('meetings.title'); ?></b></label>
                             <input type="text" class="form-control" name="newMeetingPointTitle" id="newMeetingPointTitle" placeholder="<?= $translator->t('meetings.title'); ?>" value="" />
@@ -1271,7 +1271,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                         <?= $translator->t('meetings.types.information'); ?></span>
                                 </label>
                                 <label class="form-selectgroup-item">
-                                    <input type="radio" name="newMeetingPointType" value="diskussion" class="form-selectgroup-input">
+                                    <input type="radio" name="newMeetingPointType" value="discussion" class="form-selectgroup-input">
                                     <span class="form-selectgroup-label"><!-- Download SVG icon from http://tabler.io/icons/icon/user -->
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-users-group">
                                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -1285,7 +1285,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                         <?= $translator->t('meetings.types.discussion'); ?></span>
                                 </label>
                                 <label class="form-selectgroup-item">
-                                    <input type="radio" name="newMeetingPointType" value="abstimmung" class="form-selectgroup-input">
+                                    <input type="radio" name="newMeetingPointType" value="voting" class="form-selectgroup-input">
                                     <span class="form-selectgroup-label"><!-- Download SVG icon from http://tabler.io/icons/icon/circle -->
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-circle-dashed-check">
                                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -1312,7 +1312,7 @@ $alleBenutzer = $userRepository->findAll(true);
                             <select class="form-select" name="newMeetingPointParent" id="newMeetingPointParent">
                                 <option value="0"><?= $translator->t('meetings.noParentTopic'); ?></option>
                                 <?php foreach ($tops as $t) { ?>
-                                    <option value="<?= $t->id; ?>"><?= $t->titel; ?></option>
+                                    <option value="<?= $t->id; ?>"><?= $t->title; ?></option>
                                 <?php } ?>
                             </select>
                         </div>
@@ -1371,7 +1371,7 @@ $alleBenutzer = $userRepository->findAll(true);
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" name="publishMeetingId" id="publishMeetingId" value="<?= $besprechung->id; ?>" />
+                        <input type="hidden" name="publishMeetingId" id="publishMeetingId" value="<?= $meeting->id; ?>" />
                         <div class="mb-3">
                             <label class="form-label"><b><?= $translator->t('text.meeting.publish'); ?></b></label>
                         </div>
@@ -1409,7 +1409,7 @@ $alleBenutzer = $userRepository->findAll(true);
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" name="unpublishMeetingId" id="unpublishMeetingId" value="<?= $besprechung->id; ?>" />
+                        <input type="hidden" name="unpublishMeetingId" id="unpublishMeetingId" value="<?= $meeting->id; ?>" />
                         <div class="mb-3">
                             <label class="form-label"><b><?= $translator->t('text.meeting.unpublish'); ?></b></label>
                         </div>
@@ -1448,7 +1448,7 @@ $alleBenutzer = $userRepository->findAll(true);
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="sendInvitationMeetingId" value="<?= $besprechung->id; ?>" />
+                    <input type="hidden" name="sendInvitationMeetingId" value="<?= $meeting->id; ?>" />
 
                     <div class="mb-2">
                         <label class="form-check">
@@ -1460,7 +1460,7 @@ $alleBenutzer = $userRepository->findAll(true);
                     <p class="text-muted"><?= $translator->t('meetings.participants.selectRecipients'); ?></p>
 
                     <ul class="list-group list-group-flush">
-                        <?php foreach ($teilnehmer as $t) { ?>
+                        <?php foreach ($participants as $t) { ?>
                             <?php $hasMail = !empty($t->mail); ?>
                             <li class="list-group-item">
                                 <label class="form-check">
@@ -1469,7 +1469,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                         name="sendInvitationParticipantIds[]"
                                         value="<?= $t->id; ?>">
                                     <span class="form-check-label">
-                                        <?= htmlspecialchars($t->vorname . ' ' . $t->nachname, ENT_QUOTES, 'UTF-8'); ?>
+                                        <?= htmlspecialchars($t->firstName . ' ' . $t->lastName, ENT_QUOTES, 'UTF-8'); ?>
                                         <?php if ($hasMail) { ?>
                                             <span class="text-muted">(<?= htmlspecialchars($t->mail, ENT_QUOTES, 'UTF-8'); ?>)</span>
                                         <?php } else { ?>
@@ -1505,15 +1505,15 @@ $alleBenutzer = $userRepository->findAll(true);
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="meetingId" value="<?= $besprechung->id; ?>" />
+                    <input type="hidden" name="meetingId" value="<?= $meeting->id; ?>" />
 
                     <label class="form-label"><?= $translator->t('meetings.participants.root'); ?></label>
                     <div class="row g-2 align-items-center">
                         <div class="col">
                             <label class="form-label text-secondary"><?= $translator->t('meetings.participants.available'); ?></label>
-                            <select id="teilnehmer-verfuegbar" multiple size="10" class="form-select">
+                            <select id="participants-available" multiple size="10" class="form-select">
                                 <?php foreach ($verfuegbarePersonen as $person): ?>
-                                    <option value="<?= $person->id; ?>"><?= htmlspecialchars($person->vorname . ' ' . $person->nachname, ENT_QUOTES, 'UTF-8'); ?></option>
+                                    <option value="<?= $person->id; ?>"><?= htmlspecialchars($person->firstName . ' ' . $person->lastName, ENT_QUOTES, 'UTF-8'); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -1527,7 +1527,7 @@ $alleBenutzer = $userRepository->findAll(true);
 
                         <div class="col">
                             <label class="form-label text-secondary"><?= $translator->t('meetings.participants.selected'); ?></label>
-                            <select id="teilnehmer-ausgewaehlt" name="teilnehmer[]" multiple size="10" class="form-select"></select>
+                            <select id="participants-selected" name="participants[]" multiple size="10" class="form-select"></select>
                         </div>
                     </div>
                 </div>
@@ -1579,28 +1579,28 @@ $alleBenutzer = $userRepository->findAll(true);
             .then(response => response.json())
             .then(data => {
                 document.getElementById('editMeetingPointId').value = data.id;
-                document.getElementById('editMeetingPointTitle').value = data.titel;
-                hugeRTE.get("editMeetingPointDescription").setContent(data.beschreibung);
-                document.getElementById('editMeetingPointParent').value = data.elternPosition ?? 0;
+                document.getElementById('editMeetingPointTitle').value = data.title;
+                hugeRTE.get("editMeetingPointDescription").setContent(data.description);
+                document.getElementById('editMeetingPointParent').value = data.parentPosition ?? 0;
 
-                const typeValue = ['information', 'diskussion', 'abstimmung'].includes(data.typ) ? data.typ : 'information';
+                const typeValue = ['information', 'discussion', 'voting'].includes(data.type) ? data.type : 'information';
                 document.querySelectorAll('input[name="editMeetingPointType"]').forEach(input => {
                     input.checked = input.value === typeValue;
                 });
 
-                if (typeValue !== 'abstimmung') {
+                if (typeValue !== 'voting') {
                     document.getElementById('editVoteFields').style.display = 'none';
                     document.getElementById('editMeetingPointVotingYes').value = 0;
                     document.getElementById('editMeetingPointVotingNo').value = 0;
                     document.getElementById('editMeetingPointVotingAbstain').value = 0;
                 } else {
                     document.getElementById('editVoteFields').style.display = 'block';
-                    document.getElementById('editMeetingPointVotingYes').value = data.ergebnis_zustimmung ?? 0;
-                    document.getElementById('editMeetingPointVotingNo').value = data.ergebnis_ablehnung ?? 0;
-                    document.getElementById('editMeetingPointVotingAbstain').value = data.ergebnis_enthaltung ?? 0;
+                    document.getElementById('editMeetingPointVotingYes').value = data.resultApproval ?? 0;
+                    document.getElementById('editMeetingPointVotingNo').value = data.resultRejection ?? 0;
+                    document.getElementById('editMeetingPointVotingAbstain').value = data.resultAbstention ?? 0;
                 }
 
-                hugeRTE.get("editMeetingPointResult").setContent(data.ergebnis);
+                hugeRTE.get("editMeetingPointResult").setContent(data.result);
 
                 var editModal = new bootstrap.Modal(document.getElementById('editMeetingPointTextModal'));
                 editModal.show();
@@ -1610,94 +1610,94 @@ $alleBenutzer = $userRepository->findAll(true);
 </script>
 
 <script>
-    async function setParticipantStatus(besprechungId, participantId, status) {
+    async function setParticipantStatus(meetingId, participantId, status) {
 
-            console.log(`Setting status for participant ${participantId} to ${status} in meeting ${besprechungId}`);
+        console.log(`Setting status for participant ${participantId} to ${status} in meeting ${meetingId}`);
+
+        try {
+            const response = await fetch('api/setMeetingParticipantStatus.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    meetingId,
+                    participantId,
+                    status
+                })
+            });
+
+            const text = await response.text();
+            let data;
 
             try {
-                const response = await fetch('api/setMeetingParticipantStatus.php', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        besprechungId,
-                        participantId,
-                        status
-                    })
-                });
-
-                const text = await response.text();
-                let data;
-
-                try {
-                    data = JSON.parse(text);
-                } catch (err) {
-                    console.error('Invalid JSON response from API:', text);
-                    alert('Server returned an invalid response. See console for details.');
-                    return;
-                }
-
-                if (!response.ok) {
-                    console.error('API response error:', response.status, data);
-                    alert(data.error || 'Server error while updating participant status.');
-                    return;
-                }
-
-                if (data.error) {
-                    alert(data.error);
-                    return;
-                }
-
-                location.reload();
-            } catch (error) {
-                console.error('Fetch error:', error);
-                alert('An error occurred while updating participant status.');
+                data = JSON.parse(text);
+            } catch (err) {
+                console.error('Invalid JSON response from API:', text);
+                alert('Server returned an invalid response. See console for details.');
+                return;
             }
+
+            if (!response.ok) {
+                console.error('API response error:', response.status, data);
+                alert(data.error || 'Server error while updating participant status.');
+                return;
+            }
+
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            location.reload();
+        } catch (error) {
+            console.error('Fetch error:', error);
+            alert('An error occurred while updating participant status.');
         }
+    }
 </script>
 
 <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const verfuegbar = document.getElementById('teilnehmer-verfuegbar');
-            const ausgewaehlt = document.getElementById('teilnehmer-ausgewaehlt');
+    document.addEventListener('DOMContentLoaded', function() {
+        const available = document.getElementById('participants-available');
+        const selected = document.getElementById('participants-selected');
 
-            if (!verfuegbar || !ausgewaehlt) return;
+        if (!available || !selected) return;
 
-            const form = ausgewaehlt.closest('form');
+        const form = selected.closest('form');
 
-            function moveOptions(from, to, onlySelected) {
-                Array.from(from.options).forEach(function(option) {
-                    if (!onlySelected || option.selected) {
-                        option.selected = false;
-                        to.appendChild(option);
-                    }
-                });
-            }
-
-            document.getElementById('btn-participant-add').addEventListener('click', function() {
-                moveOptions(verfuegbar, ausgewaehlt, true);
+        function moveOptions(from, to, onlySelected) {
+            Array.from(from.options).forEach(function(option) {
+                if (!onlySelected || option.selected) {
+                    option.selected = false;
+                    to.appendChild(option);
+                }
             });
+        }
 
-            document.getElementById('btn-participant-remove').addEventListener('click', function() {
-                moveOptions(ausgewaehlt, verfuegbar, true);
-            });
+        document.getElementById('btn-participant-add').addEventListener('click', function() {
+            moveOptions(available, selected, true);
+        });
 
-            document.getElementById('btn-participant-add-all').addEventListener('click', function() {
-                moveOptions(verfuegbar, ausgewaehlt, false);
-            });
+        document.getElementById('btn-participant-remove').addEventListener('click', function() {
+            moveOptions(selected, available, true);
+        });
 
-            document.getElementById('btn-participant-remove-all').addEventListener('click', function() {
-                moveOptions(ausgewaehlt, verfuegbar, false);
-            });
+        document.getElementById('btn-participant-add-all').addEventListener('click', function() {
+            moveOptions(available, selected, false);
+        });
 
-            form.addEventListener('submit', function() {
-                Array.from(ausgewaehlt.options).forEach(function(option) {
-                    option.selected = true;
-                });
+        document.getElementById('btn-participant-remove-all').addEventListener('click', function() {
+            moveOptions(selected, available, false);
+        });
+
+        form.addEventListener('submit', function() {
+            Array.from(selected.options).forEach(function(option) {
+                option.selected = true;
             });
         });
+    });
 </script>
 
 <script>

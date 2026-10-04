@@ -11,17 +11,17 @@ if (!$auth->isLoggedIn()) {
 }
 
 $currentURL = basename($_SERVER['SCRIPT_NAME']);
-$organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
+$organizationId = (int) ($session->get('DefaultOrganization') ?? 0);
 
-if ($organisationId <= 0) {
+if ($organizationId <= 0) {
     $flash->set('errorMsg', 'Keine gueltige Standardorganisation gesetzt.');
     $flash->set('errorColor', 'red');
     $flash->set('errorCode', '400');
     $redirect->to('error.php');
 }
 
-$organisation = $organisationRepository->findById($organisationId);
-if ($organisation === null) {
+$organization = $organizationRepository->findById($organizationId);
+if ($organization === null) {
     $flash->set('errorMsg', 'Organisation nicht gefunden.');
     $flash->set('errorColor', 'red');
     $flash->set('errorCode', '404');
@@ -29,78 +29,78 @@ if ($organisation === null) {
 }
 
 $countries = $countryRepository->findAll();
-$mitglieder = $organisationsMitgliedRepository->findAllByOrganisation($organisationId, false);
-$organisationsFunktionen = $organisationsFunktionRepository->findAllByOrganisation($organisationId, false);
+$members = $organizationMemberRepository->findAllByOrganization($organizationId, false);
+$organizationFunctions = $organizationFunctionRepository->findAllByOrganization($organizationId, false);
 
-$funktionenById = [];
-foreach ($organisationsFunktionen as $funktion) {
-    if ($funktion->id !== null) {
-        $funktionenById[(int) $funktion->id] = (string) $funktion->bezeichnung;
+$functionsById = [];
+foreach ($organizationFunctions as $function) {
+    if ($function->id !== null) {
+        $functionsById[(int) $function->id] = (string) $function->name;
     }
 }
 
-$personenRows = [];
+$personRows = [];
 $userByPerson = [];
 
-foreach ($mitglieder as $mitglied) {
-    if ($mitglied->person === null) {
+foreach ($members as $member) {
+    if ($member->person === null) {
         continue;
     }
 
-    $personId = (int) $mitglied->person;
+    $personId = (int) $member->person;
     if (!isset($userByPerson[$personId])) {
         $userByPerson[$personId] = $userRepository->findByPersonId($personId);
     }
 
-    $personenRows[] = [
+    $personRows[] = [
         'personId' => $personId,
-        'mitgliedId' => (int) ($mitglied->id ?? 0),
-        'funktionId' => $mitglied->funktion !== null ? (int) $mitglied->funktion : null,
-        'funktionName' => $mitglied->funktion !== null && isset($funktionenById[(int) $mitglied->funktion])
-            ? $funktionenById[(int) $mitglied->funktion]
+        'memberId' => (int) ($member->id ?? 0),
+        'functionId' => $member->function !== null ? (int) $member->function : null,
+        'functionName' => $member->function !== null && isset($functionsById[(int) $member->function])
+            ? $functionsById[(int) $member->function]
             : '',
-        'vorname' => (string) ($mitglied->vorname ?? ''),
-        'nachname' => (string) ($mitglied->nachname ?? ''),
-        'mail' => (string) ($mitglied->mail ?? ''),
-        'telefon' => (string) ($mitglied->telefon ?? ''),
-        'strasse' => (string) ($mitglied->strasse ?? ''),
-        'plz' => (string) ($mitglied->plz ?? ''),
-        'ort' => (string) ($mitglied->ort ?? ''),
-        'land' => $mitglied->land !== null ? (int) $mitglied->land : null,
-        'istAktiv' => (bool) $mitglied->istAktiv,
+        'firstName' => (string) ($member->firstName ?? ''),
+        'lastName' => (string) ($member->lastName ?? ''),
+        'mail' => (string) ($member->mail ?? ''),
+        'phone' => (string) ($member->phone ?? ''),
+        'street' => (string) ($member->street ?? ''),
+        'zipCode' => (string) ($member->zipCode ?? ''),
+        'city' => (string) ($member->city ?? ''),
+        'country' => $member->country !== null ? (int) $member->country : null,
+        'isActive' => (bool) $member->isActive,
         'user' => $userByPerson[$personId],
     ];
 }
 
-$filterVorname = trim((string) ($_GET['f_vorname'] ?? ''));
-$filterNachname = trim((string) ($_GET['f_nachname'] ?? ''));
+$filterFirstName = trim((string) ($_GET['f_firstName'] ?? ''));
+$filterLastName = trim((string) ($_GET['f_lastName'] ?? ''));
 $filterMail = trim((string) ($_GET['f_mail'] ?? ''));
-$filterTelefon = trim((string) ($_GET['f_telefon'] ?? ''));
-$filterFunktion = trim((string) ($_GET['f_funktion'] ?? ''));
-$filterAktiv = trim((string) ($_GET['f_aktiv'] ?? ''));
+$filterPhone = trim((string) ($_GET['f_phone'] ?? ''));
+$filterFunction = trim((string) ($_GET['f_function'] ?? ''));
+$filterActive = trim((string) ($_GET['f_isActive'] ?? ''));
 $filterHasUser = trim((string) ($_GET['f_user'] ?? ''));
 
-$personenRows = array_values(array_filter(
-    $personenRows,
-    static function (array $row) use ($filterVorname, $filterNachname, $filterMail, $filterTelefon, $filterFunktion, $filterAktiv, $filterHasUser): bool {
-        if ($filterVorname !== '' && stripos($row['vorname'], $filterVorname) === false) {
+$personRows = array_values(array_filter(
+    $personRows,
+    static function (array $row) use ($filterFirstName, $filterLastName, $filterMail, $filterPhone, $filterFunction, $filterActive, $filterHasUser): bool {
+        if ($filterFirstName !== '' && stripos($row['firstName'], $filterFirstName) === false) {
             return false;
         }
-        if ($filterNachname !== '' && stripos($row['nachname'], $filterNachname) === false) {
+        if ($filterLastName !== '' && stripos($row['lastName'], $filterLastName) === false) {
             return false;
         }
         if ($filterMail !== '' && stripos($row['mail'], $filterMail) === false) {
             return false;
         }
-        if ($filterTelefon !== '' && stripos($row['telefon'], $filterTelefon) === false) {
+        if ($filterPhone !== '' && stripos($row['phone'], $filterPhone) === false) {
             return false;
         }
-        if ($filterFunktion !== '' && (string) ($row['funktionId'] ?? '') !== $filterFunktion) {
+        if ($filterFunction !== '' && (string) ($row['functionId'] ?? '') !== $filterFunction) {
             return false;
         }
-        if ($filterAktiv !== '') {
-            $isActive = $row['istAktiv'] ? '1' : '0';
-            if ($isActive !== $filterAktiv) {
+        if ($filterActive !== '') {
+            $isActive = $row['isActive'] ? '1' : '0';
+            if ($isActive !== $filterActive) {
                 return false;
             }
         }
@@ -183,15 +183,15 @@ $personenRows = array_values(array_filter(
                         <form method="get" action="">
                             <div class="row g-3 align-items-end">
                                 <div class="col-12 col-md-6 col-xl-2">
-                                    <label for="f_vorname" class="form-label">Vorname</label>
-                                    <input type="text" name="f_vorname" id="f_vorname" class="form-control"
-                                        value="<?= htmlspecialchars($filterVorname, ENT_QUOTES, 'UTF-8') ?>">
+                                    <label for="f_firstName" class="form-label">Vorname</label>
+                                    <input type="text" name="f_firstName" id="f_firstName" class="form-control"
+                                        value="<?= htmlspecialchars($filterFirstName, ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
 
                                 <div class="col-12 col-md-6 col-xl-2">
-                                    <label for="f_nachname" class="form-label">Nachname</label>
-                                    <input type="text" name="f_nachname" id="f_nachname" class="form-control"
-                                        value="<?= htmlspecialchars($filterNachname, ENT_QUOTES, 'UTF-8') ?>">
+                                    <label for="f_lastName" class="form-label">Nachname</label>
+                                    <input type="text" name="f_lastName" id="f_lastName" class="form-control"
+                                        value="<?= htmlspecialchars($filterLastName, ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
 
                                 <div class="col-12 col-md-6 col-xl-2">
@@ -201,30 +201,30 @@ $personenRows = array_values(array_filter(
                                 </div>
 
                                 <div class="col-12 col-md-6 col-xl-2">
-                                    <label for="f_telefon" class="form-label">Telefon</label>
-                                    <input type="text" name="f_telefon" id="f_telefon" class="form-control"
-                                        value="<?= htmlspecialchars($filterTelefon, ENT_QUOTES, 'UTF-8') ?>">
+                                    <label for="f_phone" class="form-label">Telefon</label>
+                                    <input type="text" name="f_phone" id="f_phone" class="form-control"
+                                        value="<?= htmlspecialchars($filterPhone, ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
 
                                 <div class="col-12 col-md-6 col-xl-2">
-                                    <label for="f_funktion" class="form-label">Funktion</label>
-                                    <select name="f_funktion" id="f_funktion" class="form-select">
+                                    <label for="f_function" class="form-label">Funktion</label>
+                                    <select name="f_function" id="f_function" class="form-select">
                                         <option value="">Alle</option>
-                                        <?php foreach ($organisationsFunktionen as $funktion): ?>
-                                            <?php $funktionId = (int) ($funktion->id ?? 0); ?>
-                                            <option value="<?= $funktionId ?>" <?= $filterFunktion === (string) $funktionId ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars((string) $funktion->bezeichnung, ENT_QUOTES, 'UTF-8') ?>
+                                        <?php foreach ($organizationFunctions as $function): ?>
+                                            <?php $functionId = (int) ($function->id ?? 0); ?>
+                                            <option value="<?= $functionId ?>" <?= $filterFunction === (string) $functionId ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars((string) $function->name, ENT_QUOTES, 'UTF-8') ?>
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
 
                                 <div class="col-12 col-md-6 col-xl-2">
-                                    <label for="f_aktiv" class="form-label">Aktiv</label>
-                                    <select name="f_aktiv" id="f_aktiv" class="form-select">
+                                    <label for="f_isActive" class="form-label">Aktiv</label>
+                                    <select name="f_isActive" id="f_isActive" class="form-select">
                                         <option value="">Alle</option>
-                                        <option value="1" <?= $filterAktiv === '1' ? 'selected' : '' ?>>Ja</option>
-                                        <option value="0" <?= $filterAktiv === '0' ? 'selected' : '' ?>>Nein</option>
+                                        <option value="1" <?= $filterActive === '1' ? 'selected' : '' ?>>Ja</option>
+                                        <option value="0" <?= $filterActive === '0' ? 'selected' : '' ?>>Nein</option>
                                     </select>
                                 </div>
 
@@ -264,7 +264,7 @@ $personenRows = array_values(array_filter(
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php if ($personenRows === []): ?>
+                                <?php if ($personRows === []): ?>
                                     <tr>
                                         <td colspan="9" class="text-secondary text-center py-4">
                                             Keine Personen gefunden
@@ -272,17 +272,17 @@ $personenRows = array_values(array_filter(
                                     </tr>
                                 <?php endif; ?>
 
-                                <?php foreach ($personenRows as $row): ?>
+                                <?php foreach ($personRows as $row): ?>
                                     <?php $user = $row['user']; ?>
                                     <tr>
                                         <td><?= (int) $row['personId'] ?></td>
-                                        <td><?= htmlspecialchars((string) $row['vorname'], ENT_QUOTES, 'UTF-8') ?></td>
-                                        <td><?= htmlspecialchars((string) $row['nachname'], ENT_QUOTES, 'UTF-8') ?></td>
+                                        <td><?= htmlspecialchars((string) $row['firstName'], ENT_QUOTES, 'UTF-8') ?></td>
+                                        <td><?= htmlspecialchars((string) $row['lastName'], ENT_QUOTES, 'UTF-8') ?></td>
                                         <td><?= htmlspecialchars((string) $row['mail'], ENT_QUOTES, 'UTF-8') ?></td>
-                                        <td><?= htmlspecialchars((string) $row['telefon'], ENT_QUOTES, 'UTF-8') ?></td>
-                                        <td><?= htmlspecialchars((string) ($row['funktionName'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                                        <td><?= htmlspecialchars((string) $row['phone'], ENT_QUOTES, 'UTF-8') ?></td>
+                                        <td><?= htmlspecialchars((string) ($row['functionName'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                                         <td>
-                                            <?php if ($row['istAktiv']): ?>
+                                            <?php if ($row['isActive']): ?>
                                                 <span class="badge bg-green-lt">Aktiv</span>
                                             <?php else: ?>
                                                 <span class="badge bg-secondary-lt">Gesperrt</span>
@@ -303,15 +303,15 @@ $personenRows = array_values(array_filter(
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#modal-person-edit"
                                                     data-person-id="<?= (int) $row['personId'] ?>"
-                                                    data-person-vorname="<?= htmlspecialchars((string) $row['vorname'], ENT_QUOTES, 'UTF-8') ?>"
-                                                    data-person-nachname="<?= htmlspecialchars((string) $row['nachname'], ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-person-first-name="<?= htmlspecialchars((string) $row['firstName'], ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-person-last-name="<?= htmlspecialchars((string) $row['lastName'], ENT_QUOTES, 'UTF-8') ?>"
                                                     data-person-mail="<?= htmlspecialchars((string) $row['mail'], ENT_QUOTES, 'UTF-8') ?>"
-                                                    data-person-telefon="<?= htmlspecialchars((string) $row['telefon'], ENT_QUOTES, 'UTF-8') ?>"
-                                                    data-person-strasse="<?= htmlspecialchars((string) $row['strasse'], ENT_QUOTES, 'UTF-8') ?>"
-                                                    data-person-plz="<?= htmlspecialchars((string) $row['plz'], ENT_QUOTES, 'UTF-8') ?>"
-                                                    data-person-ort="<?= htmlspecialchars((string) $row['ort'], ENT_QUOTES, 'UTF-8') ?>"
-                                                    data-person-land="<?= (int) ($row['land'] ?? 0) ?>"
-                                                    data-person-funktion-id="<?= (int) ($row['funktionId'] ?? 0) ?>"
+                                                    data-person-phone="<?= htmlspecialchars((string) $row['phone'], ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-person-street="<?= htmlspecialchars((string) $row['street'], ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-person-zip-code="<?= htmlspecialchars((string) $row['zipCode'], ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-person-city="<?= htmlspecialchars((string) $row['city'], ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-person-country="<?= (int) ($row['country'] ?? 0) ?>"
+                                                    data-person-function-id="<?= (int) ($row['functionId'] ?? 0) ?>"
                                                     data-person-has-user="<?= $user !== null ? '1' : '0' ?>"
                                                     data-person-has-mail="<?= $row['mail'] !== '' ? '1' : '0' ?>"
                                                     aria-label="Person bearbeiten">
@@ -323,7 +323,7 @@ $personenRows = array_values(array_filter(
                                                     </svg>
                                                 </button>
 
-                                                <?php if ($row['istAktiv']): ?>
+                                                <?php if ($row['isActive']): ?>
                                                     <form method="post" action="actions.php?action=disable_person&amp;person_id=<?= (int) $row['personId'] ?>" onsubmit="return confirm('Person wirklich sperren?');">
                                                         <button type="submit" class="btn btn-icon btn-outline-warning" aria-label="Sperren">
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icon-tabler-user-x">
@@ -409,33 +409,33 @@ $personenRows = array_values(array_filter(
                     <div class="modal-body">
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="vorname-create">Vorname</label>
-                                <input type="text" name="vorname" id="vorname-create" class="form-control">
+                                <label class="form-label" for="firstName-create">Vorname</label>
+                                <input type="text" name="firstName" id="firstName-create" class="form-control">
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="nachname-create">Nachname</label>
-                                <input type="text" name="nachname" id="nachname-create" class="form-control">
+                                <label class="form-label" for="lastName-create">Nachname</label>
+                                <input type="text" name="lastName" id="lastName-create" class="form-control">
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="strasse-create">Straße</label>
-                                <input type="text" name="strasse" id="strasse-create" class="form-control">
+                                <label class="form-label" for="street-create">Straße</label>
+                                <input type="text" name="street" id="street-create" class="form-control">
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="plz-create">PLZ</label>
-                                <input type="text" name="plz" id="plz-create" class="form-control">
+                                <label class="form-label" for="zipCode-create">PLZ</label>
+                                <input type="text" name="zipCode" id="zipCode-create" class="form-control">
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="ort-create">Ort</label>
-                                <input type="text" name="ort" id="ort-create" class="form-control">
+                                <label class="form-label" for="city-create">Ort</label>
+                                <input type="text" name="city" id="city-create" class="form-control">
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="land-create">Land</label>
-                                <select name="land" id="land-create" class="form-select">
+                                <label class="form-label" for="country-create">Land</label>
+                                <select name="country" id="country-create" class="form-select">
                                     <option value="">Bitte wählen</option>
                                     <?php foreach ($countries as $country): ?>
                                         <option value="<?= (int) $country->countryId ?>">
@@ -446,8 +446,8 @@ $personenRows = array_values(array_filter(
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="telefon-create">Telefon</label>
-                                <input type="text" name="telefon" id="telefon-create" class="form-control">
+                                <label class="form-label" for="phone-create">Telefon</label>
+                                <input type="text" name="phone" id="phone-create" class="form-control">
                             </div>
 
                             <div class="col-12 col-md-6">
@@ -456,12 +456,12 @@ $personenRows = array_values(array_filter(
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="funktion-create">Funktion/Rolle</label>
-                                <select name="funktion_id" id="funktion-create" class="form-select">
+                                <label class="form-label" for="function-create">Funktion/Rolle</label>
+                                <select name="function_id" id="function-create" class="form-select">
                                     <option value="">Keine Funktion</option>
-                                    <?php foreach ($organisationsFunktionen as $funktion): ?>
-                                        <option value="<?= (int) ($funktion->id ?? 0) ?>">
-                                            <?= htmlspecialchars((string) $funktion->bezeichnung, ENT_QUOTES, 'UTF-8') ?>
+                                    <?php foreach ($organizationFunctions as $function): ?>
+                                        <option value="<?= (int) ($function->id ?? 0) ?>">
+                                            <?= htmlspecialchars((string) $function->name, ENT_QUOTES, 'UTF-8') ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -533,33 +533,33 @@ $personenRows = array_values(array_filter(
 
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="vorname-edit">Vorname</label>
-                                <input type="text" name="vorname" id="vorname-edit" class="form-control" value="">
+                                <label class="form-label" for="firstName-edit">Vorname</label>
+                                <input type="text" name="firstName" id="firstName-edit" class="form-control" value="">
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="nachname-edit">Nachname</label>
-                                <input type="text" name="nachname" id="nachname-edit" class="form-control" value="">
+                                <label class="form-label" for="lastName-edit">Nachname</label>
+                                <input type="text" name="lastName" id="lastName-edit" class="form-control" value="">
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="strasse-edit">Straße</label>
-                                <input type="text" name="strasse" id="strasse-edit" class="form-control" value="">
+                                <label class="form-label" for="street-edit">Straße</label>
+                                <input type="text" name="street" id="street-edit" class="form-control" value="">
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="plz-edit">PLZ</label>
-                                <input type="text" name="plz" id="plz-edit" class="form-control" value="">
+                                <label class="form-label" for="zipCode-edit">PLZ</label>
+                                <input type="text" name="zipCode" id="zipCode-edit" class="form-control" value="">
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="ort-edit">Ort</label>
-                                <input type="text" name="ort" id="ort-edit" class="form-control" value="">
+                                <label class="form-label" for="city-edit">Ort</label>
+                                <input type="text" name="city" id="city-edit" class="form-control" value="">
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="land-edit">Land</label>
-                                <select name="land" id="land-edit" class="form-select">
+                                <label class="form-label" for="country-edit">Land</label>
+                                <select name="country" id="country-edit" class="form-select">
                                     <option value="">Bitte wählen</option>
                                     <?php foreach ($countries as $country): ?>
                                         <option value="<?= (int) $country->countryId ?>">
@@ -570,8 +570,8 @@ $personenRows = array_values(array_filter(
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="telefon-edit">Telefon</label>
-                                <input type="text" name="telefon" id="telefon-edit" class="form-control" value="">
+                                <label class="form-label" for="phone-edit">Telefon</label>
+                                <input type="text" name="phone" id="phone-edit" class="form-control" value="">
                             </div>
 
                             <div class="col-12 col-md-6">
@@ -580,12 +580,12 @@ $personenRows = array_values(array_filter(
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label" for="funktion-edit">Funktion/Rolle</label>
-                                <select name="funktion_id" id="funktion-edit" class="form-select">
+                                <label class="form-label" for="function-edit">Funktion/Rolle</label>
+                                <select name="function_id" id="function-edit" class="form-select">
                                     <option value="">Keine Funktion</option>
-                                    <?php foreach ($organisationsFunktionen as $funktion): ?>
-                                        <option value="<?= (int) ($funktion->id ?? 0) ?>">
-                                            <?= htmlspecialchars((string) $funktion->bezeichnung, ENT_QUOTES, 'UTF-8') ?>
+                                    <?php foreach ($organizationFunctions as $function): ?>
+                                        <option value="<?= (int) ($function->id ?? 0) ?>">
+                                            <?= htmlspecialchars((string) $function->name, ENT_QUOTES, 'UTF-8') ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -626,15 +626,15 @@ $personenRows = array_values(array_filter(
                     };
 
                     setValue('person-id-edit', button.getAttribute('data-person-id') || '');
-                    setValue('vorname-edit', button.getAttribute('data-person-vorname') || '');
-                    setValue('nachname-edit', button.getAttribute('data-person-nachname') || '');
+                    setValue('firstName-edit', button.getAttribute('data-person-first-name') || '');
+                    setValue('lastName-edit', button.getAttribute('data-person-last-name') || '');
                     setValue('mail-edit', button.getAttribute('data-person-mail') || '');
-                    setValue('telefon-edit', button.getAttribute('data-person-telefon') || '');
-                    setValue('strasse-edit', button.getAttribute('data-person-strasse') || '');
-                    setValue('plz-edit', button.getAttribute('data-person-plz') || '');
-                    setValue('ort-edit', button.getAttribute('data-person-ort') || '');
-                    setValue('land-edit', button.getAttribute('data-person-land') || '');
-                    setValue('funktion-edit', button.getAttribute('data-person-funktion-id') || '');
+                    setValue('phone-edit', button.getAttribute('data-person-phone') || '');
+                    setValue('street-edit', button.getAttribute('data-person-street') || '');
+                    setValue('zipCode-edit', button.getAttribute('data-person-zip-code') || '');
+                    setValue('city-edit', button.getAttribute('data-person-city') || '');
+                    setValue('country-edit', button.getAttribute('data-person-country') || '');
+                    setValue('function-edit', button.getAttribute('data-person-function-id') || '');
 
                     const hasUser = (button.getAttribute('data-person-has-user') || '0') === '1';
                     const hasMail = (button.getAttribute('data-person-has-mail') || '0') === '1';
@@ -651,9 +651,9 @@ $personenRows = array_values(array_filter(
                         resetPasswordLink.style.display = 'none';
 
                         if (!hasUser) {
-                            accountHint.textContent = hasMail
-                                ? 'Für diese Person existiert noch kein Benutzerkonto.'
-                                : 'Für ein Benutzerkonto muss zuerst eine E-Mail-Adresse gepflegt werden.';
+                            accountHint.textContent = hasMail ?
+                                'Für diese Person existiert noch kein Benutzerkonto.' :
+                                'Für ein Benutzerkonto muss zuerst eine E-Mail-Adresse gepflegt werden.';
 
                             if (hasMail && personId !== '') {
                                 createUserLink.style.display = 'inline-block';

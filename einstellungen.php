@@ -10,11 +10,11 @@ if (!$auth->isLoggedIn()) {
     $redirect->to('login.php');
 }
 
-if(!$session->get('istAdmin')) {
+if (!$session->get('IsAdmin')) {
     $redirect->to('index.php');
 }
 
-$einstellungen = $config->all();
+$settings = $config->all();
 
 ?>
 
@@ -75,7 +75,7 @@ $einstellungen = $config->all();
 
         <div class="container-xl">
 
-            <?php foreach ($einstellungen as $section => $einstellung) { ?>
+            <?php foreach ($settings as $section => $sectionValues) { ?>
 
                 <form action="actions.php?action=saveConfig" method="post">
                     <div class="card mb-3 shadow-sm">
@@ -90,7 +90,7 @@ $einstellungen = $config->all();
                         <div class="card-body">
 
                             <div class="config-meta">
-                                <?php foreach ($einstellung as $name => $wert) { ?>
+                                <?php foreach ($sectionValues as $name => $value) { ?>
                                     <div class="config-meta-item">
                                         <div class="config-meta-label"><?= htmlspecialchars($translator->t('settings.sections.' . $section . '.' . $name)); ?></div>
                                         <div class="config-meta-value">
@@ -101,7 +101,7 @@ $einstellungen = $config->all();
                                                         class="form-control"
                                                         id="update_<?= $section . '_' . $name; ?>"
                                                         name="update_<?= $section . '_' . $name; ?>"
-                                                        value="<?= $wert; ?>">
+                                                        value="<?= $value; ?>">
 
                                                     <span class="input-group-text">
                                                         <button
@@ -122,10 +122,10 @@ $einstellungen = $config->all();
                                                 <input type="hidden" id="update_<?= $section . '_' . $name; ?>" name="update_<?= $section . '_' . $name; ?>" value="0">
 
                                                 <label class="form-check form-switch form-switch-2 mb-2 mt-2">
-                                                    <input class="form-check-input" type="checkbox" id="update_<?= $section . '_' . $name; ?>" name="update_<?= $section . '_' . $name; ?>" <?= (($wert ?? null) ? 'checked' : ''); ?>>
+                                                    <input class="form-check-input" type="checkbox" id="update_<?= $section . '_' . $name; ?>" name="update_<?= $section . '_' . $name; ?>" <?= (($value ?? null) ? 'checked' : ''); ?>>
                                                 </label>
                                             <?php } else { ?>
-                                                <input type=" text" class="form-control" id="update_<?= $section . '_' . $name; ?>" name="update_<?= $section . '_' . $name; ?>" value="<?= $wert; ?>">
+                                                <input type=" text" class="form-control" id="update_<?= $section . '_' . $name; ?>" name="update_<?= $section . '_' . $name; ?>" value="<?= $value; ?>">
                                             <?php } ?>
                                         </div>
                                     </div>
@@ -162,7 +162,7 @@ $einstellungen = $config->all();
 
 <script>
     function togglePassword(inputId, button) {
-        const feld = document.getElementById(inputId);
+        const field = document.getElementById(inputId);
 
         const eyeSvg = `
             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-eye" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -182,12 +182,12 @@ $einstellungen = $config->all();
             </svg>
         `;
 
-        if (feld.type === 'password') {
-            feld.type = 'text';
+        if (field.type === 'password') {
+            field.type = 'text';
             button.innerHTML = eyeOffSvg;
             button.setAttribute('aria-label', 'Passwort verbergen');
         } else {
-            feld.type = 'password';
+            field.type = 'password';
             button.innerHTML = eyeSvg;
             button.setAttribute('aria-label', 'Passwort anzeigen');
         }

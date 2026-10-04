@@ -12,10 +12,10 @@ final class PersonRepository
 
     public function findAll(bool $onlyActive = true): array
     {
-        $sql = 'SELECT * FROM tblPerson WHERE istGeloescht = 0';
+        $sql = 'SELECT * FROM tblPerson WHERE IsDeleted = 0';
 
         if ($onlyActive) {
-            $sql .= ' AND istAktiv = 1';
+            $sql .= ' AND IsActive = 1';
         }
         $rows = $this->db->query($sql);
 
@@ -32,7 +32,7 @@ final class PersonRepository
 
     public function findByMail(string $mail): ?Person
     {
-        $sql = 'SELECT * FROM tblPerson WHERE Mail = ? AND istGeloescht = 0 LIMIT 1';
+        $sql = 'SELECT * FROM tblPerson WHERE Mail = ? AND IsDeleted = 0 LIMIT 1';
         $row = $this->db->first($sql, [$mail]);
 
         return $row ? Person::fromArray($row) : null;
@@ -43,20 +43,20 @@ final class PersonRepository
         $data = $person->toDatabaseArray();
 
         $sql = 'INSERT INTO tblPerson
-                (Vorname, Nachname, Mail, Telefon, Strasse, PLZ, Ort, Land, istAktiv, istGeloescht)
+                (FirstName, LastName, Mail, Phone, Street, ZipCode, City, Country, IsActive, IsDeleted)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
         $this->db->execute($sql, [
-            $data['Vorname'],
-            $data['Nachname'],
+            $data['FirstName'],
+            $data['LastName'],
             $data['Mail'],
-            $data['Telefon'],
-            $data['Strasse'],
-            $data['PLZ'],
-            $data['Ort'],
-            $data['Land'],
-            $data['istAktiv'],
-            $data['istGeloescht'],
+            $data['Phone'],
+            $data['Street'],
+            $data['ZipCode'],
+            $data['City'],
+            $data['Country'],
+            $data['IsActive'],
+            $data['IsDeleted'],
         ]);
 
         return (int) $this->db->lastInsertId();
@@ -71,29 +71,29 @@ final class PersonRepository
         $data = $person->toDatabaseArray();
 
         $sql = 'UPDATE tblPerson SET
-                Vorname = ?,
-                Nachname = ?,
+                FirstName = ?,
+                LastName = ?,
                 Mail = ?,
-                Telefon = ?,
-                Strasse = ?,
-                PLZ = ?,
-                Ort = ?,
-                Land = ?,
-                istAktiv = ?,
-                istGeloescht = ?
+                Phone = ?,
+                Street = ?,
+                ZipCode = ?,
+                City = ?,
+                Country = ?,
+                IsActive = ?,
+                IsDeleted = ?
                 WHERE id = ?';
 
         return $this->db->execute($sql, [
-            $data['Vorname'],
-            $data['Nachname'],
+            $data['FirstName'],
+            $data['LastName'],
             $data['Mail'],
-            $data['Telefon'],
-            $data['Strasse'],
-            $data['PLZ'],
-            $data['Ort'],
-            $data['Land'],
-            $data['istAktiv'],
-            $data['istGeloescht'],
+            $data['Phone'],
+            $data['Street'],
+            $data['ZipCode'],
+            $data['City'],
+            $data['Country'],
+            $data['IsActive'],
+            $data['IsDeleted'],
             $person->id,
         ]);
     }

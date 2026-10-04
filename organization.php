@@ -11,20 +11,20 @@ if (!$auth->isLoggedIn()) {
 }
 
 $currentURL = basename($_SERVER['SCRIPT_NAME']);
-$organisationId = (int) ($session->get('StandardOrganisation') ?? 0);
+$organizationId = (int) ($session->get('DefaultOrganization') ?? 0);
 
-if ($organisationId <= 0) {
+if ($organizationId <= 0) {
     $redirect->to('index.php');
 }
 
-$organisation = $organisationRepository->findById($organisationId);
+$organization = $organizationRepository->findById($organizationId);
 
-if ($organisation === null) {
+if ($organization === null) {
     $redirect->to('index.php');
 }
 
-$organisationError = (string) ($flash->get('organisation_error') ?? '');
-$organisationSuccess = (string) ($flash->get('organisation_success') ?? '');
+$organizationError = (string) ($flash->get('organization_error') ?? '');
+$organizationSuccess = (string) ($flash->get('organization_success') ?? '');
 
 $countries = $countryRepository->findAll();
 ?>
@@ -48,19 +48,19 @@ $countries = $countryRepository->findAll();
             <div class="container-xl py-3">
                 <ul class="nav nav-bordered mb-4 flex-nowrap overflow-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="./organisation.php">
+                        <a class="nav-link active" aria-current="page" href="./organization.php">
                             <?= htmlspecialchars($translator->t('organization.overview'), ENT_QUOTES, 'UTF-8') ?>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="./organisation.funktionen.php">
+                        <a class="nav-link" href="./organization.functions.php">
                             <?= htmlspecialchars($translator->t('organization.functions.root'), ENT_QUOTES, 'UTF-8') ?>
                         </a>
                     </li>
                 </ul>
 
-                <form action="actions.php?action=updateOrganisation" method="post" enctype="multipart/form-data">
-                    <input type="hidden" id="organisationId" name="organisationId" value="<?= $organisation->id; ?>">
+                <form action="actions.php?action=updateOrganization" method="post" enctype="multipart/form-data">
+                    <input type="hidden" id="organizationId" name="organizationId" value="<?= $organization->id; ?>">
                     <div class="card">
 
                         <div class="card-body">
@@ -78,7 +78,7 @@ $countries = $countryRepository->findAll();
                                         name="logo"
                                         id="logo"
                                         class="form-control"
-                                        value="<?= htmlspecialchars((string) ($organisation?->logo ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                        value="<?= htmlspecialchars((string) ($organization?->logo ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
 
                                 <div class="col-12 col-md-4">
@@ -90,7 +90,7 @@ $countries = $countryRepository->findAll();
                                         name="name1"
                                         id="name1"
                                         class="form-control"
-                                        value="<?= htmlspecialchars((string) ($organisation?->name1 ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                        value="<?= htmlspecialchars((string) ($organization?->name1 ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
 
                                 <div class="col-12 col-md-4">
@@ -102,31 +102,31 @@ $countries = $countryRepository->findAll();
                                         name="name2"
                                         id="name2"
                                         class="form-control"
-                                        value="<?= htmlspecialchars((string) ($organisation?->name2 ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                        value="<?= htmlspecialchars((string) ($organization?->name2 ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
 
                                 <div class="col-12 col-md-6">
-                                    <label for="registergericht" class="form-label">
+                                    <label for="registryCourt" class="form-label">
                                         <?= htmlspecialchars($translator->t('organization.localcourt'), ENT_QUOTES, 'UTF-8') ?>
                                     </label>
                                     <input
                                         type="text"
-                                        name="registergericht"
-                                        id="registergericht"
+                                        name="registryCourt"
+                                        id="registryCourt"
                                         class="form-control"
-                                        value="<?= htmlspecialchars((string) ($organisation?->registergericht ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                        value="<?= htmlspecialchars((string) ($organization?->registryCourt ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
 
                                 <div class="col-12 col-md-6">
-                                    <label for="registereintrag" class="form-label">
+                                    <label for="registryEntry" class="form-label">
                                         <?= htmlspecialchars($translator->t('organization.registration'), ENT_QUOTES, 'UTF-8') ?>
                                     </label>
                                     <input
                                         type="text"
-                                        name="registereintrag"
-                                        id="registereintrag"
+                                        name="registryEntry"
+                                        id="registryEntry"
                                         class="form-control"
-                                        value="<?= htmlspecialchars((string) ($organisation?->registereintrag ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                        value="<?= htmlspecialchars((string) ($organization?->registryEntry ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
 
                                 <div class="col-12">
@@ -135,25 +135,25 @@ $countries = $countryRepository->findAll();
                                 </div>
 
                                 <div class="col-12">
-                                    <label for="strasse" class="form-label">
+                                    <label for="street" class="form-label">
                                         <?= htmlspecialchars($translator->t('organization.address.street'), ENT_QUOTES, 'UTF-8') ?>
                                     </label>
                                     <input
                                         type="text"
-                                        name="strasse"
-                                        id="strasse"
+                                        name="street"
+                                        id="street"
                                         class="form-control"
-                                        value="<?= htmlspecialchars((string) ($organisation?->strasse ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                        value="<?= htmlspecialchars((string) ($organization?->street ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
 
                                 <div class="col-12 col-md-5">
-                                    <label for="land" class="form-label">
+                                    <label for="country" class="form-label">
                                         <?= htmlspecialchars($translator->t('organization.address.country'), ENT_QUOTES, 'UTF-8') ?>
                                     </label>
-                                    <select class="form-select" name="land" id="land">
+                                    <select class="form-select" name="country" id="country">
                                         <option value="">--Select--</option>
                                         <?php foreach ($countries as $country): ?>
-                                            <option value="<?= htmlspecialchars($country->isoAlpha2, ENT_QUOTES, 'UTF-8') ?>" <?= ($organisation?->land === $country->isoAlpha2) ? 'selected' : '' ?>>
+                                            <option value="<?= htmlspecialchars($country->isoAlpha2, ENT_QUOTES, 'UTF-8') ?>" <?= ($organization?->country === $country->isoAlpha2) ? 'selected' : '' ?>>
                                                 <?php if (strtoupper($currentLang) === 'DE'): ?>
                                                     <?= htmlspecialchars($country->nameDe, ENT_QUOTES, 'UTF-8') ?>
                                                 <?php else: ?>
@@ -165,27 +165,27 @@ $countries = $countryRepository->findAll();
                                 </div>
 
                                 <div class="col-12 col-md-3">
-                                    <label for="plz" class="form-label">
+                                    <label for="zipCode" class="form-label">
                                         <?= htmlspecialchars($translator->t('organization.address.zip'), ENT_QUOTES, 'UTF-8') ?>
                                     </label>
                                     <input
                                         type="text"
-                                        name="plz"
-                                        id="plz"
+                                        name="zipCode"
+                                        id="zipCode"
                                         class="form-control"
-                                        value="<?= htmlspecialchars((string) ($organisation?->plz ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                        value="<?= htmlspecialchars((string) ($organization?->zipCode ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
 
                                 <div class="col-12 col-md-4">
-                                    <label for="ort" class="form-label">
+                                    <label for="city" class="form-label">
                                         <?= htmlspecialchars($translator->t('organization.address.city'), ENT_QUOTES, 'UTF-8') ?>
                                     </label>
                                     <input
                                         type="text"
-                                        name="ort"
-                                        id="ort"
+                                        name="city"
+                                        id="city"
                                         class="form-control"
-                                        value="<?= htmlspecialchars((string) ($organisation?->ort ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                        value="<?= htmlspecialchars((string) ($organization?->city ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
 
                                 <div class="col-12">
@@ -194,27 +194,27 @@ $countries = $countryRepository->findAll();
                                 </div>
 
                                 <div class="col-12 col-md-6">
-                                    <label for="telefon" class="form-label">
+                                    <label for="phone" class="form-label">
                                         <?= htmlspecialchars($translator->t('organization.contact.phone'), ENT_QUOTES, 'UTF-8') ?>
                                     </label>
                                     <input
                                         type="tel"
-                                        name="telefon"
-                                        id="telefon"
+                                        name="phone"
+                                        id="phone"
                                         class="form-control"
-                                        value="<?= htmlspecialchars((string) ($organisation?->telefon ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                        value="<?= htmlspecialchars((string) ($organization?->phone ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
 
                                 <div class="col-12 col-md-6">
-                                    <label for="telefax" class="form-label">
+                                    <label for="fax" class="form-label">
                                         <?= htmlspecialchars($translator->t('organization.contact.facsimile'), ENT_QUOTES, 'UTF-8') ?>
                                     </label>
                                     <input
                                         type="tel"
-                                        name="telefax"
-                                        id="telefax"
+                                        name="fax"
+                                        id="fax"
                                         class="form-control"
-                                        value="<?= htmlspecialchars((string) ($organisation?->telefax ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                        value="<?= htmlspecialchars((string) ($organization?->fax ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
 
                                 <div class="col-12 col-md-6">
@@ -226,7 +226,7 @@ $countries = $countryRepository->findAll();
                                         name="email"
                                         id="email"
                                         class="form-control"
-                                        value="<?= htmlspecialchars((string) ($organisation?->email ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                        value="<?= htmlspecialchars((string) ($organization?->email ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
 
                                 <div class="col-12 col-md-6">
@@ -238,7 +238,7 @@ $countries = $countryRepository->findAll();
                                         name="homepage"
                                         id="homepage"
                                         class="form-control"
-                                        value="<?= htmlspecialchars((string) ($organisation?->homepage ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                        value="<?= htmlspecialchars((string) ($organization?->homepage ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
                             </div>
                         </div>

@@ -19,7 +19,7 @@ if (!class_exists(\setasign\Fpdi\Tcpdf\Fpdi::class)) {
  */
 class MeetingInvitationPdf extends \setasign\Fpdi\Tcpdf\Fpdi
 {
-    private ?object $organisation = null;
+    private ?object $organization = null;
     private array $boardOfDirectors = [];
     private bool $isAttachmentPage = false;
 
@@ -47,9 +47,9 @@ class MeetingInvitationPdf extends \setasign\Fpdi\Tcpdf\Fpdi
         $this->SetAlpha(1);
     }
 
-    public function setOrganisation(?object $organisation): void
+    public function setOrganization(?object $organization): void
     {
-        $this->organisation = $organisation;
+        $this->organization = $organization;
     }
 
     public function setBoardOfDirectors(array $boardOfDirectors): void
@@ -84,8 +84,8 @@ class MeetingInvitationPdf extends \setasign\Fpdi\Tcpdf\Fpdi
         $this->SetTextColor(75, 75, 75);
 
         $nameParts = [];
-        $name1 = trim((string)($this->organisation->name1 ?? ''));
-        $name2 = trim((string)($this->organisation->name2 ?? ''));
+        $name1 = trim((string)($this->organization->name1 ?? ''));
+        $name2 = trim((string)($this->organization->name2 ?? ''));
         if ($name1 !== '') {
             $nameParts[] = $name1;
         }
@@ -93,18 +93,18 @@ class MeetingInvitationPdf extends \setasign\Fpdi\Tcpdf\Fpdi
             $nameParts[] = $name2;
         }
 
-        $street = trim((string)($this->organisation->strasse ?? ''));
-        $city = trim((string)($this->organisation->plz ?? '') . ' ' . (string)($this->organisation->ort ?? ''));
-        $country = trim((string)($this->organisation->land ?? ''));
+        $street = trim((string)($this->organization->street ?? ''));
+        $city = trim((string)($this->organization->zipCode ?? '') . ' ' . (string)($this->organization->city ?? ''));
+        $country = trim((string)($this->organization->country ?? ''));
 
         $addressParts = array_filter([$street, $city, $country], static fn($value) => $value !== '');
         $addressLine = implode(' | ', $addressParts);
 
         $contactParts = [];
-        $phone = trim((string)($this->organisation->telefon ?? ''));
-        $fax = trim((string)($this->organisation->telefax ?? ''));
-        $email = trim((string)($this->organisation->email ?? ''));
-        $web = trim((string)($this->organisation->homepage ?? ''));
+        $phone = trim((string)($this->organization->phone ?? ''));
+        $fax = trim((string)($this->organization->fax ?? ''));
+        $email = trim((string)($this->organization->email ?? ''));
+        $web = trim((string)($this->organization->homepage ?? ''));
 
         if ($phone !== '') {
             $contactParts[] = 'Tel.: ' . $phone;
@@ -119,27 +119,27 @@ class MeetingInvitationPdf extends \setasign\Fpdi\Tcpdf\Fpdi
             $contactParts[] = $web;
         }
 
-        $registergericht = trim((string)($this->organisation->registergericht ?? ''));
-        $registereintrag = trim((string)($this->organisation->registereintrag ?? ''));
+        $registryCourt = trim((string)($this->organization->registryCourt ?? ''));
+        $registryEntry = trim((string)($this->organization->registryEntry ?? ''));
 
-        $vorstandNamen = [];
-        foreach ($this->boardOfDirectors as $mitglied) {
-            $vorstandName = trim((string)($mitglied->vorname ?? '') . ' ' . (string)($mitglied->nachname ?? ''));
-            if ($vorstandName !== '') {
-                $vorstandNamen[] = $vorstandName;
+        $boardNames = [];
+        foreach ($this->boardOfDirectors as $member) {
+            $boardName = trim((string)($member->firstName ?? '') . ' ' . (string)($member->lastName ?? ''));
+            if ($boardName !== '') {
+                $boardNames[] = $boardName;
             }
         }
 
         $registerParts = [];
-        if ($registergericht !== '') {
-            $registerParts[] = 'Registergericht: ' . $registergericht;
+        if ($registryCourt !== '') {
+            $registerParts[] = 'Registergericht: ' . $registryCourt;
         }
-        if ($registereintrag !== '') {
-            $registerParts[] = 'Eintrag: ' . $registereintrag;
+        if ($registryEntry !== '') {
+            $registerParts[] = 'Eintrag: ' . $registryEntry;
         }
 
-        if (!empty($vorstandNamen)) {
-            $registerParts[] = 'Vorstand: ' . implode(', ', $vorstandNamen);
+        if (!empty($boardNames)) {
+            $registerParts[] = 'Vorstand: ' . implode(', ', $boardNames);
         }
 
         $this->SetX($leftMargin);

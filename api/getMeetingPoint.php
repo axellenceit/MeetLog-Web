@@ -22,7 +22,7 @@ if (!$meetingPointId) {
     exit;
 }
 
-$meetingPoint = $besprechungspunktRepository->findById((int)$meetingPointId);
+$meetingPoint = $meetingPointRepository->findById((int)$meetingPointId);
 
 if (!$meetingPoint) {
     http_response_code(404);
@@ -32,15 +32,15 @@ if (!$meetingPoint) {
 
 echo json_encode([
     'id' => $meetingPoint->id,
-    'besprechungId' => $meetingPoint->besprechungId,
+    'meetingId' => $meetingPoint->meetingId,
     'position' => $meetingPoint->position,
-    'elternPosition' => $meetingPoint->elternPosition,
-    'titel' => $meetingPoint->titel,
-    'beschreibung' => $meetingPoint->beschreibung,
-    'typ' => $meetingPoint->typ,
-    'ergebnis' => $meetingPoint->ergebnis,
-    'ergebnis_zustimmung' => $meetingPoint->ergebnis_zustimmung,
-    'ergebnis_ablehnung' => $meetingPoint->ergebnis_ablehnung,
-    'ergebnis_enthaltung' => $meetingPoint->ergebnis_enthaltung,
-    'istAktiviert' => $meetingPoint->istAktiviert,
+    'parentPosition' => $meetingPoint->parentPosition,
+    'title' => $meetingPoint->title,
+    'description' => $meetingPoint->description,
+    'type' => $meetingPoint->type,
+    'result' => $meetingPoint->result,
+    'resultApproval' => $meetingPoint->resultApproval,
+    'resultRejection' => $meetingPoint->resultRejection,
+    'resultAbstention' => $meetingPoint->resultAbstention,
+    'isActive' => $meetingPoint->isActive,
 ]);

@@ -25,23 +25,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $custom = $data['custom'] ?? [];
             $pdo->beginTransaction();
-            $organization = $pdo->prepare('INSERT INTO tblOrganisation (Logo, Name1, Homepage, EMail, Land) VALUES (?, ?, ?, ?, ?)');
+            $organization = $pdo->prepare('INSERT INTO tblOrganization (Logo, Name1, Homepage, EMail, Country) VALUES (?, ?, ?, ?, ?)');
             $organization->execute(['', $custom['organization'], $data['url'], $custom['email'], 'DE']);
             $organizationId = (int)$pdo->lastInsertId();
 
-            $person = $pdo->prepare('INSERT INTO tblPerson (Vorname, Nachname, Mail, Land) VALUES (?, ?, ?, ?)');
+            $person = $pdo->prepare('INSERT INTO tblPerson (FirstName, LastName, Mail, Country) VALUES (?, ?, ?, ?)');
             $person->execute([$custom['first_name'], $custom['last_name'], $custom['email'], 1]);
             $personId = (int)$pdo->lastInsertId();
 
-            $user = $pdo->prepare('INSERT INTO tblUser (Person, Pass, StandardOrganisation, lang, istAdmin) VALUES (?, ?, ?, ?, 1)');
+            $user = $pdo->prepare('INSERT INTO tblUser (Person, Password, DefaultOrganization, Lang, IsAdmin) VALUES (?, ?, ?, ?, 1)');
             $user->execute([$personId, password_hash($custom['password'], PASSWORD_DEFAULT), $organizationId, 'de']);
             $userId = (int)$pdo->lastInsertId();
 
-            $function = $pdo->prepare('INSERT INTO tblOrganisationsFunktionen (Organisation, Bezeichnung, DarfOrganisationVerwalten, DarfBesprechungenVerwalten) VALUES (?, ?, 1, 1)');
+            $function = $pdo->prepare('INSERT INTO tblOrganizationFunction (Organization, Name, MayManageOrganization, MayManageMeetings) VALUES (?, ?, 1, 1)');
             $function->execute([$organizationId, 'Administrator']);
             $functionId = (int)$pdo->lastInsertId();
 
-            $member = $pdo->prepare('INSERT INTO tblOrganisationsMitglieder (Organisation, Person, User, Funktion) VALUES (?, ?, ?, ?)');
+            $member = $pdo->prepare('INSERT INTO tblOrganizationMember (Organization, Person, User, Function) VALUES (?, ?, ?, ?)');
             $member->execute([$organizationId, $personId, $userId, $functionId]);
             $pdo->commit();
         }

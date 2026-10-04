@@ -2,6 +2,8 @@
 
 require_once __DIR__ . '/../src/init.php';
 
+use Src\Meeting\MeetingAttachmentRepository;
+
 if (!$auth->isLoggedIn()) {
     $redirect->to('../login.php');
 }
@@ -10,9 +12,9 @@ if (!isset($_GET['meetingId'])) {
     $redirect->back();
 }
 
-$besprechung = $besprechungRepository->findById((int)($_GET['meetingId']));
+$meeting = $meetingRepository->findById((int)($_GET['meetingId']));
 
-if (!$besprechung || !$besprechung->istAktiviert) {
+if (!$meeting || !$meeting->isActive) {
     $flash->set('errorMsg', 'Diese Besprechung existiert nicht oder wurde gelöscht');
     $flash->set('errorColor', 'red');
     $flash->set('errorCode', '403');
@@ -30,16 +32,16 @@ if (!class_exists(\setasign\Fpdi\Tcpdf\Fpdi::class)) {
 }
 
 // Hole Organisationsdaten
-$organisation = $organisationRepository->findById($besprechung->organisationId);
-$besprechungspunkte = $besprechungspunktRepository->findByBesprechungId((int)$besprechung->id, false);
+$organization = $organizationRepository->findById($meeting->organizationId);
+$besprechungspunkte = $meetingPointRepository->findByMeetingId((int)$meeting->id, false);
 $includeParticipants = isset($_GET['includeParticipants']) ? (bool)$_GET['includeParticipants'] : false;
-$teilnehmer = $besprechungsteilnehmerRepository->findByBesprechungID((int)$besprechung->id);
+$teilnehmer = $meetingParticipantRepository->findByMeetingId((int)$meeting->id);
 
-$filename = 'Besprechungsprotokoll_' . str_replace('.', '', str_replace(' ', '_', $besprechung->titel)) . '_' . date('Y-m-d') . '.pdf';
+$filename = 'Besprechungsprotokoll_' . str_replace('.', '', str_replace(' ', '_', $meeting->title)) . '_' . date('Y-m-d') . '.pdf';
 
 class MeetingPDF extends \setasign\Fpdi\Tcpdf\Fpdi
 {
-    private ?object $organisation = null;
+    private ?object $organization = null;
     private string $meetingTitle = '';
     private string $printDate = '';
     private string $baseDir = '';
@@ -69,9 +71,9 @@ class MeetingPDF extends \setasign\Fpdi\Tcpdf\Fpdi
         $this->SetAlpha(1);
     }
 
-    public function setOrganisation(?object $organisation): void
+    public function setOrganization(?object $organization): void
     {
-        $this->organisation = $organisation;
+        $this->organization = $organization;
     }
 
     public function setMeetingTitle(string $meetingTitle): void
@@ -121,38 +123,38 @@ class MeetingPDF extends \setasign\Fpdi\Tcpdf\Fpdi
 
         $bottomContentY = $textY;
 
-        if ($this->organisation) {
+        if ($this->organization) {
             $this->SetFont('helvetica', 'B', 12);
             $this->SetTextColor(64, 64, 64);
             $this->SetXY($textX, $textY);
-            $this->Cell($textWidth, 5, (string)($this->organisation->name1 ?? ''), 0, 1, 'L', false);
+            $this->Cell($textWidth, 5, (string)($this->organization->name1 ?? ''), 0, 1, 'L', false);
 
             $this->SetFont('helvetica', '', 10);
 
-            $strasse = trim((string)($this->organisation->strasse ?? ''));
-            $plz = trim((string)($this->organisation->plz ?? ''));
-            $ort = trim((string)($this->organisation->ort ?? ''));
+            $street = trim((string)($this->organization->street ?? ''));
+            $zipCode = trim((string)($this->organization->zipCode ?? ''));
+            $city = trim((string)($this->organization->city ?? ''));
 
-            $line2 = trim($strasse . ' • ' . $plz . ' ' . $ort, ' •');
+            $line2 = trim($street . ' • ' . $zipCode . ' ' . $city, ' •');
             if ($line2 !== '') {
                 $this->setX($textX);
                 $this->Cell($textWidth, 5, $line2, 0, 1, 'L', false);
             }
 
-            $homepage = trim((string)($this->organisation->homepage ?? ''));
-            $email = trim((string)($this->organisation->email ?? ''));
+            $homepage = trim((string)($this->organization->homepage ?? ''));
+            $email = trim((string)($this->organization->email ?? ''));
             if ($homepage !== '' || $email !== '') {
                 $line3 = trim($homepage . ' • ' . $email, ' •');
                 $this->setX($textX);
                 $this->Cell($textWidth, 5, $line3, 0, 1, 'L', false);
             }
 
-            $registergericht = trim((string)($this->organisation->registergericht ?? ''));
-            $registereintrag = trim((string)($this->organisation->registereintrag ?? ''));
-            if ($registergericht !== '' || $registereintrag !== '') {
-                $registerText = 'Amtsgericht: ' . $registergericht;
-                if ($registereintrag !== '') {
-                    $registerText .= ' • ' . $registereintrag;
+            $registryCourt = trim((string)($this->organization->registryCourt ?? ''));
+            $registryEntry = trim((string)($this->organization->registryEntry ?? ''));
+            if ($registryCourt !== '' || $registryEntry !== '') {
+                $registerText = 'Amtsgericht: ' . $registryCourt;
+                if ($registryEntry !== '') {
+                    $registerText .= ' • ' . $registryEntry;
                 }
 
                 $this->setX($textX);
@@ -161,8 +163,8 @@ class MeetingPDF extends \setasign\Fpdi\Tcpdf\Fpdi
 
             $bottomContentY = $this->GetY();
 
-            if (!empty($this->organisation->logo)) {
-                $logoFile = $this->baseDir . $this->organisation->logo;
+            if (!empty($this->organization->logo)) {
+                $logoFile = $this->baseDir . $this->organization->logo;
 
                 if (is_file($logoFile)) {
                     $logoX = $pageWidth - $rightMargin - $logoWidth;
@@ -249,15 +251,15 @@ class MeetingPDF extends \setasign\Fpdi\Tcpdf\Fpdi
 $pdf = new MeetingPDF('P', 'mm', 'A4', true, 'UTF-8', false);
 $pdf->SetCreator('MeetLog');
 $pdf->SetAuthor('MeetLog');
-$pdf->SetTitle($besprechung->titel);
+$pdf->SetTitle($meeting->title);
 $pdf->SetSubject('Besprechungsprotokoll');
-$pdf->SetKeywords($besprechung->titel . ', ' . ($besprechung->ort ?? ''));
+$pdf->SetKeywords($meeting->title . ', ' . ($meeting->location ?? ''));
 $pdf->setHeaderFont(['helvetica', '', 12]);
 $pdf->setFooterFont(['helvetica', '', 8]);
 $pdf->SetDefaultMonospacedFont('courier');
 
-$pdf->setOrganisation($organisation);
-$pdf->setMeetingTitle($besprechung->titel);
+$pdf->setOrganization($organization);
+$pdf->setMeetingTitle($meeting->title);
 $pdf->setPrintDate(date('d.m.Y'));
 $pdf->setBaseDir(__DIR__);
 
@@ -276,7 +278,7 @@ $pdf->AddPage();
 // Titel des Protokolls
 $pdf->SetFont('helvetica', 'B', 20);
 $pdf->SetTextColor(100, 100, 100);
-$pdf->MultiCell(0, 8, $besprechung->titel, 0, 'C');
+$pdf->MultiCell(0, 8, $meeting->title, 0, 'C');
 
 $pdf->Ln(5);
 
@@ -290,59 +292,59 @@ $pdf->Ln(2);
 $pdf->SetFont('helvetica', 'B', 10);
 $pdf->Cell(35, 5, 'Sitzungszeit:', 0, 0, 'L');
 $pdf->SetFont('helvetica', '', 10);
-$pdf->Cell(0, 5, date('d.m.Y', strtotime($besprechung->datum)) . ' (' . date('H:i', strtotime($besprechung->beginn)) . ' -> ' . date('H:i', strtotime($besprechung->ende)) . ')', 0, 1, 'L');
+$pdf->Cell(0, 5, date('d.m.Y', strtotime($meeting->date)) . ' (' . date('H:i', strtotime($meeting->startTime)) . ' -> ' . date('H:i', strtotime($meeting->endTime)) . ')', 0, 1, 'L');
 
 // Sitzungsort
 $pdf->SetFont('helvetica', 'B', 10);
 $pdf->Cell(35, 5, 'Sitzungsort:', 0, 0, 'L');
 $pdf->SetFont('helvetica', '', 10);
-$pdf->Cell(0, 5, $besprechung->ort ?? 'N/A', 0, 1, 'L');
+$pdf->Cell(0, 5, $meeting->location ?? 'N/A', 0, 1, 'L');
 
 // Vorsitz
-$vorsitz = array_filter($teilnehmer, fn($t) => $t->istSitzungsleitung === true);
+$vorsitz = array_filter($teilnehmer, fn($t) => $t->isChair === true);
 $pdf->SetFont('helvetica', 'B', 10);
 $pdf->Cell(35, 5, 'Vorsitz:', 0, 0, 'L');
 $pdf->SetFont('helvetica', '', 10);
 if (!empty($vorsitz)) {
     $vorsitzName = current($vorsitz);
-    $pdf->Cell(0, 5, trim(($vorsitzName->vorname ?? '') . ' ' . ($vorsitzName->nachname ?? '')), 0, 1, 'L');
+    $pdf->Cell(0, 5, trim(($vorsitzName->firstName ?? '') . ' ' . ($vorsitzName->lastName ?? '')), 0, 1, 'L');
 } else {
     $pdf->Cell(0, 5, 'N/A', 0, 1, 'L');
 }
 
 // Protokollführer
-$protokollführer = array_filter($teilnehmer, fn($t) => $t->istProtokollfuehrer === true);
+$protokollführer = array_filter($teilnehmer, fn($t) => $t->isMinuteTaker === true);
 $pdf->SetFont('helvetica', 'B', 10);
 $pdf->Cell(35, 5, 'Protokollführung:', 0, 0, 'L');
 $pdf->SetFont('helvetica', '', 10);
 if (!empty($protokollführer)) {
     $protoName = current($protokollführer);
-    $pdf->Cell(0, 5, trim(($protoName->vorname ?? '') . ' ' . ($protoName->nachname ?? '')), 0, 1, 'L');
+    $pdf->Cell(0, 5, trim(($protoName->firstName ?? '') . ' ' . ($protoName->lastName ?? '')), 0, 1, 'L');
 } else {
     $pdf->Cell(0, 5, 'N/A', 0, 1, 'L');
 }
 
 // Entschuldigte
-$entschuldigte = array_filter($teilnehmer, fn($t) => $t->istEntschuldigt);
+$entschuldigte = array_filter($teilnehmer, fn($t) => $t->isExcused);
 if (!empty($entschuldigte)) {
     $pdf->SetFont('helvetica', 'B', 10);
     $pdf->Cell(35, 5, 'Entschuldigt:', 0, 0, 'L');
     $pdf->SetFont('helvetica', '', 10);
     $entschuldigteText = implode(', ', array_map(
-        fn($t) => trim(($t->vorname ?? '') . ' ' . ($t->nachname ?? '')),
+        fn($t) => trim(($t->firstName ?? '') . ' ' . ($t->lastName ?? '')),
         $entschuldigte
     ));
     $pdf->MultiCell(0, 5, $entschuldigteText, 0, 'L');
 }
 
 // Unterschreibende
-$unterschreibende = array_filter($teilnehmer, fn($t) => $t->darfUnterschreiben);
+$unterschreibende = array_filter($teilnehmer, fn($t) => $t->maySign);
 if (!empty($unterschreibende)) {
     $pdf->SetFont('helvetica', 'B', 10);
     $pdf->Cell(35, 5, 'Unterschreibend:', 0, 0, 'L');
     $pdf->SetFont('helvetica', '', 10);
     $unterschreibendeText = implode(', ', array_map(
-        fn($t) => trim(($t->vorname ?? '') . ' ' . ($t->nachname ?? '')),
+        fn($t) => trim(($t->firstName ?? '') . ' ' . ($t->lastName ?? '')),
         $unterschreibende
     ));
     $pdf->MultiCell(0, 5, $unterschreibendeText, 0, 'L');
@@ -370,11 +372,11 @@ if (!empty($besprechungspunkte)) {
     $lastMainPrefix = 0;
 
     foreach ($besprechungspunkte as $punkt) {
-        $titel = pdfText($punkt->titel ?? '');
-        $beschreibung = pdfText($punkt->beschreibung ?? '');
-        $ergebnis = pdfText($punkt->ergebnis ?? '');
+        $titel = pdfText($punkt->title ?? '');
+        $beschreibung = pdfText($punkt->description ?? '');
+        $ergebnis = pdfText($punkt->result ?? '');
 
-        if (empty($punkt->elternPosition) || $punkt->elternPosition == 0):
+        if (empty($punkt->parentPosition) || $punkt->parentPosition == 0):
 
             $main++;
             $child = 0;
@@ -414,7 +416,7 @@ if (!empty($besprechungspunkte)) {
             $pdf->MultiCell(
                 0,
                 5,
-                $punkt->beschreibung,
+                $punkt->description,
                 0,
                 'L',
                 false,
@@ -431,10 +433,10 @@ if (!empty($besprechungspunkte)) {
             );
         }
 
-        if ($punkt->typ === 'abstimmung') {
-            $ja = (int)($punkt->ergebnis_zustimmung ?? 0);
-            $nein = (int)($punkt->ergebnis_ablehnung ?? 0);
-            $enthaltung = (int)($punkt->ergebnis_enthaltung ?? 0);
+        if ($punkt->type === 'voting') {
+            $ja = (int)($punkt->resultApproval ?? 0);
+            $nein = (int)($punkt->resultRejection ?? 0);
+            $enthaltung = (int)($punkt->resultAbstention ?? 0);
 
             $x = $startX + $indentWidth;
             $y = $pdf->GetY() + 1.5;
@@ -517,7 +519,7 @@ if (!empty($unterschreibende)) {
         $x = $leftX + ($i * ($columnWidth + $gap));
         $pdf->Line($x, $lineY, $x + $lineWidth, $lineY);
 
-        $personenName = trim((string)($unterschreibendeListe[$i]->vorname ?? '') . ' ' . (string)($unterschreibendeListe[$i]->nachname ?? ''));
+        $personenName = trim((string)($unterschreibendeListe[$i]->firstName ?? '') . ' ' . (string)($unterschreibendeListe[$i]->lastName ?? ''));
         $pdf->SetXY($x, $nameY);
         $pdf->SetFont('helvetica', '', 9);
         $pdf->Cell($columnWidth, 4, $personenName, 0, 0, 'L');
@@ -573,7 +575,7 @@ if ($includeParticipants) {
             $pdf->SetTextColor(0, 0, 0);
             $pdf->Cell($nameColWidth, $rowHeight, '', 1, 0, 'L');
 
-            $name = trim((string)($t->vorname ?? '') . ' ' . (string)($t->nachname ?? ''));
+            $name = trim((string)($t->firstName ?? '') . ' ' . (string)($t->lastName ?? ''));
             $textX = $tableLeftX + 2;
             $textY = $rowY + (($rowHeight - 4) / 2);
             $pdf->SetXY($textX, $textY);
@@ -583,15 +585,15 @@ if ($includeParticipants) {
             $iconX = $textX + $pdf->GetStringWidth($name) + 2.5;
             $iconY = $rowY + (($rowHeight - $iconSize) / 2);
 
-            if ($t->istSitzungsleitung === true) {
+            if ($t->isChair === true) {
                 $pdf->ImageSVG($chairmanIconSvg, $iconX, $iconY, $iconSize, $iconSize);
                 $iconX += $iconSize + $iconGap;
             }
-            if ($t->istProtokollfuehrer === true) {
+            if ($t->isMinuteTaker === true) {
                 $pdf->ImageSVG($secretaryIconSvg, $iconX, $iconY, $iconSize, $iconSize);
                 $iconX += $iconSize + $iconGap;
             }
-            if (!empty($t->darfUnterschreiben)) {
+            if (!empty($t->maySign)) {
                 $pdf->ImageSVG($signIconSvg, $iconX, $iconY, $iconSize, $iconSize);
                 $iconX += $iconSize + $iconGap;
             }
@@ -603,10 +605,10 @@ if ($includeParticipants) {
             $statusCenterX = $tableLeftX + $nameColWidth + ($statusColWidth / 2);
             $statusCenterY = $rowY + ($rowHeight / 2);
 
-            if (!empty($t->istAnwesend)) {
+            if (!empty($t->isPresent)) {
                 drawStatusCheckmark($pdf, $statusCenterX, $statusCenterY, 5.0);
             } else {
-                $statusText = (!empty($t->istAbwesend) || !empty($t->istEntschuldigt))
+                $statusText = (!empty($t->isAbsent) || !empty($t->isExcused))
                     ? '--- abwesend ---'
                     : '--- fehlt ---';
 
@@ -625,8 +627,8 @@ if ($includeParticipants) {
     }
 }
 
-// Anlagenverzeichnis: Anhänge mit DruckenBeiProtokoll = 'Y'
-$protokollAnhaenge = $besprechungsanhangRepository->findPrintableByBesprechungId((int)$besprechung->id, 'Protokoll');
+// Anlagenverzeichnis: Anhänge mit PrintWithMinutes = 'Y'
+$protokollAnhaenge = $meetingAttachmentRepository->findPrintableByMeetingId((int)$meeting->id, MeetingAttachmentRepository::CONTEXT_MINUTES);
 
 if (!empty($protokollAnhaenge)) {
     // Verzeichnis-Seite soll Header/Footer haben
@@ -641,12 +643,12 @@ if (!empty($protokollAnhaenge)) {
     foreach ($protokollAnhaenge as $anhang) {
         $pdf->checkPageBreakPublic(16);
         $pdf->SetFont('helvetica', 'B', 10);
-        $pdf->Cell(0, 6, 'Anlage ' . $nr . ': ' . $anhang->originalDateiname . ' (' . $anhang->formatierteGroesse() . ')', 0, 1, 'L');
+        $pdf->Cell(0, 6, 'Anlage ' . $nr . ': ' . $anhang->originalFileName . ' (' . $anhang->formattedSize() . ')', 0, 1, 'L');
 
-        if (!empty($anhang->beschreibung)) {
+        if (!empty($anhang->description)) {
             $pdf->SetFont('helvetica', '', 9);
             $pdf->SetTextColor(80, 80, 80);
-            $pdf->MultiCell(0, 5, $anhang->beschreibung, 0, 'L', false, 1);
+            $pdf->MultiCell(0, 5, $anhang->description, 0, 'L', false, 1);
             $pdf->SetTextColor(0, 0, 0);
         }
 
@@ -663,11 +665,11 @@ if (!empty($protokollAnhaenge)) {
 
     // Anhang-Seiten vollständig ins Protokoll einfügen
     foreach ($protokollAnhaenge as $anhang) {
-        if (empty($anhang->dateipfad)) {
+        if (empty($anhang->filePath)) {
             continue;
         }
 
-        $filePath = __DIR__ . '/../' . ltrim((string)$anhang->dateipfad, './');
+        $filePath = __DIR__ . '/../' . ltrim((string)$anhang->filePath, './');
 
         if (!is_file($filePath)) {
             continue;

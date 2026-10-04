@@ -8,53 +8,52 @@ final class Person
 {
     public function __construct(
         public ?int $id = null,
-        public ?string $vorname = null,
-        public ?string $nachname = null,
+        public ?string $firstName = null,
+        public ?string $lastName = null,
         public ?string $mail = null,
-        public ?string $telefon = null,
-        public ?string $strasse = null,
-        public ?string $plz = null,
-        public ?string $ort = null,
-        public ?int $land = null,
-        public int $istAktiv = 1,
-        public int $istGeloescht = 0,
-        public ?string $erstelltAm = null,
-        public ?string $geaendertAm = null
-    ) {
-    }
+        public ?string $phone = null,
+        public ?string $street = null,
+        public ?string $zipCode = null,
+        public ?string $city = null,
+        public ?int $country = null,
+        public int $isActive = 1,
+        public int $isDeleted = 0,
+        public ?string $createdAt = null,
+        public ?string $updatedAt = null
+    ) {}
 
     public static function fromArray(array $row): self
     {
         return new self(
             id: isset($row['id']) ? (int) $row['id'] : null,
-            vorname: $row['Vorname'] ?? null,
-            nachname: $row['Nachname'] ?? null,
+            firstName: $row['FirstName'] ?? null,
+            lastName: $row['LastName'] ?? null,
             mail: $row['Mail'] ?? null,
-            telefon: $row['Telefon'] ?? null,
-            strasse: $row['Strasse'] ?? null,
-            plz: $row['PLZ'] ?? null,
-            ort: $row['Ort'] ?? null,
-            land: isset($row['Land']) ? (int) $row['Land'] : null,
-            istAktiv: (int) ($row['istAktiv'] ?? 1),
-            istGeloescht: (int) ($row['istGeloescht'] ?? 0),
-            erstelltAm: $row['ErstelltAm'] ?? null,
-            geaendertAm: $row['GeaendertAm'] ?? null,
+            phone: $row['Phone'] ?? null,
+            street: $row['Street'] ?? null,
+            zipCode: $row['ZipCode'] ?? null,
+            city: $row['City'] ?? null,
+            country: isset($row['Country']) ? (int) $row['Country'] : null,
+            isActive: (int) ($row['IsActive'] ?? 1),
+            isDeleted: (int) ($row['IsDeleted'] ?? 0),
+            createdAt: $row['CreatedAt'] ?? null,
+            updatedAt: $row['UpdatedAt'] ?? null,
         );
     }
 
     public function toDatabaseArray(): array
     {
         return [
-            'Vorname' => $this->vorname,
-            'Nachname' => $this->nachname,
+            'FirstName' => $this->firstName,
+            'LastName' => $this->lastName,
             'Mail' => $this->mail,
-            'Telefon' => $this->telefon,
-            'Strasse' => $this->strasse,
-            'PLZ' => $this->plz,
-            'Ort' => $this->ort,
-            'Land' => $this->land,
-            'istAktiv' => $this->istAktiv,
-            'istGeloescht' => $this->istGeloescht,
+            'Phone' => $this->phone,
+            'Street' => $this->street,
+            'ZipCode' => $this->zipCode,
+            'City' => $this->city,
+            'Country' => $this->country,
+            'IsActive' => $this->isActive,
+            'IsDeleted' => $this->isDeleted,
         ];
     }
 }

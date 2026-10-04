@@ -13,7 +13,7 @@ if (!$auth->isLoggedIn()) {
 use Src\User\Permission;
 
 $user = $userRepository->findById($session->get('id'));
-$authToManageMeetings = $user->istAdmin || $acl->isPermitted($user->id, (int)$session->get('Organisation'), Permission::MANAGE_MEETINGS);
+$authToManageMeetings = $user->isAdmin || $acl->isPermitted($user->id, (int)$session->get('Organization'), Permission::MANAGE_MEETINGS);
 
 if (!$authToManageMeetings) {
     $redirect->to('index.php');
@@ -53,18 +53,18 @@ $start = $_GET['start'] ?? '';
                     <div class="card-body">
                         <div class="row mb-2">
                             <div class="col-12 col-xl-6">
-                                <label class="form-label" for="titel-create"><?= $translator->t('meetings.title'); ?></label>
-                                <input type="text" name="titel" id="titel-create" class="form-control">
+                                <label class="form-label" for="title-create"><?= $translator->t('meetings.title'); ?></label>
+                                <input type="text" name="title" id="title-create" class="form-control">
                             </div>
                         </div>
                         <div class="row mb-2">
                             <div class="col-4 col-md-4">
-                                <label class="form-label" for="datum-create"><?= $translator->t('meetings.date'); ?></label>
-                                <input type="date" name="datum" id="datum-create" class="form-control" value="<?= htmlspecialchars($start); ?>">
+                                <label class="form-label" for="date-create"><?= $translator->t('meetings.date'); ?></label>
+                                <input type="date" name="date" id="date-create" class="form-control" value="<?= htmlspecialchars($start); ?>">
                             </div>
                             <div class="col-4 col-md-4">
-                                <label class="form-label" for="beginn-create"><?= $translator->t('meetings.start'); ?></label>
-                                <select name="beginn" id="beginn-create" class="form-select">
+                                <label class="form-label" for="startTime-create"><?= $translator->t('meetings.start'); ?></label>
+                                <select name="startTime" id="startTime-create" class="form-select">
                                     <option value="">--:--</option>
                                     <?php for ($hour = 0; $hour < 24; $hour++): ?>
                                         <?php for ($minute = 0; $minute < 60; $minute += 15): ?>
@@ -77,8 +77,8 @@ $start = $_GET['start'] ?? '';
                                 </select>
                             </div>
                             <div class="col-4 col-md-4">
-                                <label class="form-label" for="ende-create"><?= $translator->t('meetings.end'); ?></label>
-                                <select name="ende" id="ende-create" class="form-select">
+                                <label class="form-label" for="endTime-create"><?= $translator->t('meetings.end'); ?></label>
+                                <select name="endTime" id="endTime-create" class="form-select">
                                     <option value="">--:--</option>
                                     <?php for ($hour = 0; $hour < 24; $hour++): ?>
                                         <?php for ($minute = 0; $minute < 60; $minute += 15): ?>
@@ -93,8 +93,8 @@ $start = $_GET['start'] ?? '';
                         </div>
 
                         <div class="col-12 col-md-6">
-                            <label class="form-label" for="ort-create"><?= $translator->t('meetings.location'); ?></label>
-                            <input type="text" name="ort" id="ort-create" class="form-control">
+                            <label class="form-label" for="location-create"><?= $translator->t('meetings.location'); ?></label>
+                            <input type="text" name="location" id="location-create" class="form-control">
                         </div>
 
                         <hr class="my-4">
@@ -103,9 +103,9 @@ $start = $_GET['start'] ?? '';
                         <div class="row g-2 align-items-center">
                             <div class="col">
                                 <label class="form-label text-secondary"><?= $translator->t('meetings.participants.available'); ?></label>
-                                <select id="teilnehmer-verfuegbar" multiple size="10" class="form-select">
+                                <select id="participants-available" multiple size="10" class="form-select">
                                     <?php foreach ($alleBenutzer as $benutzer): ?>
-                                        <option value="<?= $benutzer->id; ?>"><?= htmlspecialchars($benutzer->vorname . ' ' . $benutzer->nachname); ?></option>
+                                        <option value="<?= $benutzer->id; ?>"><?= htmlspecialchars($benutzer->firstName . ' ' . $benutzer->lastName); ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -119,7 +119,7 @@ $start = $_GET['start'] ?? '';
 
                             <div class="col">
                                 <label class="form-label text-secondary"><?= $translator->t('meetings.participants.selected'); ?></label>
-                                <select id="teilnehmer-ausgewaehlt" name="teilnehmer[]" multiple size="10" class="form-select"></select>
+                                <select id="participants-selected" name="participants[]" multiple size="10" class="form-select"></select>
                             </div>
                         </div>
                     </div>
@@ -141,9 +141,9 @@ $start = $_GET['start'] ?? '';
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const verfuegbar = document.getElementById('teilnehmer-verfuegbar');
-        const ausgewaehlt = document.getElementById('teilnehmer-ausgewaehlt');
-        const form = ausgewaehlt.closest('form');
+        const available = document.getElementById('participants-available');
+        const selected = document.getElementById('participants-selected');
+        const form = selected.closest('form');
 
         function moveOptions(from, to, onlySelected) {
             Array.from(from.options).forEach(function(option) {
@@ -155,23 +155,23 @@ $start = $_GET['start'] ?? '';
         }
 
         document.getElementById('btn-add').addEventListener('click', function() {
-            moveOptions(verfuegbar, ausgewaehlt, true);
+            moveOptions(available, selected, true);
         });
 
         document.getElementById('btn-remove').addEventListener('click', function() {
-            moveOptions(ausgewaehlt, verfuegbar, true);
+            moveOptions(selected, available, true);
         });
 
         document.getElementById('btn-add-all').addEventListener('click', function() {
-            moveOptions(verfuegbar, ausgewaehlt, false);
+            moveOptions(available, selected, false);
         });
 
         document.getElementById('btn-remove-all').addEventListener('click', function() {
-            moveOptions(ausgewaehlt, verfuegbar, false);
+            moveOptions(selected, available, false);
         });
 
         form.addEventListener('submit', function() {
-            Array.from(ausgewaehlt.options).forEach(function(option) {
+            Array.from(selected.options).forEach(function(option) {
                 option.selected = true;
             });
         });

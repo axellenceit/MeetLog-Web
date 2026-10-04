@@ -18,8 +18,8 @@ if (!$auth->isLoggedIn()) {
 
 $user = $userRepository->findById($session->get('id'));
 
-$naechstenBesprechungen = $besprechungRepository->findNextMeetings(5);
-$meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
+$nextMeetings = $meetingRepository->findNextMeetings(5);
+$myTasks = $taskRepository->findAllByUserId((int) $session->get('id'));
 
 ?>
 
@@ -100,7 +100,7 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
                                             </div>
                                             <div class="list-group list-group-flush list-group-hoverable">
 
-                                                <?php if (empty($naechstenBesprechungen)): ?>
+                                                <?php if (empty($nextMeetings)): ?>
                                                     <div class="list-group-item">
                                                         <div class="row align-items-center">
                                                             <div class="col text-center">
@@ -110,11 +110,11 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
                                                     </div>
                                                 <?php endif; ?>
 
-                                                <?php foreach ($naechstenBesprechungen as $besprechung): ?>
+                                                <?php foreach ($nextMeetings as $meeting): ?>
 
                                                     <?php
-                                                    /** @var \Src\Besprechung\Besprechung $besprechung */
-                                                    $diff = date_diff(new DateTime(), new DateTime($besprechung->datum));
+                                                    /** @var \Src\Meeting\Meeting $meeting */
+                                                    $diff = date_diff(new DateTime(), new DateTime($meeting->date));
                                                     $eventColor = match (true) {
                                                         $diff->days > 14 => 'bg-green',
                                                         $diff->days > 7 => 'bg-yellow',
@@ -127,14 +127,14 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
                                                             <div class="col-auto">
                                                                 <a href="#">
                                                                     <span class="avatar">
-                                                                        <?= date('d.m', strtotime($besprechung->datum)); ?>
+                                                                        <?= date('d.m', strtotime($meeting->date)); ?>
                                                                     </span>
                                                                 </a>
                                                             </div>
                                                             <div class="col text-truncate">
-                                                                <a href="./besprechung.php?id=<?= $besprechung->id; ?>"><?= $besprechung->titel; ?></a>
+                                                                <a href="./meeting.php?id=<?= $meeting->id; ?>"><?= $meeting->title; ?></a>
                                                                 <div class="d-block text-secondary text-truncate mt-n1">
-                                                                    <?= $besprechung->ort ?>
+                                                                    <?= $meeting->location ?>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -153,7 +153,7 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
                                 <div class="card-header">
                                     <h3 class="card-title"><?= $translator->t('tasks.my'); ?></h3>
                                     <div class="card-actions">
-                                        <a href="./tasks.php?f_titel=&f_user=<?= (int) $session->get('id'); ?>&f_erledigt=" class="btn btn-primary btn-sm"><?= $translator->t('tasks.view_all'); ?></a>
+                                        <a href="./tasks.php?f_title=&f_user=<?= (int) $session->get('id'); ?>&f_isDone=" class="btn btn-primary btn-sm"><?= $translator->t('tasks.view_all'); ?></a>
                                     </div>
                                 </div>
                                 <div class="card-body">
@@ -172,7 +172,7 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
                                             </div>
                                             <div class="list-group list-group-flush list-group-hoverable">
 
-                                                <?php if (empty($meineAufgaben)): ?>
+                                                <?php if (empty($myTasks)): ?>
                                                     <div class="list-group-item">
                                                         <div class="row align-items-center">
                                                             <div class="col text-center">
@@ -182,7 +182,7 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
                                                     </div>
                                                 <?php endif; ?>
 
-                                                <?php foreach ($meineAufgaben as $task): ?>
+                                                <?php foreach ($myTasks as $task): ?>
 
                                                     <?php
                                                     /** @var \Src\Task\Task $task */
@@ -204,16 +204,16 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
                                                             <div class="col text-truncate">
                                                                 <a href="#" class="task-title-link" data-bs-toggle="modal" data-bs-target="#modal-task-view"
                                                                     data-task-id="<?= $task->id ?>"
-                                                                    data-task-title="<?= htmlspecialchars($task->titel, ENT_QUOTES, 'UTF-8') ?>"
-                                                                    data-task-description="<?= htmlspecialchars($task->beschreibung ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                                                    data-task-title="<?= htmlspecialchars($task->title, ENT_QUOTES, 'UTF-8') ?>"
+                                                                    data-task-description="<?= htmlspecialchars($task->description ?? '', ENT_QUOTES, 'UTF-8') ?>"
                                                                     data-task-deadline="<?= htmlspecialchars($task->deadline ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                                                                    data-task-completed="<?= $task->istErledigt ? '1' : '0' ?>"><?= $task->titel; ?></a>
+                                                                    data-task-completed="<?= $task->isDone ? '1' : '0' ?>"><?= $task->title; ?></a>
                                                                 <div class="d-block text-secondary text-truncate mt-n1">
-                                                                    <?= $task->beschreibung ?>
+                                                                    <?= $task->description ?>
                                                                 </div>
                                                             </div>
                                                             <div class="col-auto">
-                                                                <input type="checkbox" class="form-check-input" <?= $task->istErledigt ? 'checked' : ''; ?> id="erledigt" name="erledigt" data-task-id="<?= $task->id ?>">
+                                                                <input type="checkbox" class="form-check-input" <?= $task->isDone ? 'checked' : ''; ?> id="isDone" name="isDone" data-task-id="<?= $task->id ?>">
                                                             </div>
                                                         </div>
                                                     </div>
@@ -285,14 +285,14 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
             events: './api/fullcalendar_getEvents.php',
             selectable: true,
             select: function(info) {
-                window.location.href = './neuebesprechung.php?start=' + info.startStr;
+                window.location.href = './newmeeting.php?start=' + info.startStr;
             },
             locale: '<?= $session->get('lang'); ?>',
             displayEventTime: false,
             weekNumbers: true,
             eventClick: function(info) {
                 info.jsEvent.preventDefault();
-                window.location.href = './besprechung.php?id=' + info.event.id;
+                window.location.href = './meeting.php?id=' + info.event.id;
             },
             eventContent: function(info) {
                 const start = info.event.start;
@@ -320,12 +320,12 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
 </script>
 
 <script>
-    document.querySelectorAll('input[name="erledigt"]').forEach(function(checkbox) {
+    document.querySelectorAll('input[name="isDone"]').forEach(function(checkbox) {
         checkbox.addEventListener('change', function() {
             const taskId = this.dataset.taskId;
             const isChecked = this.checked ? 1 : 0;
 
-            fetch(`actions.php?action=update_task_status&task_id=${taskId}&ist_erledigt=${isChecked}`, {
+            fetch(`actions.php?action=update_task_status&task_id=${taskId}&is_done=${isChecked}`, {
                     method: 'POST',
                 })
                 .then(response => response.json())
@@ -371,7 +371,7 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
             const taskId = this.dataset.taskId;
             const isChecked = this.checked ? 1 : 0;
 
-            fetch(`actions.php?action=update_task_status&task_id=${taskId}&ist_erledigt=${isChecked}`, {
+            fetch(`actions.php?action=update_task_status&task_id=${taskId}&is_done=${isChecked}`, {
                     method: 'POST',
                 })
                 .then(response => response.json())

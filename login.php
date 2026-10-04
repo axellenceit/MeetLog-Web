@@ -34,10 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($formType === 'public_meeting') {
-        $meetingId = trim($_POST['besprechung'] ?? '');
+        $meetingId = trim($_POST['meeting'] ?? '');
 
         if ($meetingId !== '') {
-            $redirect->to('api/getMeetingAsPublic.php?besprechung=' . urlencode($meetingId));
+            $redirect->to('api/getMeetingAsPublic.php?meeting=' . urlencode($meetingId));
         }
     }
 }
@@ -173,11 +173,11 @@ $loginError = $flash->get('login_error');
                             </div>
 
                             <div class="mb-3">
-                                <label for="besprechung" class="form-label">Besprechungs-ID</label>
+                                <label for="meeting" class="form-label">Besprechungs-ID</label>
                                 <input
                                     type="text"
-                                    id="besprechung"
-                                    name="besprechung"
+                                    id="meeting"
+                                    name="meeting"
                                     class="form-control"
                                     placeholder="z. B. ABC123"
                                     required>

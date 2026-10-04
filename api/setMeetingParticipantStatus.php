@@ -21,7 +21,7 @@ if (!is_array($input)) {
     parse_str($rawInput, $input);
 }
 
-$besprechungId = $input['besprechungId'] ?? null;
+$meetingId = $input['meetingId'] ?? null;
 $participantId = $input['participantId'] ?? null;
 $status = $input['status'] ?? null;
 
@@ -31,7 +31,7 @@ if (!$participantId || !$status) {
     exit;
 }
 
-$participant = $besprechungsteilnehmerRepository->findById((int)$participantId);
+$participant = $meetingParticipantRepository->findById((int)$participantId);
 
 if (!$participant) {
     http_response_code(404);
@@ -41,19 +41,19 @@ if (!$participant) {
 
 switch ($status) {
     case 'present':
-        $participant->istAnwesend = true;
-        $participant->istEntschuldigt = false;
-        $participant->istAbwesend = false;
+        $participant->isPresent = true;
+        $participant->isExcused = false;
+        $participant->isAbsent = false;
         break;
     case 'excused':
-        $participant->istAnwesend = false;
-        $participant->istEntschuldigt = true;
-        $participant->istAbwesend = false;
+        $participant->isPresent = false;
+        $participant->isExcused = true;
+        $participant->isAbsent = false;
         break;
     case 'absent':
-        $participant->istAnwesend = false;
-        $participant->istEntschuldigt = false;
-        $participant->istAbwesend = true;
+        $participant->isPresent = false;
+        $participant->isExcused = false;
+        $participant->isAbsent = true;
         break;
     default:
         http_response_code(400);
@@ -61,7 +61,7 @@ switch ($status) {
         exit;
 }
 
-$besprechungsteilnehmerRepository->updateTeilnehmer($besprechungId, $participant);
+$meetingParticipantRepository->updateParticipant($meetingId, $participant);
 
 http_response_code(200);
 echo json_encode(['message' => 'Participant status updated successfully']);

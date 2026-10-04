@@ -58,7 +58,7 @@ return [
         'no' => 'No',
         'new' => 'New role',
         'authToSign' => 'Authorized to sign',
-        'authToManageOrganisation' => 'Authorized to manage organization',
+        'authToManageOrganization' => 'Authorized to manage organization',
         'authToManageMeetings' => 'Authorized to manage meetings',
     ],
 ];

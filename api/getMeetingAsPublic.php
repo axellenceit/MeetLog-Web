@@ -13,25 +13,25 @@ if (!$togglePublicMeeting) {
     $redirect->to('../index.php');
 }*/
 
-$besprechung = $besprechungRepository->findByPublicCode($_GET['besprechung'] ?? '');
+$meeting = $meetingRepository->findByPublicCode($_GET['meeting'] ?? '');
 
-if (!$besprechung) {
+if (!$meeting) {
     $flash->set('errorMsg', 'Besprechung nicht gefunden');
     $flash->set('errorColor', 'red');
     $flash->set('errorCode', '404');
     $redirect->to('../error.php');
 }
 
-$datum = (new DateTime($besprechung->datum))->format('d.m.Y');
-$zeiten = (new DateTime($besprechung->beginn))->format('H:i') . ' - ' . (new DateTime($besprechung->ende))->format('H:i');
-$dauer = (new DateTime($besprechung->ende))->getTimestamp() - (new DateTime($besprechung->beginn))->getTimestamp();
+$datum = (new DateTime($meeting->date))->format('d.m.Y');
+$zeiten = (new DateTime($meeting->startTime))->format('H:i') . ' - ' . (new DateTime($meeting->endTime))->format('H:i');
+$dauer = (new DateTime($meeting->endTime))->getTimestamp() - (new DateTime($meeting->startTime))->getTimestamp();
 $dauer = round($dauer / 60);
 
-$tops = $besprechungspunktRepository->findByBesprechungId($besprechung->id);
+$tops = $meetingPointRepository->findByMeetingId($meeting->id);
 
-$teilnehmer = $besprechungsteilnehmerRepository->findByBesprechungId($besprechung->id);
+$teilnehmer = $meetingParticipantRepository->findByMeetingId($meeting->id);
 $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
-    return $t->istAnwesend;
+    return $t->isPresent;
 });
 
 
@@ -76,7 +76,7 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
 
                     <div class="card mb-2">
                         <div class="card-header">
-                            <h2 class="card-title" style="font-weight: bold;"><?= $besprechung->titel; ?></h2>
+                            <h2 class="card-title" style="font-weight: bold;"><?= $meeting->title; ?></h2>
                             <div class="card-actions">
                                 <button class="btn btn-icon" name="printPDF" id="printPDF"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-pdf">
                                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -147,13 +147,13 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                             ?>
                                             <?php foreach ($tops as $t) {
                                                 $position = isset($t->position) ? $t->position : ++$i;
-                                                $prefix = ($t->elternPosition ?? 0) != 0 ? $t->elternPosition . '.' . $position : $position;
+                                                $prefix = ($t->parentPosition ?? 0) != 0 ? $t->parentPosition . '.' . $position : $position;
                                             ?>
                                                 <li class="list-group-item">
                                                     <div class="d-flex align-items-center gap-3">
                                                         <div>
                                                             <a href="#topic-<?= $prefix ?>" class="text-decoration-none">
-                                                                <h4 class="mb-0"><?= $prefix; ?> • <?= $t->titel; ?></h4>
+                                                                <h4 class="mb-0"><?= $prefix; ?> • <?= $t->title; ?></h4>
                                                             </a>
                                                         </div>
                                                     </div>
@@ -177,10 +177,10 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                         <ul class="list-group list-group-flush">
                                             <?php foreach ($teilnehmer as $t) { ?>
                                                 <li class="list-group-item d-flex align-items-center gap-1">
-                                                    <span class="badge bg-<?= $t->istAnwesend ? 'success' : ($t->istEntschuldigt ? 'warning' : ($t->istAbwesend ? 'danger' : 'secondary')); ?> text-white"></span>
+                                                    <span class="badge bg-<?= $t->isPresent ? 'success' : ($t->isExcused ? 'warning' : ($t->isAbsent ? 'danger' : 'secondary')); ?> text-white"></span>
                                                     <div>
-                                                        <?= $t->vorname . ' ' . $t->nachname; ?>
-                                                        <div class="text-muted"><?= $t->funktion; ?></div>
+                                                        <?= $t->firstName . ' ' . $t->lastName; ?>
+                                                        <div class="text-muted"><?= $t->function; ?></div>
                                                     </div>
                                                     <div class="btn-list ms-auto gap-1">
 
@@ -215,11 +215,11 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                 </div>
                                 <div class="col-7">
                                     <?php
-                                    if ($besprechung->status === 'geplant') {
+                                    if ($meeting->status === 'planned') {
                                         echo '<span class="badge bg-secondary text-white">' . $translator->t('meetings.statusPlanned') . '</span>';
-                                    } elseif ($besprechung->status === 'live') {
+                                    } elseif ($meeting->status === 'live') {
                                         echo '<span class="badge bg-success text-white">' . $translator->t('meetings.statusLive') . '</span>';
-                                    } elseif ($besprechung->status === 'beendet') {
+                                    } elseif ($meeting->status === 'finished') {
                                         echo '<span class="badge bg-dark text-white">' . $translator->t('meetings.statusFinished') . '</span>';
                                     }
                                     ?>
@@ -278,7 +278,7 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                     </svg><strong> <?= $translator->t('meetings.location'); ?>:</strong>
                                 </div>
                                 <div class="col-7">
-                                    <?= $besprechung->ort; ?>
+                                    <?= $meeting->location; ?>
                                 </div>
                             </div>
 
@@ -292,9 +292,9 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                     </svg><strong> <?= $translator->t('meetings.link'); ?>:</strong>
                                 </div>
                                 <div class="col-7">
-                                    <?php if ($besprechung->istVeröffentlicht) { ?>
+                                    <?php if ($meeting->isPublished) { ?>
                                         <span class="badge bg-success text-white"> <?= $translator->t('meetings.published'); ?></span><br />
-                                        <a href="<?= $config->get('general', 'url'); ?>/public.php?besprechung=<?= $besprechung->public_code; ?>" target="_blank"><?= $besprechung->public_code; ?></a>
+                                        <a href="<?= $config->get('general', 'url'); ?>/public.php?meeting=<?= $meeting->publicCode; ?>" target="_blank"><?= $meeting->publicCode; ?></a>
                                     <?php } else { ?>
                                         <span class="badge bg-danger text-white"> <?= $translator->t('meetings.unpublished'); ?></span><br />
                                     <?php } ?>
@@ -313,7 +313,7 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                     </svg><strong> <?= $translator->t('meetings.createdAt'); ?>:</strong>
                                 </div>
                                 <div class="col-7">
-                                    <?= $besprechung->createdAt; ?>
+                                    <?= $meeting->createdAt; ?>
                                 </div>
                             </div>
 
@@ -327,7 +327,7 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                     </svg><strong> <?= $translator->t('meetings.createdBy'); ?>:</strong>
                                 </div>
                                 <div class="col-7">
-                                    <?= $userRepository->findByID($besprechung->erstellerUserId)->vorname . ' ' . $userRepository->findByID($besprechung->erstellerUserId)->nachname; ?>
+                                    <?= $userRepository->findById($meeting->creatorUserId)->firstName . ' ' . $userRepository->findById($meeting->creatorUserId)->lastName; ?>
                                 </div>
                             </div>
 
@@ -343,7 +343,7 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                     </svg><strong> <?= $translator->t('meetings.updatedAt'); ?>:</strong>
                                 </div>
                                 <div class="col-7">
-                                    <?= $besprechung->updatedAt; ?>
+                                    <?= $meeting->updatedAt; ?>
                                 </div>
                             </div>
 
@@ -359,34 +359,34 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
             <div class="row g-3">
                 <?php foreach ($tops as $t) {
                     $position = isset($t->position) ? $t->position : ++$i;
-                    $prefix = ($t->elternPosition ?? 0) != 0 ? $t->elternPosition . '.' . $position : $position;
+                    $prefix = ($t->parentPosition ?? 0) != 0 ? $t->parentPosition . '.' . $position : $position;
                 ?>
                     <div class="card mb-2" id="topic-<?= $prefix ?>">
                         <div class="card-header">
-                            <h3 class="card-title"><b><?= $prefix; ?> • <?= $t->titel; ?></h3></b>
+                            <h3 class="card-title"><b><?= $prefix; ?> • <?= $t->title; ?></h3></b>
                         </div>
                         <div class="card-body">
-                            <p><?= $t->beschreibung; ?></p>
-                            <?php if ($t->ergebnis) { ?>
+                            <p><?= $t->description; ?></p>
+                            <?php if ($t->result) { ?>
                                 <p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-sum">
                                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                         <path d="M18 16v2a1 1 0 0 1 -1 1h-11l6 -7l-6 -7h11a1 1 0 0 1 1 1v2" />
-                                    </svg> <?= $t->ergebnis; ?></p>
+                                    </svg> <?= $t->result; ?></p>
                             <?php } ?>
                         </div>
-                        <?php if ($t->typ == 'abstimmung') { ?>
+                        <?php if ($t->type == 'voting') { ?>
                             <div class="card-footer">
                                 <div class="btn-list gap-1 text-center">
                                     <?php
-                                    $gesamtStimmen = ($t->ergebnis_zustimmung ?? 0) + ($t->ergebnis_ablehnung ?? 0) + ($t->ergebnis_enthaltung ?? 0);
-                                    $jaProzent = $gesamtStimmen > 0 ? round(($t->ergebnis_zustimmung ?? 0) / $gesamtStimmen * 100) : 0;
-                                    $neinProzent = $gesamtStimmen > 0 ? round(($t->ergebnis_ablehnung ?? 0) / $gesamtStimmen * 100) : 0;
+                                    $gesamtStimmen = ($t->resultApproval ?? 0) + ($t->resultRejection ?? 0) + ($t->resultAbstention ?? 0);
+                                    $jaProzent = $gesamtStimmen > 0 ? round(($t->resultApproval ?? 0) / $gesamtStimmen * 100) : 0;
+                                    $neinProzent = $gesamtStimmen > 0 ? round(($t->resultRejection ?? 0) / $gesamtStimmen * 100) : 0;
                                     $ergebnis = $jaProzent > $neinProzent ? 'approved' : ($neinProzent > $jaProzent ? 'rejected' : 'tie');
                                     $ergebnisText = $jaProzent > $neinProzent ? $translator->t('meetings.voting.result.approved') : ($neinProzent > $jaProzent ? $translator->t('meetings.voting.result.rejected') : $translator->t('meetings.voting.result.tie'));
                                     ?>
-                                    <button type="button" class="btn btn-outline-success"><?= $t->ergebnis_zustimmung ?? 0 ?> <?= $translator->t('meetings.voting.yes') ?></button>
-                                    <button type="button" class="btn btn-outline-danger"><?= $t->ergebnis_ablehnung ?? 0 ?> <?= $translator->t('meetings.voting.no') ?></button>
-                                    <button type="button" class="btn btn-outline-secondary me-auto"><?= $t->ergebnis_enthaltung ?? 0 ?> <?= $translator->t('meetings.voting.abstain') ?></button>
+                                    <button type="button" class="btn btn-outline-success"><?= $t->resultApproval ?? 0 ?> <?= $translator->t('meetings.voting.yes') ?></button>
+                                    <button type="button" class="btn btn-outline-danger"><?= $t->resultRejection ?? 0 ?> <?= $translator->t('meetings.voting.no') ?></button>
+                                    <button type="button" class="btn btn-outline-secondary me-auto"><?= $t->resultAbstention ?? 0 ?> <?= $translator->t('meetings.voting.abstain') ?></button>
                                     <button type="button" class="btn btn-<?= ($ergebnis === 'approved') ? 'success' : (($ergebnis === 'rejected') ? 'danger' : 'secondary') ?>"> <?= $ergebnisText; ?></button>
                                 </div>
 
@@ -397,7 +397,7 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                 <?php } ?>
             </div>
 
-            <?php if (!$besprechung->istVeröffentlicht) { ?>
+            <?php if (!$meeting->isPublished) { ?>
                 <div class="hr-text"><?= $translator->translate('meetings.newtopic') ?></div>
                 <div class="text-center">
                     <button class="btn btn-lg btn-success mb-5"><?= $translator->t('meetings.newtopic') ?></button>

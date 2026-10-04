@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Src\UI;
@@ -17,15 +18,15 @@ final class LanguageRepository
         $availableLanguages = $this->translator->getSupportedLanguages();
 
         $sql = "SELECT IsoCode2, LocaleCode, LanguageNameNative, FlagEmoji, SortOrder
-                FROM tblLanguages
+                FROM tblLanguage
                 WHERE IsActive = 1
                 ORDER BY SortOrder ASC, LanguageNameNative ASC";
 
         $languages = $this->db->query($sql);
 
         return array_values(array_filter(
-        $languages,
-        fn(array $language): bool => in_array($language['IsoCode2'], $availableLanguages, true)
-    ));
+            $languages,
+            fn(array $language): bool => in_array($language['IsoCode2'], $availableLanguages, true)
+        ));
     }
 }

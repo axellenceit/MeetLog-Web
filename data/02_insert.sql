@@ -1,4 +1,4 @@
-INSERT IGNORE INTO `tblCountries` (`countryId`, `isoAlpha2`, `isoAlpha3`, `isoNumeric`, `nameEn`, `nameDe`, `istAktiviert`, `sortOrder`) VALUES
+INSERT IGNORE INTO `tblCountry` (`countryId`, `isoAlpha2`, `isoAlpha3`, `isoNumeric`, `nameEn`, `nameDe`, `isActive`, `sortOrder`) VALUES
 (1, 'DE', 'DEU', '276', 'Germany', 'Deutschland', 1, 1),
 (2, 'AT', 'AUT', '040', 'Austria', 'Österreich', 1, 2),
 (3, 'CH', 'CHE', '756', 'Switzerland', 'Schweiz', 1, 3),
@@ -24,7 +24,7 @@ INSERT IGNORE INTO `tblCountries` (`countryId`, `isoAlpha2`, `isoAlpha3`, `isoNu
 (23, 'IS', 'ISL', '352', 'Iceland', 'Island', 1, 23),
 (24, 'GB', 'GBR', '826', 'United Kingdom', 'Vereinigtes Königreich', 1, 24);
 
-INSERT IGNORE INTO `tblLanguages` (`LanguageID`, `IsoCode2`, `IsoCode3`, `LocaleCode`, `CountryCode2`, `LanguageNameEn`, `LanguageNameNative`, `FlagEmoji`, `FlagSvg`, `IsActive`, `SortOrder`) VALUES
+INSERT IGNORE INTO `tblLanguage` (`LanguageID`, `IsoCode2`, `IsoCode3`, `LocaleCode`, `CountryCode2`, `LanguageNameEn`, `LanguageNameNative`, `FlagEmoji`, `FlagSvg`, `IsActive`, `SortOrder`) VALUES
 (1, 'de', 'deu', 'de-DE', 'DE', 'German', 'Deutsch', '🇩🇪', NULL, 1, 10),
 (2, 'fr', 'fra', 'fr-FR', 'FR', 'French', 'Français', '🇫🇷', NULL, 1, 30),
 (3, 'es', 'spa', 'es-ES', 'ES', 'Spanish', 'Español', '🇪🇸', NULL, 1, 40),
