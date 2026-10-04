@@ -259,6 +259,10 @@ final class InvitationPdfBuilder
                 $nr++;
             }
 
+            // Header/Footer für alle folgenden Anhang-Seiten deaktivieren
+            $pdf->setPrintHeader(false);
+            $pdf->setPrintFooter(false);
+
             // Anhang-Seiten vollständig in die Einladung einfügen
             self::appendPdfAttachments($pdf, $einladungsAnhaenge);
         }
@@ -278,25 +282,23 @@ final class InvitationPdfBuilder
                 continue;
             }
 
+            // Von src/Besprechung/ aus ist das Projektroot dirname(__DIR__, 2)
             $filePath = dirname(__DIR__, 2) . '/' . ltrim((string)$anhang->dateipfad, './');
 
             if (!is_file($filePath)) {
                 continue;
             }
 
-            try {
-                $pageCount = $pdf->setSourceFile($filePath);
+            $pageCount = $pdf->setSourceFile($filePath);
 
-                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                    $templateId = $pdf->importPage($pageNo);
-                    $size = $pdf->getTemplateSize($templateId);
-                    $orientation = $size['width'] > $size['height'] ? 'L' : 'P';
+            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                $templateId = $pdf->importPage($pageNo);
+                $size = $pdf->getTemplateSize($templateId);
+                $orientation = $size['width'] > $size['height'] ? 'L' : 'P';
 
-                    $pdf->AddPage($orientation, [$size['width'], $size['height']]);
-                    $pdf->useTemplate($templateId);
-                }
-            } catch (\Throwable) {
-                // Beschädigte oder nicht lesbare Anhänge werden übersprungen
+                $pdf->AddPage($orientation, [$size['width'], $size['height']]);
+                $pdf->watermarkAttachment();
+                $pdf->useTemplate($templateId);
             }
         }
     }

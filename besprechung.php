@@ -730,7 +730,7 @@ $alleBenutzer = $userRepository->findAll(true);
                         </div>
                     </div>
                     <div class="card-body">
-                        <p class="card-text"><?= htmlspecialchars($task->beschreibung) ?></p>
+                        <p class="card-text"><?= htmlspecialchars((string)($task->beschreibung ?? '')) ?></p>
                         <p class="card-text"><small class="text-muted"><?= $translator->t('meetings.tasks.deadline') ?>: <?= $task->deadline ? htmlspecialchars((new DateTime($task->deadline))->format('d.m.Y')) : '' ?></small></p>
                     </div>
                 </div>

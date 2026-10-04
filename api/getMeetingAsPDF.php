@@ -43,6 +43,31 @@ class MeetingPDF extends \setasign\Fpdi\Tcpdf\Fpdi
     private string $meetingTitle = '';
     private string $printDate = '';
     private string $baseDir = '';
+    private bool $isAttachmentPage = false;
+
+    public function setAttachmentPage(bool $isAttachmentPage): void
+    {
+        $this->isAttachmentPage = $isAttachmentPage;
+    }
+
+    /**
+     * Dezentes diagonales Wasserzeichen "Anhang" hinter dem Seiteninhalt.
+     * Transparenz stellt sicher, dass der Anhang-Inhalt nicht überdeckt wird.
+     */
+    public function watermarkAttachment(): void
+    {
+        $pageWidth = $this->getPageWidth();
+        $pageHeight = $this->getPageHeight();
+
+        $this->SetAlpha(0.08);
+        $this->SetFont('helvetica', 'B', 80);
+        $this->SetTextColor(150, 150, 150);
+        $this->StartTransform();
+        $this->Rotate(45, $pageWidth / 2, $pageHeight / 2);
+        $this->Text($pageWidth / 2 - 70, $pageHeight / 2 - 15, 'Anhang');
+        $this->StopTransform();
+        $this->SetAlpha(1);
+    }
 
     public function setOrganisation(?object $organisation): void
     {
@@ -75,6 +100,10 @@ class MeetingPDF extends \setasign\Fpdi\Tcpdf\Fpdi
 
     public function Header(): void
     {
+        if ($this->isAttachmentPage) {
+            return;
+        }
+
         $leftMargin  = 15;
         $rightMargin = 15;
         $pageWidth   = $this->getPageWidth();
@@ -173,6 +202,10 @@ class MeetingPDF extends \setasign\Fpdi\Tcpdf\Fpdi
 
     public function Footer(): void
     {
+        if ($this->isAttachmentPage) {
+            return;
+        }
+
         $leftMargin  = 15;
         $rightMargin = 15;
         $pageWidth   = $this->getPageWidth();
@@ -596,6 +629,9 @@ if ($includeParticipants) {
 $protokollAnhaenge = $besprechungsanhangRepository->findPrintableByBesprechungId((int)$besprechung->id, 'Protokoll');
 
 if (!empty($protokollAnhaenge)) {
+    // Verzeichnis-Seite soll Header/Footer haben
+    $pdf->setPrintHeader(true);
+    $pdf->setPrintFooter(true);
     $pdf->AddPage();
     $pdf->SetFont('helvetica', 'B', 14);
     $pdf->Cell(0, 8, 'Anlagen', 0, 1, 'L');
@@ -618,6 +654,13 @@ if (!empty($protokollAnhaenge)) {
         $nr++;
     }
 
+    // Footer der Verzeichnis-Seite manuell auslösen bevor wir ihn deaktivieren
+    $pdf->endPage();
+
+    // Header/Footer für alle folgenden Anhang-Seiten deaktivieren
+    $pdf->setPrintHeader(false);
+    $pdf->setPrintFooter(false);
+
     // Anhang-Seiten vollständig ins Protokoll einfügen
     foreach ($protokollAnhaenge as $anhang) {
         if (empty($anhang->dateipfad)) {
@@ -639,6 +682,7 @@ if (!empty($protokollAnhaenge)) {
                 $orientation = $size['width'] > $size['height'] ? 'L' : 'P';
 
                 $pdf->AddPage($orientation, [$size['width'], $size['height']]);
+                $pdf->watermarkAttachment();
                 $pdf->useTemplate($templateId);
             }
         } catch (\Throwable) {

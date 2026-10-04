@@ -21,6 +21,31 @@ class MeetingInvitationPdf extends \setasign\Fpdi\Tcpdf\Fpdi
 {
     private ?object $organisation = null;
     private array $boardOfDirectors = [];
+    private bool $isAttachmentPage = false;
+
+    public function setAttachmentPage(bool $isAttachmentPage): void
+    {
+        $this->isAttachmentPage = $isAttachmentPage;
+    }
+
+    /**
+     * Dezentes diagonales Wasserzeichen "Anhang" hinter dem Seiteninhalt.
+     * Transparenz stellt sicher, dass der Anhang-Inhalt nicht überdeckt wird.
+     */
+    public function watermarkAttachment(): void
+    {
+        $pageWidth = $this->getPageWidth();
+        $pageHeight = $this->getPageHeight();
+
+        $this->SetAlpha(0.08);
+        $this->SetFont('helvetica', 'B', 80);
+        $this->SetTextColor(150, 150, 150);
+        $this->StartTransform();
+        $this->Rotate(45, $pageWidth / 2, $pageHeight / 2);
+        $this->Text($pageWidth / 2 - 70, $pageHeight / 2 - 15, 'Anhang');
+        $this->StopTransform();
+        $this->SetAlpha(1);
+    }
 
     public function setOrganisation(?object $organisation): void
     {
@@ -39,6 +64,10 @@ class MeetingInvitationPdf extends \setasign\Fpdi\Tcpdf\Fpdi
 
     public function Footer(): void
     {
+        if ($this->isAttachmentPage) {
+            return;
+        }
+
         $leftMargin = 25.0;
         $rightMargin = 20.0;
         $pageWidth = $this->getPageWidth();
