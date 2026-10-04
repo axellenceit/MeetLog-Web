@@ -24,6 +24,7 @@ $languageRepository = $app->languageRepository();
 $besprechungRepository = $app->besprechungRepository();
 $besprechungspunktRepository = $app->besprechungspunktRepository();
 $besprechungsteilnehmerRepository = $app->besprechungsteilnehmerRepository();
+$besprechungsanhangRepository = $app->besprechungsanhangRepository();
 $personRepository = $app->personRepository();
 $countryRepository = $app->countryRepository();
 $taskRepository = $app->taskRepository();

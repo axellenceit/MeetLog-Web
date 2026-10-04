@@ -233,7 +233,72 @@ final class InvitationPdfBuilder
             $pdf->MultiCell($usableWidth, 6, 'Die Sitzungsleitung', 0, 'L', false, 1);
         }
 
+        // Anlagenverzeichnis: Anhänge mit DruckenBeiEinladung = 'Y'
+        $einladungsAnhaenge = $app->besprechungsanhangRepository()->findPrintableByBesprechungId((int)$besprechung->id, 'Einladung');
+
+        if (!empty($einladungsAnhaenge)) {
+            $pdf->AddPage();
+            $pdf->SetFont('helvetica', 'B', 12);
+            $pdf->Cell(0, 7, 'Anlagen', 0, 1, 'L');
+            $pdf->Ln(2);
+
+            $nr = 1;
+            foreach ($einladungsAnhaenge as $anhang) {
+                $pdf->checkPageBreakPublic(16);
+                $pdf->SetFont('helvetica', 'B', 10);
+                $pdf->Cell(0, 6, 'Anlage ' . $nr . ': ' . $anhang->originalDateiname . ' (' . $anhang->formatierteGroesse() . ')', 0, 1, 'L');
+
+                if (!empty($anhang->beschreibung)) {
+                    $pdf->SetFont('helvetica', '', 9);
+                    $pdf->SetTextColor(80, 80, 80);
+                    $pdf->MultiCell(0, 5, self::pdfText($anhang->beschreibung), 0, 'L', false, 1);
+                    $pdf->SetTextColor(0, 0, 0);
+                }
+
+                $pdf->Ln(1.5);
+                $nr++;
+            }
+
+            // Anhang-Seiten vollständig in die Einladung einfügen
+            self::appendPdfAttachments($pdf, $einladungsAnhaenge);
+        }
+
         return [$pdf, $filename];
+    }
+
+    /**
+     * Hängt die Seiten der übergebenen PDF-Anhänge vollständig an das PDF an.
+     *
+     * @param Besprechungsanhang[] $anhaenge
+     */
+    private static function appendPdfAttachments(\MeetingInvitationPdf $pdf, array $anhaenge): void
+    {
+        foreach ($anhaenge as $anhang) {
+            if (empty($anhang->dateipfad)) {
+                continue;
+            }
+
+            $filePath = dirname(__DIR__, 2) . '/' . ltrim((string)$anhang->dateipfad, './');
+
+            if (!is_file($filePath)) {
+                continue;
+            }
+
+            try {
+                $pageCount = $pdf->setSourceFile($filePath);
+
+                for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                    $templateId = $pdf->importPage($pageNo);
+                    $size = $pdf->getTemplateSize($templateId);
+                    $orientation = $size['width'] > $size['height'] ? 'L' : 'P';
+
+                    $pdf->AddPage($orientation, [$size['width'], $size['height']]);
+                    $pdf->useTemplate($templateId);
+                }
+            } catch (\Throwable) {
+                // Beschädigte oder nicht lesbare Anhänge werden übersprungen
+            }
+        }
     }
 
     private static function pdfText(?string $html): string

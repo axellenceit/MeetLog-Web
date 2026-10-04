@@ -8,11 +8,16 @@ if (!class_exists('TCPDF')) {
     throw new RuntimeException('TCPDF wurde über Composer nicht geladen.');
 }
 
+if (!class_exists(\setasign\Fpdi\Tcpdf\Fpdi::class)) {
+    throw new RuntimeException('FPDI wurde über Composer nicht geladen.');
+}
+
 /**
  * TCPDF-Erweiterung für die Einladungs-PDF mit Organisationsfußzeile. Bewusst im globalen
- * Namespace, da TCPDF selbst nicht namespaced ist.
+ * Namespace, da TCPDF selbst nicht namespaced ist. Erbt von Fpdi, um PDF-Anhänge
+ * importieren zu können.
  */
-class MeetingInvitationPdf extends TCPDF
+class MeetingInvitationPdf extends \setasign\Fpdi\Tcpdf\Fpdi
 {
     private ?object $organisation = null;
     private array $boardOfDirectors = [];

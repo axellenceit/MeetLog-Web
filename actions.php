@@ -15,6 +15,7 @@ use Src\User\User;
 use Src\Organisation\OrganisationsMitglied;
 use Src\Person\Person;
 use Src\Besprechung\Besprechung;
+use Src\Besprechung\Besprechungsanhang;
 use Src\Besprechung\InvitationPdfBuilder;
 use Src\Task\Task;
 use Src\Log\Log;
@@ -607,6 +608,144 @@ switch ($action) {
             }
             $flash->addToast($errorMessage, 'danger');
         }
+
+        $redirect->back();
+        break;
+
+    case 'uploadMeetingAttachment':
+        $meetingId = $_POST['meetingId'] ?? null;
+
+        if (!$meetingId) {
+            $flash->addToast('Meeting ID fehlt', 'danger');
+            $redirect->back();
+        }
+
+        $meeting = $besprechungRepository->findById((int)$meetingId);
+
+        if (!$meeting || !$meeting->istAktiviert) {
+            $flash->addToast('Meeting nicht gefunden', 'danger');
+            $redirect->back();
+        }
+
+        if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+            $flash->addToast('Bitte Datei auswählen', 'danger');
+            $redirect->back();
+        }
+
+        $file = $_FILES['file'];
+        $maxSize = 20 * 1024 * 1024;
+
+        if ($file['size'] > $maxSize) {
+            $flash->addToast('Datei zu groß. Maximal 20 MB', 'danger');
+            $redirect->back();
+        }
+
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mimeType = (string)$finfo->file($file['tmp_name']);
+        $originalName = basename((string)$file['name']);
+        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+        // Nur PDF-Dateien zulässig
+        if ($mimeType !== 'application/pdf' || $extension !== 'pdf') {
+            $flash->addToast('Nicht zulässiges Dateiformat. Erlaubt sind nur PDF-Dateien', 'danger');
+            $redirect->back();
+        }
+
+        $extension = 'pdf';
+
+        $uploadDir = __DIR__ . '/upload/besprechung/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0775, true);
+        }
+
+        $newFilename = 'besprechung_' . (int)$meetingId . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
+        $targetPath = $uploadDir . $newFilename;
+
+        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+            $flash->addToast('Hochladen fehlgeschlagen', 'danger');
+            $redirect->back();
+        }
+
+        $anhang = new Besprechungsanhang(
+            besprechung: (int)$meetingId,
+            dateiname: $newFilename,
+            originalDateiname: $originalName,
+            dateipfad: './upload/besprechung/' . $newFilename,
+            mimeTyp: $mimeType,
+            dateigroesse: (int)$file['size'],
+            beschreibung: trim((string)($_POST['beschreibung'] ?? '')) ?: null,
+            druckenBeiEinladung: isset($_POST['druckenBeiEinladung']),
+            druckenBeiProtokoll: isset($_POST['druckenBeiProtokoll']),
+            hochgeladenVon: (int)$session->get('id'),
+        );
+
+        $anhangId = $besprechungsanhangRepository->create($anhang);
+
+        $flash->addToast('Anhang erfolgreich hochgeladen', 'success');
+        $logEntry = new Log(
+            id: null,
+            userId: (int) $_SESSION['id'],
+            action: 'Anhang ' . $anhangId . ' zu Meeting ' . $meetingId . ' hochgeladen',
+            severity: 'info',
+            timestamp: date('Y-m-d H:i:s')
+        );
+        $logRepository->create($logEntry);
+
+        $redirect->back();
+        break;
+
+    case 'deleteMeetingAttachment':
+        $attachmentId = (int)($_GET['attachmentId'] ?? $_POST['attachmentId'] ?? 0);
+        $meetingId = (int)($_GET['meetingId'] ?? $_POST['meetingId'] ?? 0);
+
+        $anhang = $besprechungsanhangRepository->findById($attachmentId);
+
+        if (!$anhang || (int)$anhang->besprechung !== $meetingId) {
+            $flash->addToast('Anhang nicht gefunden', 'danger');
+            $redirect->back();
+        }
+
+        $besprechungsanhangRepository->delete($attachmentId);
+
+        // Physische Datei entfernen
+        if (!empty($anhang->dateipfad)) {
+            $absolutePath = __DIR__ . '/' . ltrim((string)$anhang->dateipfad, './');
+            if (is_file($absolutePath)) {
+                unlink($absolutePath);
+            }
+        }
+
+        $flash->addToast('Anhang erfolgreich gelöscht', 'success');
+        $logEntry = new Log(
+            id: null,
+            userId: (int) $_SESSION['id'],
+            action: 'Anhang ' . $attachmentId . ' zu Meeting ' . $meetingId . ' gelöscht',
+            severity: 'info',
+            timestamp: date('Y-m-d H:i:s')
+        );
+        $logRepository->create($logEntry);
+
+        $redirect->back();
+        break;
+
+    case 'updateMeetingAttachmentFlags':
+        $attachmentId = (int)($_POST['attachmentId'] ?? 0);
+        $meetingId = (int)($_POST['meetingId'] ?? 0);
+
+        $anhang = $besprechungsanhangRepository->findById($attachmentId);
+
+        if (!$anhang || (int)$anhang->besprechung !== $meetingId) {
+            $flash->addToast('Anhang nicht gefunden', 'danger');
+            $redirect->back();
+        }
+
+        $besprechungsanhangRepository->updateDruckFlags(
+            $attachmentId,
+            isset($_POST['druckenBeiEinladung']),
+            isset($_POST['druckenBeiProtokoll'])
+        );
+
+        $flash->addToast('Druck-Einstellungen gespeichert', 'success');
 
         $redirect->back();
         break;

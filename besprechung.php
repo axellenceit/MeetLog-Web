@@ -53,6 +53,8 @@ $verfuegbarePersonen = array_filter(
 
 $tasks = $taskRepository->findByBesprechungId($besprechung->id);
 
+$anhaenge = $besprechungsanhangRepository->findByBesprechungId($besprechung->id);
+
 $alleBenutzer = $userRepository->findAll(true);
 
 ?>
@@ -743,9 +745,108 @@ $alleBenutzer = $userRepository->findAll(true);
 
             <?php } ?>
 
+            <div class="hr-text"><?= $translator->t('meetings.attachments.root') ?></div>
+
+            <div class="card mb-3">
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead>
+                            <tr>
+                                <th><?= $translator->t('meetings.attachments.file') ?></th>
+                                <th><?= $translator->t('meetings.attachments.description') ?></th>
+                                <th><?= $translator->t('meetings.attachments.size') ?></th>
+                                <th class="text-center"><?= $translator->t('meetings.attachments.printInvitation') ?></th>
+                                <th class="text-center"><?= $translator->t('meetings.attachments.printProtocol') ?></th>
+                                <th class="w-1"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($anhaenge)) { ?>
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted"><?= $translator->t('meetings.attachments.empty') ?></td>
+                                </tr>
+                            <?php } else { ?>
+                                <?php foreach ($anhaenge as $anhang) { ?>
+                                    <tr>
+                                        <td>
+                                            <a href="<?= htmlspecialchars((string)$anhang->dateipfad, ENT_QUOTES, 'UTF-8'); ?>" target="_blank"><?= htmlspecialchars($anhang->originalDateiname, ENT_QUOTES, 'UTF-8'); ?></a>
+                                        </td>
+                                        <td class="text-muted"><?= htmlspecialchars((string)($anhang->beschreibung ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td class="text-muted"><?= $anhang->formatierteGroesse(); ?></td>
+                                        <td colspan="2">
+                                            <form method="post" action="actions.php?action=updateMeetingAttachmentFlags" class="d-flex justify-content-around align-items-center">
+                                                <input type="hidden" name="attachmentId" value="<?= (int)$anhang->id; ?>" />
+                                                <input type="hidden" name="meetingId" value="<?= (int)$besprechung->id; ?>" />
+                                                <input type="checkbox" class="form-check-input" name="druckenBeiEinladung" value="1" <?= $anhang->druckenBeiEinladung ? 'checked' : ''; ?> onchange="this.form.submit()" data-bs-toggle="tooltip" data-bs-title="<?= $translator->t('meetings.attachments.printInvitation') ?>" />
+                                                <input type="checkbox" class="form-check-input" name="druckenBeiProtokoll" value="1" <?= $anhang->druckenBeiProtokoll ? 'checked' : ''; ?> onchange="this.form.submit()" data-bs-toggle="tooltip" data-bs-title="<?= $translator->t('meetings.attachments.printProtocol') ?>" />
+                                            </form>
+                                        </td>
+                                        <td>
+                                            <a href="./actions.php?action=deleteMeetingAttachment&attachmentId=<?= (int)$anhang->id; ?>&meetingId=<?= (int)$besprechung->id; ?>" class="btn btn-icon btn-outline-danger" data-bs-toggle="tooltip" data-bs-title="<?= $translator->t('meetings.attachments.delete'); ?>">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                    <line x1="4" y1="7" x2="20" y2="7" />
+                                                    <line x1="10" y1="11" x2="10" y2="17" />
+                                                    <line x1="14" y1="11" x2="14" y2="17" />
+                                                    <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                                                    <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                                                </svg>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php } ?>
+                            <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <?php if (!$besprechung->istVeröffentlicht) { ?>
+                <div class="text-center">
+                    <button class="btn btn-lg btn-success mb-5" data-bs-toggle="modal" data-bs-target="#uploadAttachmentModal"><?= $translator->t('meetings.attachments.new') ?></button>
+                </div>
+            <?php } ?>
+
         </div>
 
     </div>
+
+    <form action="actions.php?action=uploadMeetingAttachment" method="post" enctype="multipart/form-data" class="modal modal-blur fade" id="uploadAttachmentModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?= $translator->t('meetings.attachments.new'); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="meetingId" value="<?= (int)$besprechung->id; ?>" />
+                    <div class="mb-3">
+                        <label class="form-label"><?= $translator->t('meetings.attachments.file'); ?></label>
+                        <input type="file" class="form-control" name="file" accept=".pdf" required />
+                        <small class="form-hint"><?= $translator->t('meetings.attachments.allowedTypes'); ?></small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><?= $translator->t('meetings.attachments.description'); ?></label>
+                        <input type="text" class="form-control" name="beschreibung" maxlength="255" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-check">
+                            <input type="checkbox" class="form-check-input" name="druckenBeiEinladung" value="1" />
+                            <span class="form-check-label"><?= $translator->t('meetings.attachments.printWithInvitation'); ?></span>
+                        </label>
+                        <label class="form-check">
+                            <input type="checkbox" class="form-check-input" name="druckenBeiProtokoll" value="1" />
+                            <span class="form-check-label"><?= $translator->t('meetings.attachments.printWithProtocol'); ?></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"><?= $translator->t('common.cancel'); ?></button>
+                    <button type="submit" class="btn btn-primary btn-5 ms-auto"><?= $translator->t('meetings.attachments.upload'); ?></button>
+                </div>
+            </div>
+        </div>
+    </form>
 
     <form action="api/getMeetingAsPDF.php" method="get" target="_blank" class="modal modal-blur fade" id="printToPDF" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-sm modal-dialog-centered" role="document">

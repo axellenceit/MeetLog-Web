@@ -15,6 +15,7 @@ use Src\UI\LanguageRepository;
 use Src\Besprechung\BesprechungRepository;
 use Src\Besprechung\BesprechungspunktRepository;
 use Src\Besprechung\BesprechungsteilnehmerRepository;
+use Src\Besprechung\BesprechungsanhangRepository;
 use Src\Core\CountryRepository;
 use Src\Person\PersonRepository;
 use Src\User\ACL;
@@ -40,16 +41,17 @@ final class App
     private BesprechungRepository $besprechungRepository;
     private BesprechungspunktRepository $besprechungspunktRepository;
     private BesprechungsteilnehmerRepository $besprechungsteilnehmerRepository;
+    private BesprechungsanhangRepository $besprechungsanhangRepository;
     private PersonRepository $personRepository;
     private CountryRepository $countryRepository;
     private ACL $acl;
-    private TaskRepository $taskRepository; 
+    private TaskRepository $taskRepository;
     private LogRepository $logRepository;
 
     public function __construct()
     {
         date_default_timezone_set('Europe/Berlin');
-    
+
         $this->config = new Config(dirname(__DIR__, 1) . '/../static/meetlog.ini');
 
         $this->session = new Session();
@@ -69,6 +71,7 @@ final class App
         $this->besprechungRepository = new BesprechungRepository($this->db);
         $this->besprechungspunktRepository = new BesprechungspunktRepository($this->db);
         $this->besprechungsteilnehmerRepository = new BesprechungsteilnehmerRepository($this->db);
+        $this->besprechungsanhangRepository = new BesprechungsanhangRepository($this->db);
         $this->personRepository = new PersonRepository($this->db);
         $this->countryRepository = new CountryRepository($this->db);
         $this->acl = new ACL($this->userRepository, $this->organisationsFunktionRepository, $this->organisationsMitgliedRepository);
@@ -154,6 +157,11 @@ final class App
     public function besprechungsteilnehmerRepository(): BesprechungsteilnehmerRepository
     {
         return $this->besprechungsteilnehmerRepository;
+    }
+
+    public function besprechungsanhangRepository(): BesprechungsanhangRepository
+    {
+        return $this->besprechungsanhangRepository;
     }
 
     public function personRepository(): PersonRepository

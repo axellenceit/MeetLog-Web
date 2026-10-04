@@ -25,6 +25,10 @@ if (!class_exists('TCPDF')) {
     throw new RuntimeException('TCPDF wurde über Composer nicht geladen.');
 }
 
+if (!class_exists(\setasign\Fpdi\Tcpdf\Fpdi::class)) {
+    throw new RuntimeException('FPDI wurde über Composer nicht geladen.');
+}
+
 // Hole Organisationsdaten
 $organisation = $organisationRepository->findById($besprechung->organisationId);
 $besprechungspunkte = $besprechungspunktRepository->findByBesprechungId((int)$besprechung->id, false);
@@ -33,7 +37,7 @@ $teilnehmer = $besprechungsteilnehmerRepository->findByBesprechungID((int)$bespr
 
 $filename = 'Besprechungsprotokoll_' . str_replace('.', '', str_replace(' ', '_', $besprechung->titel)) . '_' . date('Y-m-d') . '.pdf';
 
-class MeetingPDF extends TCPDF
+class MeetingPDF extends \setasign\Fpdi\Tcpdf\Fpdi
 {
     private ?object $organisation = null;
     private string $meetingTitle = '';
@@ -585,6 +589,61 @@ if ($includeParticipants) {
     } else {
         $pdf->SetFont('helvetica', '', 10);
         $pdf->Cell($tableWidth, $rowHeight, 'Keine Teilnehmer erfasst', 1, 1, 'L');
+    }
+}
+
+// Anlagenverzeichnis: Anhänge mit DruckenBeiProtokoll = 'Y'
+$protokollAnhaenge = $besprechungsanhangRepository->findPrintableByBesprechungId((int)$besprechung->id, 'Protokoll');
+
+if (!empty($protokollAnhaenge)) {
+    $pdf->AddPage();
+    $pdf->SetFont('helvetica', 'B', 14);
+    $pdf->Cell(0, 8, 'Anlagen', 0, 1, 'L');
+    $pdf->Ln(2);
+
+    $nr = 1;
+    foreach ($protokollAnhaenge as $anhang) {
+        $pdf->checkPageBreakPublic(16);
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 6, 'Anlage ' . $nr . ': ' . $anhang->originalDateiname . ' (' . $anhang->formatierteGroesse() . ')', 0, 1, 'L');
+
+        if (!empty($anhang->beschreibung)) {
+            $pdf->SetFont('helvetica', '', 9);
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->MultiCell(0, 5, $anhang->beschreibung, 0, 'L', false, 1);
+            $pdf->SetTextColor(0, 0, 0);
+        }
+
+        $pdf->Ln(1.5);
+        $nr++;
+    }
+
+    // Anhang-Seiten vollständig ins Protokoll einfügen
+    foreach ($protokollAnhaenge as $anhang) {
+        if (empty($anhang->dateipfad)) {
+            continue;
+        }
+
+        $filePath = __DIR__ . '/../' . ltrim((string)$anhang->dateipfad, './');
+
+        if (!is_file($filePath)) {
+            continue;
+        }
+
+        try {
+            $pageCount = $pdf->setSourceFile($filePath);
+
+            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                $templateId = $pdf->importPage($pageNo);
+                $size = $pdf->getTemplateSize($templateId);
+                $orientation = $size['width'] > $size['height'] ? 'L' : 'P';
+
+                $pdf->AddPage($orientation, [$size['width'], $size['height']]);
+                $pdf->useTemplate($templateId);
+            }
+        } catch (\Throwable) {
+            // Beschädigte oder nicht lesbare Anhänge werden übersprungen
+        }
     }
 }
 

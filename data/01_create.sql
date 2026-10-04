@@ -202,6 +202,29 @@ CREATE TABLE `tblBesprechungsteilnehmer` (
   CONSTRAINT `fk_tblBesprechungsteilnehmer_User` FOREIGN KEY (`User`) REFERENCES `tblUser` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
+CREATE TABLE `tblBesprechungsanhang` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `Besprechung` int(11) NOT NULL,
+  `Dateiname` varchar(255) NOT NULL,
+  `OriginalDateiname` varchar(255) NOT NULL,
+  `Dateipfad` varchar(255) DEFAULT NULL,
+  `MimeTyp` varchar(100) DEFAULT NULL,
+  `Dateigroesse` bigint(20) DEFAULT NULL,
+  `Beschreibung` varchar(255) DEFAULT NULL,
+  `Sortierung` int(11) NOT NULL DEFAULT 0,
+  `DruckenBeiEinladung` enum('Y','N') NOT NULL DEFAULT 'N',
+  `DruckenBeiProtokoll` enum('Y','N') NOT NULL DEFAULT 'N',
+  `HochgeladenVon` int(11) DEFAULT NULL,
+  `istAktiviert` tinyint(1) NOT NULL DEFAULT 1,
+  `erstelltAm` datetime NOT NULL DEFAULT current_timestamp(),
+  `geaendertAm` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_tblBesprechungsanhang_Besprechung` (`Besprechung`),
+  KEY `idx_tblBesprechungsanhang_HochgeladenVon` (`HochgeladenVon`),
+  CONSTRAINT `fk_tblBesprechungsanhang_Besprechung` FOREIGN KEY (`Besprechung`) REFERENCES `tblBesprechung` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_tblBesprechungsanhang_User` FOREIGN KEY (`HochgeladenVon`) REFERENCES `tblUser` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
 CREATE TABLE `tblTask` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `BesprechungID` int(11) NOT NULL,
