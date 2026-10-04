@@ -45,7 +45,15 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
     return $t->istAnwesend;
 });
 
+$teilnehmerPersonIds = array_filter(array_map(static fn($t) => $t->person, $teilnehmer));
+$verfuegbarePersonen = array_filter(
+    $personRepository->findAll(),
+    static fn($p) => !in_array($p->id, $teilnehmerPersonIds, true)
+);
+
 $tasks = $taskRepository->findByBesprechungId($besprechung->id);
+
+$alleBenutzer = $userRepository->findAll(true);
 
 ?>
 
@@ -406,7 +414,7 @@ $tasks = $taskRepository->findByBesprechungId($besprechung->id);
                                 <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#blankParticipantList">
                                     <?= $translator->t('meetings.participants.blanklist'); ?>
                                 </button>
-                                <button class="btn btn-outline-primary" onclick="addParticipant(<?= $besprechung->id; ?>)">
+                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addParticipantModal">
                                     <?= $translator->t('meetings.participants.add'); ?>
                                 </button>
                             </div>
@@ -687,7 +695,13 @@ $tasks = $taskRepository->findByBesprechungId($besprechung->id);
                     <div class="card-header">
                         <h3 class="card-title"><?= htmlspecialchars($task->titel) ?></h3>
                         <div class="card-actions">
-                            <a href="#" class="btn btn-icon btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editMeetingTaskModal">
+                            <a href="#" class="btn btn-icon btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-task-edit"
+                                data-task-id="<?= (int) $task->id ?>"
+                                data-task-user-id="<?= (int) ($task->verantwortlicherUserId ?? 0) ?>"
+                                data-task-title="<?= htmlspecialchars($task->titel, ENT_QUOTES, 'UTF-8') ?>"
+                                data-task-description="<?= htmlspecialchars($task->beschreibung ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                data-task-deadline="<?= htmlspecialchars($task->deadline ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                data-task-completed="<?= $task->istErledigt ? '1' : '0' ?>">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-edit">
                                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                     <path d="M9 7h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" />
@@ -777,33 +791,48 @@ $tasks = $taskRepository->findByBesprechungId($besprechung->id);
         </div>
     </form>
 
-    <form action="actions.php?action=newTask" method="post" class="modal modal-blur fade" id="newTaskModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal modal-blur fade" id="newTaskModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><?= $translator->t('meetings.tasks.new'); ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" name="meetingId" id="meetingId" value="<?= $besprechung->id; ?>" />
-
-                    <div class="mb-3">
-                        <label class="form-label"><?= $translator->t('meetings.tasks.description'); ?></label>
-                        <textarea class="form-control" name="taskDescription" id="taskDescription" rows="3" required></textarea>
+                <form method="post" action="actions.php?action=create_task">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><?= $translator->t('meetings.tasks.new'); ?></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label"><?= $translator->t('meetings.tasks.deadline'); ?></label>
-                        <input type="date" class="form-control" name="taskDeadline" id="taskDeadline" />
+                    <div class="modal-body">
+                        <input type="hidden" name="besprechung_id" value="<?= $besprechung->id; ?>">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label" for="task-title-create"><?= $translator->t('tasks.title'); ?></label>
+                                <input class="form-control" type="text" name="titel" id="task-title-create" maxlength="255" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="task-description-create"><?= $translator->t('tasks.description'); ?></label>
+                                <textarea class="form-control" name="beschreibung" id="task-description-create" rows="4"></textarea>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="task-user-create"><?= $translator->t('tasks.assignedTo'); ?></label>
+                                <select class="form-select" name="verantwortlicher_user_id" id="task-user-create">
+                                    <option value="">-</option>
+                                    <?php foreach ($alleBenutzer as $benutzer): ?>
+                                        <option value="<?= (int) $benutzer->id ?>"><?= htmlspecialchars(trim($benutzer->vorname . ' ' . $benutzer->nachname), ENT_QUOTES, 'UTF-8') ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="task-deadline-create"><?= $translator->t('tasks.dueDate'); ?></label>
+                                <input class="form-control" type="date" name="deadline" id="task-deadline-create">
+                            </div>
+                        </div>
                     </div>
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"> <?= $translator->t('common.cancel'); ?> </button>
-                    <button type="submit" class="btn btn-primary btn-5 ms-auto"><?= $translator->t('meetings.tasks.new'); ?></button>
-                </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn me-auto" data-bs-dismiss="modal"><?= $translator->t('common.cancel'); ?></button>
+                        <button type="submit" class="btn btn-primary"><?= $translator->t('common.save'); ?></button>
+                    </div>
+                </form>
             </div>
         </div>
-    </form>
+    </div>
 
     <form action="actions.php?action=editTask" method="post" class="modal modal-blur fade" id="editTaskModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
@@ -851,6 +880,57 @@ $tasks = $taskRepository->findByBesprechungId($besprechung->id);
             </div>
         </div>
     </form>
+
+    <div class="modal modal-blur fade" id="modal-task-edit" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form method="post" action="actions.php?action=update_task">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><?= $translator->t('tasks.edit'); ?></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="task_id" id="task-id-edit">
+                        <input type="hidden" name="besprechung_id" value="<?= $besprechung->id; ?>">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label" for="task-title-edit"><?= $translator->t('tasks.title'); ?></label>
+                                <input class="form-control" type="text" name="titel" id="task-title-edit" maxlength="255" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="task-description-edit"><?= $translator->t('tasks.description'); ?></label>
+                                <textarea class="form-control" name="beschreibung" id="task-description-edit" rows="4"></textarea>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="task-user-edit"><?= $translator->t('tasks.assignedTo'); ?></label>
+                                <select class="form-select" name="verantwortlicher_user_id" id="task-user-edit">
+                                    <option value="">-</option>
+                                    <?php foreach ($alleBenutzer as $benutzer): ?>
+                                        <option value="<?= (int) $benutzer->id ?>"><?= htmlspecialchars(trim($benutzer->vorname . ' ' . $benutzer->nachname), ENT_QUOTES, 'UTF-8') ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="task-deadline-edit"><?= $translator->t('tasks.dueDate'); ?></label>
+                                <input class="form-control" type="date" name="deadline" id="task-deadline-edit">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="task-completed-edit"><?= $translator->t('tasks.status'); ?></label>
+                                <select class="form-select" name="ist_erledigt" id="task-completed-edit">
+                                    <option value="0"><?= $translator->t('meetings.tasks.incomplete'); ?></option>
+                                    <option value="1"><?= $translator->t('meetings.tasks.complete'); ?></option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn me-auto" data-bs-dismiss="modal"><?= $translator->t('common.cancel'); ?></button>
+                        <button type="submit" class="btn btn-primary"><?= $translator->t('common.save'); ?></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <?php if ($authToManageMeetings) { ?>
 
@@ -1316,6 +1396,48 @@ $tasks = $taskRepository->findByBesprechungId($besprechung->id);
         </div>
     </form>
 
+    <form action="actions.php?action=addMeetingParticipants" method="post" class="modal modal-blur fade" id="addParticipantModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?= $translator->t('meetings.participants.add'); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="meetingId" value="<?= $besprechung->id; ?>" />
+
+                    <label class="form-label"><?= $translator->t('meetings.participants.root'); ?></label>
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <label class="form-label text-secondary"><?= $translator->t('meetings.participants.available'); ?></label>
+                            <select id="teilnehmer-verfuegbar" multiple size="10" class="form-select">
+                                <?php foreach ($verfuegbarePersonen as $person): ?>
+                                    <option value="<?= $person->id; ?>"><?= htmlspecialchars($person->vorname . ' ' . $person->nachname, ENT_QUOTES, 'UTF-8'); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="col-auto d-flex flex-column gap-2">
+                            <button type="button" id="btn-participant-add" class="btn btn-icon" title="<?= $translator->t('meetings.participants.addSelected'); ?>">&gt;</button>
+                            <button type="button" id="btn-participant-add-all" class="btn btn-icon" title="<?= $translator->t('meetings.participants.addAll'); ?>">&gt;&gt;</button>
+                            <button type="button" id="btn-participant-remove-all" class="btn btn-icon" title="<?= $translator->t('meetings.participants.removeAll'); ?>">&lt;&lt;</button>
+                            <button type="button" id="btn-participant-remove" class="btn btn-icon" title="<?= $translator->t('meetings.participants.removeSelected'); ?>">&lt;</button>
+                        </div>
+
+                        <div class="col">
+                            <label class="form-label text-secondary"><?= $translator->t('meetings.participants.selected'); ?></label>
+                            <select id="teilnehmer-ausgewaehlt" name="teilnehmer[]" multiple size="10" class="form-select"></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"> <?= $translator->t('common.cancel'); ?> </button>
+                    <button type="submit" class="btn btn-primary btn-5 ms-auto"><?= $translator->t('meetings.participants.add'); ?></button>
+                </div>
+            </div>
+        </div>
+    </form>
+
     <?php include_once 'footer.php'; ?>
 
 </body>
@@ -1389,81 +1511,112 @@ $tasks = $taskRepository->findByBesprechungId($besprechung->id);
 <script>
     async function setParticipantStatus(besprechungId, participantId, status) {
 
-        console.log(`Setting status for participant ${participantId} to ${status} in meeting ${besprechungId}`);
-
-        try {
-            const response = await fetch('api/setMeetingParticipantStatus.php', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    besprechungId,
-                    participantId,
-                    status
-                })
-            });
-
-            const text = await response.text();
-            let data;
+            console.log(`Setting status for participant ${participantId} to ${status} in meeting ${besprechungId}`);
 
             try {
-                data = JSON.parse(text);
-            } catch (err) {
-                console.error('Invalid JSON response from API:', text);
-                alert('Server returned an invalid response. See console for details.');
-                return;
-            }
+                const response = await fetch('api/setMeetingParticipantStatus.php', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        besprechungId,
+                        participantId,
+                        status
+                    })
+                });
 
-            if (!response.ok) {
-                console.error('API response error:', response.status, data);
-                alert(data.error || 'Server error while updating participant status.');
-                return;
-            }
+                const text = await response.text();
+                let data;
 
-            if (data.error) {
-                alert(data.error);
-                return;
-            }
+                try {
+                    data = JSON.parse(text);
+                } catch (err) {
+                    console.error('Invalid JSON response from API:', text);
+                    alert('Server returned an invalid response. See console for details.');
+                    return;
+                }
 
-            location.reload();
-        } catch (error) {
-            console.error('Fetch error:', error);
-            alert('An error occurred while updating participant status.');
-        }
-    }
+                if (!response.ok) {
+                    console.error('API response error:', response.status, data);
+                    alert(data.error || 'Server error while updating participant status.');
+                    return;
+                }
 
-    function addParticipant(meetingId) {
-        const name = prompt('Enter the name of the new participant (First Last):');
-        if (!name) return;
-
-        const [vorname, nachname] = name.split(' ');
-        if (!vorname || !nachname) {
-            alert('Please enter both first and last name.');
-            return;
-        }
-
-        fetch('api/addMeetingParticipant.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `besprechungId=${meetingId}&vorname=${vorname}&nachname=${nachname}`
-            })
-            .then(response => response.json())
-            .then(data => {
                 if (data.error) {
                     alert(data.error);
-                } else {
-                    location.reload();
+                    return;
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while adding participant.');
+
+                location.reload();
+            } catch (error) {
+                console.error('Fetch error:', error);
+                alert('An error occurred while updating participant status.');
+            }
+        }
+</script>
+
+<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const verfuegbar = document.getElementById('teilnehmer-verfuegbar');
+            const ausgewaehlt = document.getElementById('teilnehmer-ausgewaehlt');
+
+            if (!verfuegbar || !ausgewaehlt) return;
+
+            const form = ausgewaehlt.closest('form');
+
+            function moveOptions(from, to, onlySelected) {
+                Array.from(from.options).forEach(function(option) {
+                    if (!onlySelected || option.selected) {
+                        option.selected = false;
+                        to.appendChild(option);
+                    }
+                });
+            }
+
+            document.getElementById('btn-participant-add').addEventListener('click', function() {
+                moveOptions(verfuegbar, ausgewaehlt, true);
             });
-    }
+
+            document.getElementById('btn-participant-remove').addEventListener('click', function() {
+                moveOptions(ausgewaehlt, verfuegbar, true);
+            });
+
+            document.getElementById('btn-participant-add-all').addEventListener('click', function() {
+                moveOptions(verfuegbar, ausgewaehlt, false);
+            });
+
+            document.getElementById('btn-participant-remove-all').addEventListener('click', function() {
+                moveOptions(ausgewaehlt, verfuegbar, false);
+            });
+
+            form.addEventListener('submit', function() {
+                Array.from(ausgewaehlt.options).forEach(function(option) {
+                    option.selected = true;
+                });
+            });
+        });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const editModal = document.getElementById('modal-task-edit');
+
+        if (editModal) {
+            editModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                if (!button) return;
+
+                document.getElementById('task-id-edit').value = button.getAttribute('data-task-id') || '';
+                document.getElementById('task-user-edit').value = button.getAttribute('data-task-user-id') || '';
+                document.getElementById('task-title-edit').value = button.getAttribute('data-task-title') || '';
+                document.getElementById('task-description-edit').value = button.getAttribute('data-task-description') || '';
+                document.getElementById('task-deadline-edit').value = button.getAttribute('data-task-deadline') || '';
+                document.getElementById('task-completed-edit').value = button.getAttribute('data-task-completed') || '0';
+            });
+        }
+    });
 </script>
 
 <script>

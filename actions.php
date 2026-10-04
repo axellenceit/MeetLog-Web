@@ -395,6 +395,38 @@ switch ($action) {
         $redirect->back();
         break;
 
+    case 'addMeetingParticipants':
+        $meetingId = (int) ($_POST['meetingId'] ?? 0);
+
+        $meeting = $besprechungRepository->findById($meetingId);
+
+        if (!$meeting) {
+            $flash->addToast('Meeting nicht gefunden', 'danger');
+            $redirect->back();
+        }
+
+        $teilnehmerIds = array_map('intval', (array) ($_POST['teilnehmer'] ?? []));
+
+        if (empty($teilnehmerIds)) {
+            $flash->addToast('Keine Teilnehmer ausgewählt', 'danger');
+            $redirect->back();
+        }
+
+        foreach ($teilnehmerIds as $personId) {
+            if ($personId <= 0) {
+                continue;
+            }
+
+            $besprechungsteilnehmerRepository->addTeilnehmer($meetingId, new \Src\Besprechung\Besprechungsteilnehmer(
+                besprechung: $meetingId,
+                person: $personId,
+            ));
+        }
+
+        $flash->addToast('Teilnehmer erfolgreich hinzugefügt', 'success');
+        $redirect->back();
+        break;
+
     case 'meetingChairman':
         $meetingId = $_GET['meetingId'] ?? null;
         $participantId = $_GET['participantId'] ?? null;
