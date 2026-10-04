@@ -34,6 +34,16 @@ return [
     'unpublish' => 'Nicht veröffentlichen',
     'delete' => 'Löschen',
     'edit' => 'Bearbeiten',
+    'tasks' => [
+        'root' => 'Aufgaben',
+        'edit' => 'Bearbeiten',
+        'complete' => 'Abschließen',
+        'incomplete' => 'Nicht abgeschlossen',
+        'new' => 'Neue Aufgabe',
+        'delete' => 'Löschen',
+        'description' => 'Beschreibung',
+        'deadline' => 'Frist',
+    ],
     'includeParticipants' => 'Teilnehmerliste mit anhängen',
     'types' => [
         'information' => 'Information',

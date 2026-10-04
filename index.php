@@ -186,7 +186,7 @@ $meineAufgaben = $taskRepository->findAllByUserId((int) $session->get('id'));
 
                                                     <?php
                                                     /** @var \Src\Task\Task $task */
-                                                    $diff = date_diff(new DateTime(), new DateTime($task->deadline));
+                                                    $diff = date_diff(new DateTime(), new DateTime($task->deadline)) ?? 0;
                                                     $eventColor = match (true) {
                                                         $diff->days > 14 => 'bg-green',
                                                         $diff->days > 7 => 'bg-yellow',

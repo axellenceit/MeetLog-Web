@@ -16,7 +16,7 @@ final class TaskRepository
         return $row ? Task::fromArray($row) : null;
     }
 
-    public function findAllByBesprechungId(int $besprechungId): array
+    public function findByBesprechungId(int $besprechungId): array
     {
         $sql = "SELECT * FROM tblTask WHERE BesprechungID = ? ORDER BY Deadline ASC";
         $rows = $this->db->query($sql, [$besprechungId]);

@@ -31,6 +31,16 @@ return [
     'unpublish' => 'Unpublish',
     'delete' => 'Delete',
     'edit' => 'Edit',
+    'tasks' => [
+        'root' => 'Tasks',
+        'edit' => 'Edit',
+        'complete' => 'Complete',
+        'incomplete' => 'Incomplete',
+        'new' => 'New task',
+        'delete' => 'Delete',
+        'description' => 'Description',
+        'deadline' => 'Deadline',
+    ],
     'includeParticipants' => 'Include participant list',
     'types' => [
         'information' => 'Information',

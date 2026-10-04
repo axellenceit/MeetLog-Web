@@ -45,6 +45,8 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
     return $t->istAnwesend;
 });
 
+$tasks = $taskRepository->findByBesprechungId($besprechung->id);
+
 ?>
 
 <!DOCTYPE html>
@@ -55,7 +57,7 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MeetLog</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hugerte@1.0.10/skins/ui/oxide/content.min.css">
+    <!--<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hugerte@1.0.10/skins/ui/oxide/content.min.css">-->
     <style>
         html {
             scroll-padding-top: 180px;
@@ -678,6 +680,55 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
 
             <?php } ?>
 
+            <div class="hr-text"><?= $translator->translate('meetings.tasks.root') ?></div>
+
+            <?php foreach ($tasks as $task) { ?>
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h3 class="card-title"><?= htmlspecialchars($task->titel) ?></h3>
+                        <div class="card-actions">
+                            <a href="#" class="btn btn-icon btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editMeetingTaskModal">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-edit">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M9 7h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3" />
+                                    <path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" />
+                                    <line x1="16" y1="5" x2="19" y2="8" />
+                                </svg>
+                            </a>
+                            <a href="#" class="btn btn-icon btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteMeetingTaskModal">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-trash">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <line x1="4" y1="7" x2="20" y2="7" />
+                                    <line x1="10" y1="11" x2="10" y2="17" />
+                                    <line x1="14" y1="11" x2="14" y2="17" />
+                                    <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                                    <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                                </svg>
+                            </a>
+                            <a href="#" class="btn btn-icon btn-outline-success" data-bs-toggle="modal" data-bs-target="#completeMeetingTaskModal">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M5 12l5 5l10 -10" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text"><?= htmlspecialchars($task->beschreibung) ?></p>
+                        <p class="card-text"><small class="text-muted"><?= $translator->t('meetings.tasks.deadline') ?>: <?= $task->deadline ? htmlspecialchars((new DateTime($task->deadline))->format('d.m.Y')) : '' ?></small></p>
+                    </div>
+                </div>
+            <?php } ?>
+
+
+            <?php if (!$besprechung->istVeröffentlicht) { ?>
+                <div class="hr-text"><?= $translator->translate('meetings.tasks.new') ?></div>
+                <div class="text-center">
+                    <button class="btn btn-lg btn-success mb-5" data-bs-toggle="modal" data-bs-target="#newTaskModal"><?= $translator->t('meetings.tasks.new') ?></button>
+                </div>
+
+            <?php } ?>
+
         </div>
 
     </div>
@@ -721,6 +772,81 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                 <div class="modal-footer">
                     <button type="button" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"> <?= $translator->t('common.cancel'); ?> </button>
                     <button type="submit" class="btn btn-primary btn-5 ms-auto"><?= $translator->t('meetings.participants.blanklist'); ?></button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <form action="actions.php?action=newTask" method="post" class="modal modal-blur fade" id="newTaskModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?= $translator->t('meetings.tasks.new'); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="meetingId" id="meetingId" value="<?= $besprechung->id; ?>" />
+
+                    <div class="mb-3">
+                        <label class="form-label"><?= $translator->t('meetings.tasks.description'); ?></label>
+                        <textarea class="form-control" name="taskDescription" id="taskDescription" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><?= $translator->t('meetings.tasks.deadline'); ?></label>
+                        <input type="date" class="form-control" name="taskDeadline" id="taskDeadline" />
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"> <?= $translator->t('common.cancel'); ?> </button>
+                    <button type="submit" class="btn btn-primary btn-5 ms-auto"><?= $translator->t('meetings.tasks.new'); ?></button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <form action="actions.php?action=editTask" method="post" class="modal modal-blur fade" id="editTaskModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?= $translator->t('meetings.tasks.edit'); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="editTaskId" id="editTaskId" value="" />
+
+                    <div class="mb-3">
+                        <label class="form-label"><?= $translator->t('meetings.tasks.description'); ?></label>
+                        <textarea class="form-control" name="editTaskDescription" id="editTaskDescription" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><?= $translator->t('meetings.tasks.deadline'); ?></label>
+                        <input type="date" class="form-control" name="editTaskDeadline" id="editTaskDeadline" />
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"> <?= $translator->t('common.cancel'); ?> </button>
+                    <button type="submit" class="btn btn-primary btn-5 ms-auto"><?= $translator->t('meetings.tasks.edit'); ?></button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <form action="actions.php?action=deleteTask" method="post" class="modal modal-blur fade" id="deleteTaskModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?= $translator->t('meetings.tasks.delete'); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="deleteTaskId" id="deleteTaskId" value="" />
+                    <p><?= $translator->t('meetings.tasks.deleteConfirmation'); ?></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"> <?= $translator->t('common.cancel'); ?> </button>
+                    <button type="submit" class="btn btn-danger btn-5 ms-auto"><?= $translator->t('meetings.tasks.delete'); ?></button>
                 </div>
             </div>
         </div>
