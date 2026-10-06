@@ -115,8 +115,8 @@ function isActive(array $files, string $currentURL): string
                             </a>
                         </li>
 
-                        <li class="nav-item <?= isActive(['personen.php'], $currentURL); ?>">
-                            <a class="nav-link" href="./personen.php">
+                        <li class="nav-item <?= isActive(['persons.php'], $currentURL); ?>">
+                            <a class="nav-link" href="./persons.php">
                                 <span class="nav-link-icon d-lg-inline-block">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-users">
                                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -188,7 +188,7 @@ function isActive(array $files, string $currentURL): string
                             data-bs-toggle="dropdown"
                             aria-expanded="false"
                             aria-label="Benutzermenü öffnen">
-                            <span class="avatar avatar-sm me-2" style="<?= $avatarStyle; ?>">
+                            <span class="avatar avatar-sm me-2 rounded-circle flex-shrink-0" style="<?= $avatarStyle; ?>">
                                 <?= empty($user->photo) ? htmlspecialchars((string)$user->avatar, ENT_QUOTES, 'UTF-8') : ''; ?>
                             </span>
                             <span class="d-block text-start">

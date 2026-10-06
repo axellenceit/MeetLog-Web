@@ -68,6 +68,7 @@ $alleBenutzer = $userRepository->findAll(true);
     <title>MeetLog</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
     <!--<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hugerte@1.0.10/skins/ui/oxide/content.min.css">-->
+    <link rel="icon" href="./favicon.ico" type="image/vnd.microsoft.icon">
     <style>
         html {
             scroll-padding-top: 180px;

@@ -15,7 +15,7 @@ if ($auth->isLoggedIn()) {
 }
 
 $config->reload();
-$togglePublicMeeting = (int) ($config->get('general', 'togglePublicMeeting') ?? 0) === 1;
+$togglePublicMeeting = (string) ($config->get('general', 'togglePublicMeeting') ?? 'off') === 'on';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formType = $_POST['form_type'] ?? '';

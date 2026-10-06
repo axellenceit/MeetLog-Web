@@ -31,7 +31,7 @@ $myTasks = $taskRepository->findAllByUserId((int) $session->get('id'));
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MeetLog</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
-
+    <link rel="icon" href="./favicon.ico" type="image/vnd.microsoft.icon">
     <style>
         .fc .fc-daygrid-event,
         .fc .fc-daygrid-dot-event {
@@ -233,7 +233,10 @@ $myTasks = $taskRepository->findAllByUserId((int) $session->get('id'));
             <div class="modal modal-blur fade" id="modal-task-view" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
                     <div class="modal-content">
-                        <div class="modal-header">
+                        <div class="modal-header d-flex align-items-center">
+                            <div class="form-check mb-0 me-2">
+                                <input class="form-check-input mt-0" type="checkbox" id="task-completed-view" data-task-id="" aria-label="<?= $translator->t('tasks.status'); ?>">
+                            </div>
                             <h5 class="modal-title"><?= $translator->t('tasks.edit'); ?></h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                         </div>
@@ -247,16 +250,9 @@ $myTasks = $taskRepository->findAllByUserId((int) $session->get('id'));
                                     <label class="form-label" for="task-description-view"><?= $translator->t('tasks.description'); ?></label>
                                     <textarea class="form-control" id="task-description-view" rows="4" readonly></textarea>
                                 </div>
-                                <div class="col-12 col-md-6">
+                                <div class="col-12">
                                     <label class="form-label" for="task-deadline-view"><?= $translator->t('tasks.dueDate'); ?></label>
                                     <input class="form-control" type="date" id="task-deadline-view" readonly>
-                                </div>
-                                <div class="col-12 col-md-6">
-                                    <label class="form-label" for="task-completed-view"><?= $translator->t('tasks.status'); ?></label>
-                                    <div class="form-check form-switch mt-2">
-                                        <input class="form-check-input" type="checkbox" id="task-completed-view" data-task-id="">
-                                        <label class="form-check-label" for="task-completed-view"><?= $translator->t('tasks.status'); ?></label>
-                                    </div>
                                 </div>
                             </div>
                         </div>

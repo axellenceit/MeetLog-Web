@@ -62,7 +62,7 @@ $tasks = array_values(array_filter(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MeetLog</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
-
+    <link rel="icon" href="./favicon.ico" type="image/vnd.microsoft.icon">
 
     <style>
         .page-title-row {
@@ -248,6 +248,9 @@ $tasks = array_values(array_filter(
                     <div class="modal-content">
                         <form method="post" action="actions.php?action=update_task">
                             <div class="modal-header">
+                                <div class="form-check mb-0 me-2">
+                                    <input class="form-check-input mt-0" type="checkbox" id="task-completed-edit" data-task-id="" aria-label="<?= $translator->t('tasks.status'); ?>">
+                                </div>
                                 <h5 class="modal-title"><?= $translator->t('tasks.edit'); ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                             </div>
                             <div class="modal-body">
@@ -265,10 +268,6 @@ $tasks = array_values(array_filter(
                                     <div class="col-12"><label class="form-label" for="task-title-edit">Titel</label><input class="form-control" type="text" name="title" id="task-title-edit" maxlength="255" required></div>
                                     <div class="col-12"><label class="form-label" for="task-description-edit">Beschreibung</label><textarea class="form-control" name="description" id="task-description-edit" rows="4"></textarea></div>
                                     <div class="col-12 col-md-6"><label class="form-label" for="task-deadline-edit">Fälligkeitsdatum</label><input class="form-control" type="date" name="deadline" id="task-deadline-edit"></div>
-                                    <div class="col-12 col-md-6"><label class="form-label" for="task-completed-edit">Status</label><select class="form-select" name="is_done" id="task-completed-edit">
-                                            <option value="0">Offen</option>
-                                            <option value="1">Erledigt</option>
-                                        </select></div>
                                 </div>
                             </div>
                             <div class="modal-footer"><button type="button" class="btn me-auto" data-bs-dismiss="modal"><?= $translator->t('common.cancel'); ?></button><button type="submit" class="btn btn-primary"><?= $translator->t('common.save'); ?></button></div>
