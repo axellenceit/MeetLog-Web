@@ -1,0 +1,17 @@
+version: 55
+jobs:
+- name: Publish Github Release
+  steps:
+  - type: PushRepository
+    name: Github
+    remoteUrl: https://github.com/axellenceit/MeetLog-Web.git
+    userName: axcellenceit
+    force: false
+    condition: SUCCESSFUL
+    optional: false
+  retryCondition: never
+  maxAttempts: 3
+  retryDelay: 30
+  includeUpstreamWhenRebuild: false
+  includeDownstreamWhenRebuild: false
+  timeout: 14400
