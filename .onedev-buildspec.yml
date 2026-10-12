@@ -1,5 +1,4 @@
 version: 55
-
 jobs:
 - name: Publish Github Release
   steps:
@@ -19,61 +18,78 @@ jobs:
     interpreter:
       type: PosixInterpreter
       shell: sh
-    commands: |
-      set -eu
+      commands: |
+        set -eu
 
-      apk add --no-cache curl jq
+        apk add --no-cache curl jq
 
-      TAG="@tag@"
-      REPO="axellenceit/MeetLog-Web"
-      API="https://api.github.com/repos/$REPO"
-      TOKEN="@secret:GitHub-OneDev-Token@"
+        TAG="@tag@"
+        REPO="axellenceit/MeetLog-Web"
+        API="https://api.github.com/repos/$REPO"
+        TOKEN="@secret:GitHub-OneDev-Token@"
 
-      if [ ! -f ReleaseNotes.md ]; then
-        echo "ReleaseNotes.md wurde nicht gefunden!"
-        exit 1
-      fi
+        if [ -z "$TAG" ]; then
+          echo "Fehler: Kein Tag vorhanden."
+          exit 1
+        fi
 
-      jq -n 
-        --arg tag "$TAG" 
-        --arg name "$TAG" 
-        --rawfile body ReleaseNotes.md 
-        '{
-          tag_name: $tag,
-          name: $name,
-          body: $body,
-          draft: false,
-          prerelease: false
-        }' > release.json
+        if [ ! -f ReleaseNotes.md ]; then
+          echo "Fehler: ReleaseNotes.md wurde nicht gefunden."
+          echo "Dateien im Arbeitsverzeichnis:"
+          ls -la
+          exit 1
+        fi
 
-      STATUS=$(curl -sS -o release-response.json 
-        -w '%{http_code}' 
-        -H "Authorization: Bearer $TOKEN" 
-        -H "Accept: application/vnd.github+json" 
-        "$API/releases/tags/$TAG")
+        jq -n \
+          --arg tag "$TAG" \
+          --arg name "$TAG" \
+          --rawfile body ReleaseNotes.md \
+          '{
+            tag_name: $tag,
+            name: $name,
+            body: $body,
+            draft: false,
+            prerelease: false
+          }' > release.json
 
-      if [ "$STATUS" = "200" ]; then
-        ID=$(jq -r '.id' release-response.json)
-        curl --fail-with-body -sS 
-          -X PATCH 
-          -H "Authorization: Bearer $TOKEN" 
-          -H "Accept: application/vnd.github+json" 
-          -H "Content-Type: application/json" 
-          "$API/releases/$ID" 
-          --data @release.json
-      elif [ "$STATUS" = "404" ]; then
-        curl --fail-with-body -sS 
-          -X POST 
-          -H "Authorization: Bearer $TOKEN" 
-          -H "Accept: application/vnd.github+json" 
-          -H "Content-Type: application/json" 
-          "$API/releases" 
-          --data @release.json
-      else
-        echo "GitHub API Fehler: HTTP $STATUS"
-        cat release-response.json
-        exit 1
-      fi
+        STATUS=$(curl -sS -o release-response.json \
+          -w '%{http_code}' \
+          -H "Authorization: Bearer $TOKEN" \
+          -H "Accept: application/vnd.github+json" \
+          "$API/releases/tags/$TAG")
+
+        if [ "$STATUS" = "200" ]; then
+          ID=$(jq -r '.id' release-response.json)
+          echo "Release $TAG existiert bereits. Aktualisiere Beschreibung."
+
+          curl --fail-with-body -sS \
+            -X PATCH \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" \
+            "$API/releases/$ID" \
+            --data @release.json
+
+        elif [ "$STATUS" = "404" ]; then
+          echo "Erstelle GitHub Release $TAG."
+
+          curl --fail-with-body -sS \
+            -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" \
+            "$API/releases" \
+            --data @release.json
+
+        else
+          echo "GitHub API Fehler: HTTP $STATUS"
+          cat release-response.json
+          exit 1
+        fi
+
+        echo "GitHub Release $TAG erfolgreich verarbeitet."
+    runAs: 0:0
+    useTTY: true
     condition: SUCCESSFUL
     optional: false
 
