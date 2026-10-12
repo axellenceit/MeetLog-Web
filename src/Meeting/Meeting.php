@@ -7,7 +7,8 @@ namespace Src\Meeting;
 final class Meeting
 {
     public const STATUS_PLANNED = 'planned';
-    public const STATUS_LIVE = 'live';
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_INVITED = 'invited';
     public const STATUS_FINISHED = 'finished';
     public const STATUS_CANCELLED = 'cancelled';
 
@@ -32,7 +33,8 @@ final class Meeting
     {
         return [
             self::STATUS_PLANNED,
-            self::STATUS_LIVE,
+            self::STATUS_ACTIVE,
+            self::STATUS_INVITED,
             self::STATUS_FINISHED,
             self::STATUS_CANCELLED,
         ];

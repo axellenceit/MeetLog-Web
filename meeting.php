@@ -271,7 +271,7 @@ $alleBenutzer = $userRepository->findAll(true);
                                     <?php
                                     if ($meeting->status === 'planned') {
                                         echo '<span class="badge bg-secondary text-white">' . $translator->t('meetings.status.planned') . '</span>';
-                                    } elseif ($meeting->status === 'live') {
+                                    } elseif ($meeting->status === 'active') {
                                         echo '<span class="badge bg-success text-white">' . $translator->t('meetings.status.active') . '</span>';
                                     } elseif ($meeting->status === 'finished') {
                                         echo '<span class="badge bg-dark text-white">' . $translator->t('meetings.status.finished') . '</span>';

@@ -77,17 +77,6 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                     <div class="card mb-2">
                         <div class="card-header">
                             <h2 class="card-title" style="font-weight: bold;"><?= $meeting->title; ?></h2>
-                            <div class="card-actions">
-                                <button class="btn btn-icon" name="printPDF" id="printPDF"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-file-type-pdf">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                                        <path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" />
-                                        <path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" />
-                                        <path d="M17 18h2" />
-                                        <path d="M20 15h-3v6" />
-                                        <path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1" />
-                                    </svg></button>
-                            </div>
                         </div>
                     </div>
 
@@ -132,7 +121,7 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                             <circle cx="12" cy="7" r="4" />
                                             <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
                                         </svg>
-                                        <?= $translator->t('meetings.participants'); ?>
+                                        <?= $translator->t('meetings.participants.root'); ?>
                                     </a>
                                 </li>
                             </ul>
@@ -167,10 +156,10 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                         <div class="col-7">
                                         </div>
                                         <div class="col-5 justify-content-end mb-2">
-                                            <div class="badge bg-secondary text-white"><?= $translator->t('participants.invited'); ?></div>
-                                            <div class="badge bg-success text-white"><?= $translator->t('participants.present'); ?></div>
-                                            <div class="badge bg-warning text-white"><?= $translator->t('participants.excused'); ?></div>
-                                            <div class="badge bg-danger text-white"><?= $translator->t('participants.absent'); ?></div>
+                                            <div class="badge bg-secondary text-white"><?= $translator->t('meetings.participants.invited'); ?></div>
+                                            <div class="badge bg-success text-white"><?= $translator->t('meetings.participants.present'); ?></div>
+                                            <div class="badge bg-warning text-white"><?= $translator->t('meetings.participants.excused'); ?></div>
+                                            <div class="badge bg-danger text-white"><?= $translator->t('meetings.participants.absent'); ?></div>
                                         </div>
                                     </div>
                                     <div>
@@ -211,16 +200,16 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                         <path d="M19 4v16h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12" />
                                         <path d="M19 16h-12a2 2 0 0 0 -2 2" />
                                         <path d="M9 8h6" />
-                                    </svg><strong> <?= $translator->t('status'); ?></strong>
+                                    </svg><strong> <?= $translator->t('meetings.status.root'); ?></strong>
                                 </div>
                                 <div class="col-7">
                                     <?php
                                     if ($meeting->status === 'planned') {
-                                        echo '<span class="badge bg-secondary text-white">' . $translator->t('meetings.statusPlanned') . '</span>';
-                                    } elseif ($meeting->status === 'live') {
-                                        echo '<span class="badge bg-success text-white">' . $translator->t('meetings.statusLive') . '</span>';
+                                        echo '<span class="badge bg-secondary text-white">' . $translator->t('meetings.status.planned') . '</span>';
+                                    } elseif ($meeting->status === 'active') {
+                                        echo '<span class="badge bg-success text-white">' . $translator->t('meetings.status.active') . '</span>';
                                     } elseif ($meeting->status === 'finished') {
-                                        echo '<span class="badge bg-dark text-white">' . $translator->t('meetings.statusFinished') . '</span>';
+                                        echo '<span class="badge bg-dark text-white">' . $translator->t('meetings.status.finished') . '</span>';
                                     }
                                     ?>
                                 </div>
@@ -265,7 +254,7 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                     </svg><strong> <?= $translator->t('meetings.duration'); ?>:</strong>
                                 </div>
                                 <div class="col-7">
-                                    <?= $dauer; ?> <?= $translator->t('minutes'); ?>
+                                    <?= $dauer; ?> <?= $translator->t('common.minutes'); ?>
                                 </div>
                             </div>
 
@@ -279,25 +268,6 @@ $anwesendeTeilnehmer = array_filter($teilnehmer, function ($t) {
                                 </div>
                                 <div class="col-7">
                                     <?= $meeting->location; ?>
-                                </div>
-                            </div>
-
-                            <div class="row g-2 mb-2">
-                                <div class="col-5">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-link">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M9 15l6 -6" />
-                                        <path d="M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464" />
-                                        <path d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463" />
-                                    </svg><strong> <?= $translator->t('meetings.link'); ?>:</strong>
-                                </div>
-                                <div class="col-7">
-                                    <?php if ($meeting->isPublished) { ?>
-                                        <span class="badge bg-success text-white"> <?= $translator->t('meetings.published'); ?></span><br />
-                                        <a href="<?= $config->get('general', 'url'); ?>/public.php?meeting=<?= $meeting->publicCode; ?>" target="_blank"><?= $meeting->publicCode; ?></a>
-                                    <?php } else { ?>
-                                        <span class="badge bg-danger text-white"> <?= $translator->t('meetings.unpublished'); ?></span><br />
-                                    <?php } ?>
                                 </div>
                             </div>
 

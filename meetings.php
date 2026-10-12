@@ -187,7 +187,7 @@ $authToManageMeetings = $user->isAdmin || $acl->isPermitted($user->id, (int)$ses
                         <h3>
                             <?php if ($meeting->status === 'planned'): ?>
                                 <span class="badge bg-primary-lt"><?= $translator->t('meetings.status.planned'); ?></span>
-                            <?php elseif ($meeting->status === 'live'): ?>
+                            <?php elseif ($meeting->status === 'active'): ?>
                                 <span class="badge bg-success-lt"><?= $translator->t('meetings.status.active'); ?></span>
                             <?php elseif ($meeting->status === 'finished'): ?>
                                 <span class="badge bg-dark-lt"><?= $translator->t('meetings.status.finished'); ?></span>

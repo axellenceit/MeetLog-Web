@@ -157,4 +157,18 @@ final class MeetingRepository
             $meeting->id,
         ]);
     }
+
+    public function updateStatus(Meeting $meeting, string $status): bool
+    {
+        if ($meeting->id === null) {
+            return false;
+        }
+
+        $sql = "UPDATE tblMeeting SET Status = ? WHERE id = ?";
+
+        return $this->db->execute($sql, [
+            $status,
+            $meeting->id,
+        ]);
+    }
 }

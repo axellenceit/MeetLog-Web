@@ -115,6 +115,7 @@ return [
         'root' => 'Status',
         'change' => 'Change status',
         'planned' => 'Planned',
+        'invited' => 'Invited',
         'active' => 'Active',
         'finished' => 'Finished',
     ],

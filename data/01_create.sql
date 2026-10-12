@@ -101,7 +101,7 @@ CREATE TABLE `tblMeeting` (
   `StartTime` time DEFAULT NULL,
   `EndTime` time DEFAULT NULL,
   `Location` varchar(255) DEFAULT NULL,
-  `Status` enum('planned','live','finished','cancelled') DEFAULT 'planned',
+  `Status` enum('planned','invited','active','finished','cancelled') DEFAULT 'planned',
   `IsActive` tinyint(1) NOT NULL DEFAULT 1,
   `IsPublished` tinyint(1) NOT NULL DEFAULT 0,
   `CreatedAt` datetime NOT NULL DEFAULT current_timestamp(),

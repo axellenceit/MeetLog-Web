@@ -14,7 +14,8 @@ MeetLog ist eine webbasierte Anwendung zur strukturierten Vorbereitung, Durchfü
 * Erstellung und Bearbeitung von Besprechungen mit Datum, Uhrzeit, Ort und Status
 * Besprechungsstatus:
   * geplant
-  * live
+  * aktiv
+  * eingeladen
   * beendet
   * storniert
 * Verwaltung strukturierter Tagesordnungspunkte

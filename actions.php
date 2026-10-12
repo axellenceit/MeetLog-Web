@@ -180,7 +180,7 @@ switch ($action) {
             $redirect->back();
         }
 
-        if (!in_array($status, ['planned', 'live', 'finished'])) {
+        if (!in_array($status, ['planned', 'active', 'finished'])) {
             $flash->addToast('Ungültiger Status', 'danger');
             $redirect->back();
         }
@@ -596,6 +596,8 @@ switch ($action) {
             if ($sent) {
                 $participant->isInvited = true;
                 $meetingParticipantRepository->updateParticipant((int)$meeting->id, $participant);
+                $meeting->status = $meeting::STATUS_INVITED;
+                $meetingRepository->update($meeting);
             } else {
                 $failedCount++;
             }
@@ -1352,6 +1354,43 @@ switch ($action) {
             $logRepository->create($logEntry);
             $redirect->back();
         }
+
+    case 'update_meeting':
+        $meetingId = (int) ($_POST['meeting_id'] ?? 0);
+        $title = trim((string) ($_POST['title'] ?? ''));
+        $date = trim((string) ($_POST['date'] ?? ''));
+        $startTime = trim((string) ($_POST['start_time'] ?? ''));
+        $endTime = trim((string) ($_POST['end_time'] ?? ''));
+        $location = trim((string) ($_POST['location'] ?? ''));
+        $status = trim((string) ($_POST['status'] ?? ''));
+        $isActive = isset($_POST['is_active']) ? (bool) $_POST['is_active'] : true;
+        $isPublished = isset($_POST['is_published']) ? (bool) $_POST['is_published'] : false;
+
+        $meeting = $meetingRepository->findById($meetingId);
+
+        if ($meeting === null) {
+            $flash->addToast('Meeting nicht gefunden', 'danger');
+            $redirect->back();
+            break;
+        }
+
+        $meeting->title = $title !== '' ? $title : $meeting->title;
+        $meeting->date = $date !== '' ? $date : $meeting->date;
+        $meeting->startTime = $startTime !== '' ? $startTime : $meeting->startTime;
+        $meeting->endTime = $endTime !== '' ? $endTime : $meeting->endTime;
+        $meeting->location = $location !== '' ? $location : $meeting->location;
+        $meeting->status = $status !== '' ? $status : $meeting->status;
+        $meeting->isActive = $isActive;
+        $meeting->isPublished = $isPublished;
+
+        if ($meetingRepository->update($meeting)) {
+            $flash->addToast('Meeting erfolgreich aktualisiert', 'success');
+        } else {
+            $flash->addToast('Fehler beim Aktualisieren des Meetings', 'danger');
+        }
+
+        $redirect->back();
+        break;
 
     case 'create_task':
         $organizationId = (int) ($session->get('DefaultOrganization') ?? 0);
