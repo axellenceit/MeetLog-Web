@@ -41,6 +41,8 @@ return [
         'incomplete' => 'Nicht abgeschlossen',
         'new' => 'Neue Aufgabe',
         'delete' => 'Löschen',
+        'deleteConfirmation' => 'Soll diese Aufgabe wirklich gelöscht werden?',
+        'completeConfirmation' => 'Soll diese Aufgabe als erledigt markiert werden?',
         'description' => 'Beschreibung',
         'deadline' => 'Frist',
     ],

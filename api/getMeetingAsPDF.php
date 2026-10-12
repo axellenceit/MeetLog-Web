@@ -100,6 +100,16 @@ class MeetingPDF extends \setasign\Fpdi\Tcpdf\Fpdi
         $this->CheckPageBreak($height);
     }
 
+    /**
+     * Kaphöhe der Titelschrift in mm (Höhe eines Großbuchstabens).
+     * Helvetica: CapHeight ≈ 0,717 × Schriftgröße; 1 pt = 25,4/72 mm.
+     * Bei 20 pt ≈ 5,1 mm.
+     */
+    private function getTitleCapHeightMm(): float
+    {
+        return 20 * (25.4 / 72) * 0.717;
+    }
+
     public function Header(): void
     {
         if ($this->isAttachmentPage) {
@@ -200,6 +210,12 @@ class MeetingPDF extends \setasign\Fpdi\Tcpdf\Fpdi
         $this->SetDrawColor(120, 120, 120);
         $this->SetLineWidth(0.2);
         $this->Line($leftMargin, $bottomLineY, $pageWidth - $rightMargin, $bottomLineY);
+
+        // Inhalt (Titel) beginnt immer unterhalb der Kopfzeilen-Linie.
+        // Abstand = Kaphöhe der Titelschrift, also die Höhe eines Großbuchstabens.
+        // TCPDF setzt den Schreibcursor nach Header() auf diesen oberen Rand -
+        // dadurch gilt der Abstand auf jeder Seite, auch nach Seitenumbrüchen.
+        $this->setTopMargin($bottomLineY + $this->getTitleCapHeightMm());
     }
 
     public function Footer(): void
@@ -267,7 +283,9 @@ $pdf->setBaseDir(__DIR__);
 $pdf->SetPrintHeader(true);
 $pdf->SetPrintFooter(true);
 
-// Wichtig: genug Platz für Header und Footer reservieren
+// Wichtig: genug Platz für Header und Footer reservieren.
+// Hinweis: Der obere Rand (30) ist nur der Startwert - Header() setzt ihn
+// dynamisch auf "Kopfzeilen-Linie + Kaphöhe der Titelschrift".
 $pdf->SetMargins(25, 30, 20);
 $pdf->SetHeaderMargin(12);
 $pdf->SetFooterMargin(12);

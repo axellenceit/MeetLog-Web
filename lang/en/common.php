@@ -15,6 +15,7 @@ return [
     'delete' => 'Delete',
     'reset' => 'Reset',
     'search' => 'Search',
+    'submit' => 'Submit',
     'test' => 'Test',
     'yes' => 'Yes',
     'no' => 'No',
@@ -34,4 +35,5 @@ return [
     'calendar' => [
         'instructions' => 'A click on an empty day creates a meeting. A click on a meeting opens it.',
     ],
+    'privacy_policy' => 'Privacy Policy',
 ];

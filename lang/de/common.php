@@ -15,6 +15,7 @@ return [
     'delete' => 'Löschen',
     'reset' => 'Zurücksetzen',
     'search' => 'Suche',
+    'submit' => 'Absenden',
     'test' => 'Testen',
     'yes' => 'Ja',
     'no' => 'Nein',
@@ -34,4 +35,5 @@ return [
     'calendar' => [
         'instructions' => 'Ein Klick auf einen leeren Tag erstellt eine Besprechung. Ein Klicke auf eine Besprechung öffnet diese.',
     ],
+    'privacy_policy' => 'Datenschutzerklärung',
 ];

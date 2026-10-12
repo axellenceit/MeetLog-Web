@@ -2,6 +2,16 @@
 
 require_once __DIR__ . '/version.php';
 
+$latestTag = null;
+$updateAvailable = false;
+if (isset($config) && $config instanceof \Src\Core\Config) {
+    $updateChecker = \Src\Core\UpdateChecker::fromConfig($config, $currentVersion);
+    if ($updateChecker !== null) {
+        $latestTag = $updateChecker->getLatestTag();
+        $updateAvailable = $latestTag !== null && $updateChecker->isUpdateAvailable();
+    }
+}
+
 $feedbackStatus = $_GET['feedback_issue'] ?? '';
 $feedbackAlerts = [
     'success' => ['type' => 'success', 'message' => 'Vielen Dank. Dein Hinweis wurde als den Entwickler-Issue erstellt.'],
@@ -24,14 +34,14 @@ $feedbackAlerts = [
             <div class="col-lg-auto ms-lg-auto">
                 <ul class="list-inline list-inline-dots mb-0">
                     <li class="list-inline-item">
-                        <a href="./impressum.php" class="link-secondary">Impressum</a>
+                        <a href="./impressum.php" class="link-secondary"><?= htmlspecialchars($translator->t('Impressum'), ENT_QUOTES, 'UTF-8'); ?></a>
                     </li>
                     <li class="list-inline-item">
-                        <a href="./datenschutz.php" class="link-secondary">Datenschutz</a>
+                        <a href="./datenschutz.php" class="link-secondary"><?= htmlspecialchars($translator->t('Datenschutz'), ENT_QUOTES, 'UTF-8'); ?></a>
                     </li>
                     <li class="list-inline-item">
                         <a class="link-secondary p-0" data-bs-toggle="modal" data-bs-target="#reportFeedbackModal">
-                            Fehler melden / Verbesserung vorschlagen
+                            <?= htmlspecialchars($translator->t('Fehler melden / Verbesserung vorschlagen'), ENT_QUOTES, 'UTF-8'); ?>
                         </a>
                     </li>
                 </ul>
@@ -44,6 +54,11 @@ $feedbackAlerts = [
                     <li class="list-inline-item">
                         Version <?= htmlspecialchars($currentVersion, ENT_QUOTES, 'UTF-8'); ?> vom <?= htmlspecialchars(date('d.m.Y', strtotime($currentVersionDate)), ENT_QUOTES, 'UTF-8'); ?>
                     </li>
+                    <?php if ($updateAvailable): ?>
+                        <li class="list-inline-item">
+                            <a class="badge bg-green-lt" href="<?= htmlspecialchars($updateChecker->getReleaseUrl($latestTag), ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">Neue Version verf&uuml;gbar: <?= htmlspecialchars($latestTag, ENT_QUOTES, 'UTF-8'); ?></a>
+                        </li>
+                    <?php endif; ?>
                     <li class="list-inline-item">
                         <a class="btn btn-sm btn-github" href="https://github.com/axellenceit/MeetLog/releases/tag/<?= htmlspecialchars($currentVersion, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener"><!-- Download SVG icon from http://tabler.io/icons/icon/brand-github -->
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
@@ -110,7 +125,7 @@ $feedbackAlerts = [
                                 <label class="form-check-label" for="feedbackPrivacyConsent">
                                     Ich willige ein, dass meine Angaben zur Bearbeitung meiner Meldung verarbeitet und an den Entwickler übermittelt werden.
                                     Name und E-Mail sind freiwillig und werden nur für Rückfragen genutzt.
-                                    Weitere Informationen: <a href="./datenschutz.php" target="_blank" rel="noopener">Datenschutzerklärung</a>.
+                                    Weitere Informationen: <a href="./privacy.php" target="_blank" rel="noopener"><?= htmlspecialchars($translator->t('common.privacy_policy'), ENT_QUOTES, 'UTF-8'); ?></a>.
                                 </label>
                             </div>
                         </div>
@@ -118,8 +133,8 @@ $feedbackAlerts = [
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                    <button type="submit" class="btn btn-primary">An den Entwickler senden</button>
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal"><?= htmlspecialchars($translator->t('common.cancel'), ENT_QUOTES, 'UTF-8'); ?></button>
+                    <button type="submit" class="btn btn-primary"><?= htmlspecialchars($translator->t('common.submit'), ENT_QUOTES, 'UTF-8'); ?></button>
                 </div>
             </form>
         </div>

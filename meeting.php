@@ -695,10 +695,27 @@ $alleBenutzer = $userRepository->findAll(true);
 
             <?php foreach ($tasks as $task) { ?>
                 <div class="card mb-3">
+                    <?php
+                    if ($task->isDone) {
+                        $taskDone = true;
+                    ?>
+                        <div class="card-stamp">
+                            <div class="card-stamp-icon bg-green">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-check">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M5 12l5 5l10 -10" />
+                                </svg>
+                            </div>
+                        </div>
+                    <?php
+                    } else {
+                        $taskDone = false;
+                    }
+                    ?>
                     <div class="card-header">
                         <h3 class="card-title"><?= htmlspecialchars($task->title) ?></h3>
                         <div class="card-actions">
-                            <a href="#" class="btn btn-icon btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-task-edit"
+                            <a href="#" class="btn btn-icon btn-outline-primary <?= $taskDone ? 'disabled' : '' ?>" data-bs-toggle="modal" data-bs-target="#modal-task-edit"
                                 data-task-id="<?= (int) $task->id ?>"
                                 data-task-user-id="<?= (int) ($task->assigneeUserId ?? 0) ?>"
                                 data-task-title="<?= htmlspecialchars($task->title, ENT_QUOTES, 'UTF-8') ?>"
@@ -712,7 +729,9 @@ $alleBenutzer = $userRepository->findAll(true);
                                     <line x1="16" y1="5" x2="19" y2="8" />
                                 </svg>
                             </a>
-                            <a href="#" class="btn btn-icon btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteMeetingTaskModal">
+                            <a href="#" class="btn btn-icon btn-outline-danger <?= $taskDone ? 'disabled' : '' ?>" data-bs-toggle="modal" data-bs-target="#deleteMeetingTaskModal"
+                                data-task-id="<?= (int) $task->id ?>"
+                                data-task-title="<?= htmlspecialchars($task->title, ENT_QUOTES, 'UTF-8') ?>">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-trash">
                                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                     <line x1="4" y1="7" x2="20" y2="7" />
@@ -722,7 +741,9 @@ $alleBenutzer = $userRepository->findAll(true);
                                     <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
                                 </svg>
                             </a>
-                            <a href="#" class="btn btn-icon btn-outline-success" data-bs-toggle="modal" data-bs-target="#completeMeetingTaskModal">
+                            <a href="#" class="btn btn-icon btn-outline-success <?= $taskDone ? 'disabled' : '' ?>" data-bs-toggle="modal" data-bs-target="#completeMeetingTaskModal"
+                                data-task-id="<?= (int) $task->id ?>"
+                                data-task-title="<?= htmlspecialchars($task->title, ENT_QUOTES, 'UTF-8') ?>">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-check">
                                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                                     <path d="M5 12l5 5l10 -10" />
@@ -1033,6 +1054,47 @@ $alleBenutzer = $userRepository->findAll(true);
             </div>
         </div>
     </div>
+
+    <form action="actions.php?action=delete_task" method="post" class="modal modal-blur fade" id="deleteMeetingTaskModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?= $translator->t('meetings.tasks.delete'); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="task_id" id="deleteMeetingTaskId" value="" />
+                    <p><?= $translator->t('meetings.tasks.deleteConfirmation'); ?></p>
+                    <p class="mb-0"><strong id="deleteMeetingTaskTitle"></strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"> <?= $translator->t('common.cancel'); ?> </button>
+                    <button type="submit" class="btn btn-danger btn-5 ms-auto"><?= $translator->t('meetings.tasks.delete'); ?></button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <form action="actions.php?action=update_task_status" method="post" class="modal modal-blur fade" id="completeMeetingTaskModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?= $translator->t('meetings.tasks.complete'); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="task_id" id="completeMeetingTaskId" value="" />
+                    <input type="hidden" name="is_done" value="1" />
+                    <p><?= $translator->t('meetings.tasks.completeConfirmation'); ?></p>
+                    <p class="mb-0"><strong id="completeMeetingTaskTitle"></strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"> <?= $translator->t('common.cancel'); ?> </button>
+                    <button type="submit" class="btn btn-success btn-5 ms-auto"><?= $translator->t('meetings.tasks.complete'); ?></button>
+                </div>
+            </div>
+        </div>
+    </form>
 
     <?php if ($authToManageMeetings) { ?>
 
@@ -1716,6 +1778,55 @@ $alleBenutzer = $userRepository->findAll(true);
                 document.getElementById('task-description-edit').value = button.getAttribute('data-task-description') || '';
                 document.getElementById('task-deadline-edit').value = button.getAttribute('data-task-deadline') || '';
                 document.getElementById('task-completed-edit').value = button.getAttribute('data-task-completed') || '0';
+            });
+        }
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteMeetingTaskModal = document.getElementById('deleteMeetingTaskModal');
+
+        if (deleteMeetingTaskModal) {
+            deleteMeetingTaskModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                if (!button) return;
+
+                document.getElementById('deleteMeetingTaskId').value = button.getAttribute('data-task-id') || '';
+                document.getElementById('deleteMeetingTaskTitle').textContent = button.getAttribute('data-task-title') || '';
+            });
+        }
+
+        const completeMeetingTaskModal = document.getElementById('completeMeetingTaskModal');
+
+        if (completeMeetingTaskModal) {
+            completeMeetingTaskModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                if (!button) return;
+
+                document.getElementById('completeMeetingTaskId').value = button.getAttribute('data-task-id') || '';
+                document.getElementById('completeMeetingTaskTitle').textContent = button.getAttribute('data-task-title') || '';
+            });
+
+            completeMeetingTaskModal.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                fetch(completeMeetingTaskModal.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams(new FormData(completeMeetingTaskModal)).toString(),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Fehler beim Aktualisieren des Aufgabenstatus.');
+                        }
+                    })
+                    .catch(() => alert('Fehler beim Aktualisieren des Aufgabenstatus.'));
             });
         }
     });

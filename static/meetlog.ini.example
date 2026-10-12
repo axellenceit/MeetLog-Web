@@ -13,3 +13,12 @@ usessl = false
 user = mail@example.com
 pass = "Password"
 from = mail@example.com
+
+[update]
+; Clone-URL des GitHub-Repositorys für die Update-Prüfung (leer = deaktiviert)
+repo_url = "https://github.com/axellenceit/MeetLog"
+; Optional: Zugangsdaten für private Repositories (GitHub-Benutzer + Personal Access Token)
+user = ""
+pass = ""
+; Cache-Lebensdauer in Sekunden
+cache_ttl = 3600

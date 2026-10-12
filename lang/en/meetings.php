@@ -38,6 +38,8 @@ return [
         'incomplete' => 'Incomplete',
         'new' => 'New task',
         'delete' => 'Delete',
+        'deleteConfirmation' => 'Do you really want to delete this task?',
+        'completeConfirmation' => 'Do you really want to mark this task as completed?',
         'description' => 'Description',
         'deadline' => 'Deadline',
     ],
