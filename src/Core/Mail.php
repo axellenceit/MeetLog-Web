@@ -105,6 +105,24 @@ final class Mail
         return $this->send($to, $subject, $message);
     }
 
+    public function sendPasswordResetEmail(string $to, string $name, string $username, string $password, int $orgId = 1): bool
+    {
+        $organizationName = htmlspecialchars($this->organizationRepository->findById($orgId)->name1);
+
+        $subject = $this->translator->t('mail.password_reset.subject');
+        $subject = str_replace('{{organization_name}}', $organizationName, $subject);
+
+        $message = $this->translator->t('mail.password_reset.body_html');
+        $message = str_replace('{{organization_name}}', $organizationName, $message);
+        $message = str_replace('{{name}}', htmlspecialchars($name), $message);
+        $message = str_replace('{{username}}', htmlspecialchars($username), $message);
+        $message = str_replace('{{password}}', htmlspecialchars($password), $message);
+
+        $message .= $this->imprint($orgId);
+
+        return $this->send($to, $subject, $message);
+    }
+
     public function imprint(int $orgId): string
     {
 

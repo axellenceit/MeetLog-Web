@@ -8,4 +8,8 @@ return [
         'subject' => 'Dein Benutzerkonto wurde gelöscht',
         'body_html' => '<h2>Dein Benutzerkonto wurde gelöscht</h2><p>Hallo {{name}},</p><p>Dein Benutzerkonto bei {{organization_name}} wurde gelöscht und anonymisiert. Ein Zugriff ist ab jetzt nicht mehr möglich.</p><p>Beste Grüße,</p><p>Das {{organization_name}}-Team</p>',
     ],
+    'password_reset' => [
+        'subject' => 'Dein neues Passwort bei {{organization_name}}',
+        'body_html' => '<h2>Passwort zurückgesetzt</h2><p>Hallo <b>{{name}}</b>,</p><p>dein Passwort bei {{organization_name}} wurde zurückgesetzt.</p><p>Deine neuen Zugangsdaten:</p><p>Benutzername: {{username}}<br>Passwort: <code>{{password}}</code></p><p>Bitte ändere dein Passwort nach der Anmeldung in deinem Profil.</p><p>Beste Grüße,</p><p>Das {{organization_name}}-Team</p>',
+    ],
 ];
