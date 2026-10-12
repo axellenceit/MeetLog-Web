@@ -1264,6 +1264,41 @@ switch ($action) {
 
         $redirect->back();
         break;
+        
+    case 'update_profile':
+        try {
+            $firstName = trim((string) ($_POST['firstName'] ?? ''));
+            $lastName = trim((string) ($_POST['lastName'] ?? ''));
+            $mail = trim((string) ($_POST['mail'] ?? ''));
+            $password = trim((string) ($_POST['password'] ?? ''));
+
+            if ($firstName === '' || $lastName === '' || $mail === '') {
+                $flash->addToast('Vorname, Nachname und E-Mail-Adresse sind erforderlich', 'danger');
+                $redirect->back();
+            }
+
+            $user = $userRepository->findById((int) $session->get('id'));
+            if ($user) {
+                $user->firstName = $firstName;
+                $user->lastName = $lastName;
+                $user->mail = $mail;
+                if ($password !== '') {
+                    $user->password = password_hash($password, PASSWORD_DEFAULT);
+                }
+                $result = $userRepository->updateUser($user);
+                if ($result) {
+                    $flash->addToast('Profil erfolgreich aktualisiert \n Bitte melden Sie sich erneut an, um die Änderungen zu übernehmen.', 'success');
+                    $auth->logout();
+                } else {
+                    $flash->addToast('Fehler beim Aktualisieren des Profils', 'danger');
+                }
+            }
+            $redirect->back();
+        } catch (Exception $e) {
+            $flash->addToast('Fehler beim Aktualisieren des Profils', 'danger');
+            $redirect->back();
+        }
+        break;
 
     case 'create_meeting':
         try {

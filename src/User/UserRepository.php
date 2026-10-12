@@ -151,12 +151,13 @@ final class UserRepository
             $user->isDeleted ? 1 : 0,
             $user->id
         ]);
+
     }
 
-    public function update(User $user): bool
+    /* deprecated public function update(User $user): bool
     {
         return $this->updateUser($user);
-    }
+    }*/
 
     public function deleteProfilePhoto(int $userId): bool
     {

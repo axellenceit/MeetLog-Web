@@ -77,7 +77,7 @@ if (!$auth->isLoggedIn()) {
 
                 <!-- Profilangaben: 8 von 12 Spalten -->
                 <div class="col-8">
-                    <form action="." method="post">
+                    <form action="./actions.php?action=update_profile" method="post">
                         <div class="card">
                             <div class="card-header">
                                 <div class="card-title">
