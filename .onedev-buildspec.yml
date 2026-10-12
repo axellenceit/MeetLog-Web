@@ -1,14 +1,86 @@
 version: 55
+
 jobs:
 - name: Publish Github Release
   steps:
   - type: PushRepository
     name: Github
     remoteUrl: https://github.com/axellenceit/MeetLog-Web.git
-    userName: axcellenceit
+    userName: axellenceit
+    passwordSecret: GitHub-OneDev-Token
     force: false
     condition: SUCCESSFUL
     optional: false
+
+  - type: CommandStep
+    name: Create Github Release
+    runInContainer: true
+    image: alpine:3.21
+    interpreter:
+      type: PosixInterpreter
+      shell: sh
+    commands: |
+      set -eu
+
+      apk add --no-cache curl jq
+
+      TAG="@tag@"
+      REPO="axellenceit/MeetLog-Web"
+      API="https://api.github.com/repos/$REPO"
+      TOKEN="@secret:GitHub-OneDev-Token@"
+
+      if [ ! -f ReleaseNotes.md ]; then
+        echo "ReleaseNotes.md wurde nicht gefunden!"
+        exit 1
+      fi
+
+      jq -n 
+        --arg tag "$TAG" 
+        --arg name "$TAG" 
+        --rawfile body ReleaseNotes.md 
+        '{
+          tag_name: $tag,
+          name: $name,
+          body: $body,
+          draft: false,
+          prerelease: false
+        }' > release.json
+
+      STATUS=$(curl -sS -o release-response.json 
+        -w '%{http_code}' 
+        -H "Authorization: Bearer $TOKEN" 
+        -H "Accept: application/vnd.github+json" 
+        "$API/releases/tags/$TAG")
+
+      if [ "$STATUS" = "200" ]; then
+        ID=$(jq -r '.id' release-response.json)
+        curl --fail-with-body -sS 
+          -X PATCH 
+          -H "Authorization: Bearer $TOKEN" 
+          -H "Accept: application/vnd.github+json" 
+          -H "Content-Type: application/json" 
+          "$API/releases/$ID" 
+          --data @release.json
+      elif [ "$STATUS" = "404" ]; then
+        curl --fail-with-body -sS 
+          -X POST 
+          -H "Authorization: Bearer $TOKEN" 
+          -H "Accept: application/vnd.github+json" 
+          -H "Content-Type: application/json" 
+          "$API/releases" 
+          --data @release.json
+      else
+        echo "GitHub API Fehler: HTTP $STATUS"
+        cat release-response.json
+        exit 1
+      fi
+    condition: SUCCESSFUL
+    optional: false
+
+  triggers:
+  - type: TagCreateTrigger
+    tags: 'v*'
+
   retryCondition: never
   maxAttempts: 3
   retryDelay: 30
