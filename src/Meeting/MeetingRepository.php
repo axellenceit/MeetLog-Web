@@ -171,4 +171,27 @@ final class MeetingRepository
             $meeting->id,
         ]);
     }
+
+    /**
+     * Setzt alle vergangenen Meetings, die noch nicht abgeschlossen
+     * oder abgesagt sind, auf den Status 'finished'.
+     *
+     * @return int Anzahl der aktualisierten Meetings
+     */
+    public function finishPastMeetings(): int
+    {
+        $sql = "UPDATE tblMeeting
+                SET Status = ?
+                WHERE Date < CURDATE()
+                  AND Status IN (?, ?, ?)";
+
+        $stmt = $this->db->statement($sql, [
+            Meeting::STATUS_FINISHED,
+            Meeting::STATUS_PLANNED,
+            Meeting::STATUS_INVITED,
+            Meeting::STATUS_ACTIVE,
+        ]);
+
+        return $stmt->rowCount();
+    }
 }

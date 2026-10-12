@@ -77,6 +77,8 @@ final class App
         $this->acl = new ACL($this->userRepository, $this->organizationFunctionRepository, $this->organizationMemberRepository);
         $this->taskRepository = new TaskRepository($this->db);
         $this->logRepository = new LogRepository($this->db);
+
+        $this->meetingRepository->finishPastMeetings();
     }
 
     public function config(): Config
