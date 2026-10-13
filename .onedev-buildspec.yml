@@ -10,7 +10,6 @@ jobs:
     force: false
     condition: SUCCESSFUL
     optional: false
-
   - type: CommandStep
     name: Create Github Release
     runInContainer: true
@@ -68,7 +67,7 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Content-Type: application/json" \
             "$API/releases/$ID" \
-            --data @release.json
+            --data @@release.json
 
         elif [ "$STATUS" = "404" ]; then
           echo "Erstelle GitHub Release $TAG."
@@ -79,7 +78,7 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Content-Type: application/json" \
             "$API/releases" \
-            --data @release.json
+            --data @@release.json
 
         else
           echo "GitHub API Fehler: HTTP $STATUS"
@@ -92,11 +91,9 @@ jobs:
     useTTY: true
     condition: SUCCESSFUL
     optional: false
-
   triggers:
   - type: TagCreateTrigger
-    tags: 'v*'
-
+    tags: v*
   retryCondition: never
   maxAttempts: 3
   retryDelay: 30
