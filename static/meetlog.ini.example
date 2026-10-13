@@ -16,7 +16,7 @@ from = mail@example.com
 
 [update]
 ; Clone-URL des GitHub-Repositorys für die Update-Prüfung (leer = deaktiviert)
-repo_url = "https://github.com/axellenceit/MeetLog"
+repo_url = "https://github.com/axellenceit/MeetLog-Web"
 ; Optional: Zugangsdaten für private Repositories (GitHub-Benutzer + Personal Access Token)
 user = ""
 pass = ""

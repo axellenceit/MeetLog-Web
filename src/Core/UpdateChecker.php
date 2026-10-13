@@ -363,6 +363,12 @@ final class UpdateChecker
             return null;
         }
 
+        // Cache nur verwenden, wenn er zur konfigurierten Repo-URL passt,
+        // damit nach einem Wechsel des Repositorys kein veralteter Tag angezeigt wird
+        if (($data['repo'] ?? '') !== $this->repoUrl) {
+            return null;
+        }
+
         if (time() - (int) $data['fetched'] > $this->cacheTtl) {
             return null;
         }
@@ -374,7 +380,7 @@ final class UpdateChecker
     {
         @file_put_contents(
             $this->cacheFile,
-            json_encode(['tag' => $tag, 'fetched' => time()])
+            json_encode(['tag' => $tag, 'repo' => $this->repoUrl, 'fetched' => time()])
         );
     }
 }
