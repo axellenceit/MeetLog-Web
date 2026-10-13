@@ -23,9 +23,6 @@ jobs:
         apk add --no-cache curl jq
 
         TAG="@tag@"
-        echo "OneDev tag variable: '${TAG}'"
-        echo "Build commit: $(git rev-parse --short HEAD)"
-        git tag --points-at HEAD || true
         REPO="axellenceit/MeetLog-Web"
         API="https://api.github.com/repos/$REPO"
         TOKEN="@secret:GitHub-OneDev-Token@"
