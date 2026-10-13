@@ -22,7 +22,7 @@ jobs:
 
         apk add --no-cache curl jq
 
-        TAG="@tag@"
+        TAG="@updated_tag@"
         REPO="axellenceit/MeetLog-Web"
         API="https://api.github.com/repos/$REPO"
         TOKEN="@secret:GitHub-OneDev-Token@"
