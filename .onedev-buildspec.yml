@@ -20,17 +20,22 @@ jobs:
       commands: |
         set -eu
 
-        apk add --no-cache curl jq
+        apk add --no-cache curl git jq
 
         TAG="@tag@"
         REPO="axellenceit/MeetLog-Web"
         API="https://api.github.com/repos/$REPO"
         TOKEN="@secret:GitHub-OneDev-Token@"
 
+        mkdir -p /tmp/meetlog
+        cd /tmp/meetlog
+
         if [ -z "$TAG" ]; then
           echo "Fehler: Kein Tag vorhanden."
           exit 1
         fi
+
+        git clone https://github.com/axellenceit/MeetLog-Web.git .
 
         if [ ! -f ReleaseNotes.md ]; then
           echo "Fehler: ReleaseNotes.md wurde nicht gefunden."
