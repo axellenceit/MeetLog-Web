@@ -1,4 +1,4 @@
 <?php
 
-$currentVersion = '0.0.80';
+$currentVersion = '0.1.2';
 $currentVersionDate = '2026-10-12';

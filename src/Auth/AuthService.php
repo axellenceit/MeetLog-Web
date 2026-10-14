@@ -24,15 +24,13 @@ final class AuthService
             return null;
         }
 
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
         $user = $this->userRepository->findActiveByEmail($mail);
 
         if ($user === null) {
             return null;
         }
 
-        $passwordCheck = password_verify($password, $hashedPassword);
+        $passwordCheck = password_verify($password, $user->password);
 
         if (!$passwordCheck) {
             return null;
