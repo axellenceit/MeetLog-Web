@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace Src\Organization;
 
 use Src\Core\Database;
+use Src\Log\LogRepository;
+use Src\Log\Log;
 
 final class OrganizationFunctionRepository
 {
     public function __construct(
-        private Database $db
+        private Database $db,
+        private LogRepository $logRepository
     ) {}
 
     public function findById(int $id): ?OrganizationFunction
@@ -45,25 +48,56 @@ final class OrganizationFunctionRepository
 
     public function create(OrganizationFunction $function): int
     {
-        $sql = "INSERT INTO tblOrganizationFunction
+
+        try {
+
+            $sql = "INSERT INTO tblOrganizationFunction
                 (Organization, Name, Description, SortOrder, IsActive, MaySign, MayManageOrganization, MayManageMeetings)
                 VALUES
                 (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        $data = $function->toDatabaseArray();
+            $data = $function->toDatabaseArray();
 
-        $this->db->execute($sql, [
-            $data['Organization'],
-            $data['Name'],
-            $data['Description'],
-            $data['SortOrder'],
-            $data['IsActive'],
-            $data['MaySign'],
-            $data['MayManageOrganization'],
-            $data['MayManageMeetings']
-        ]);
+            $this->db->execute($sql, [
+                $data['Organization'],
+                $data['Name'],
+                $data['Description'],
+                $data['SortOrder'],
+                $data['IsActive'],
+                $data['MaySign'],
+                $data['MayManageOrganization'],
+                $data['MayManageMeetings']
+            ]);
 
-        return (int) $this->db->lastInsertId();
+            $lastInsertId = (int) $this->db->lastInsertId();
+
+            $logEntry = new Log(
+                id: null,
+                userId: (int) $_SESSION['id'],
+                action: 'Neue Organisationsfunktion ' . $data['Name'] . ' erstellt',
+                severity: 'info',
+                timestamp: date('Y-m-d H:i:s')
+            );
+            
+            $this->logRepository->create($logEntry);
+
+        } catch (\Exception $e) {
+            // Handle exception if needed
+        
+            $logEntry = new Log(
+                id: null,
+                userId: (int) $_SESSION['id'],
+                action: 'Fehler beim Erstellen der Organisationsfunktion: ' . $e->getMessage(),
+                severity: 'error',
+                timestamp: date('Y-m-d H:i:s')
+            );
+
+            $this->logRepository->create($logEntry);
+
+            throw $e;
+        }
+
+        return $lastInsertId;
     }
 
     public function update(OrganizationFunction $function): bool

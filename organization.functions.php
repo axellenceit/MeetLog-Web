@@ -178,7 +178,7 @@ $organizationFunctionsFiltered = array_values(array_filter(
                                 <?php if ($organizationFunctionsFiltered === []): ?>
                                     <tr>
                                         <td colspan="5" class="text-secondary text-center py-4">
-                                            <?= $translator->t('functions.nothingfound') ?>
+                                            <?= $translator->t('organization.functions.nothingfound') ?>
                                         </td>
                                     </tr>
                                 <?php endif; ?>
@@ -249,9 +249,8 @@ $organizationFunctionsFiltered = array_values(array_filter(
                                                     <?= $translator->t('organization.functions.edit') ?>
                                                 </button>
 
-                                                <form method="post" action="" onsubmit="return confirm('<?= $translator->t('organization.functions.delete') ?>?');">
-                                                    <input type="hidden" name="role_action" value="delete">
-                                                    <input type="hidden" name="id" value="<?= (int) $function->id ?>">
+                                                <form method="post" action="actions.php?action=delete_function" onsubmit="return confirm('<?= $translator->t('organization.functions.delete') ?>?');">
+                                                    <input type="hidden" name="functionId" value="<?= (int) $function->id ?>">
                                                     <button type="submit" class="btn btn-sm btn-outline-danger">
                                                         <?= $translator->t('organization.functions.delete') ?>
                                                     </button>
@@ -292,28 +291,19 @@ $organizationFunctionsFiltered = array_values(array_filter(
                                                     value="<?= htmlspecialchars((string) $function->name, ENT_QUOTES, 'UTF-8') ?>">
                                             </div>
 
-                                            <div class="col-12">
-                                                <label class="form-label" for="description-<?= (int) $function->id ?>"><?= $translator->t('organization.functions.description'); ?></label>
-                                                <textarea
-                                                    name="description"
-                                                    id="description-<?= (int) $function->id ?>"
-                                                    class="form-control"
-                                                    rows="4"><?= htmlspecialchars((string) ($function->description ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
-                                            </div>
-
-                                            <div class="col-12 col-md-4 d-flex align-items-md-end">
-                                                <label class="form-check mb-2 mb-md-0"><?= $translator->t('organization.functions.isActive'); ?></label>
-                                                <input
-                                                    class="form-check-input"
-                                                    type="checkbox"
-                                                    name="isActive"
-                                                    value="1"
-                                                    <?= $function->isActive ? 'checked' : '' ?>>
-                                                <span class="form-check-label"><?= $translator->t('organization.functions.active'); ?></span>
+                                            <div class="col-12 col-md-6 d-flex align-items-md-end">
+                                                <label class="form-check mb-2 mb-md-0">
+                                                    <input
+                                                        class="form-check-input"
+                                                        type="checkbox"
+                                                        name="isActive"
+                                                        value="1"
+                                                        <?= $function->isActive ? 'checked' : '' ?>>
+                                                    <span class="form-check-label"><?= $translator->t('organization.functions.active'); ?></span>
                                                 </label>
                                             </div>
 
-                                            <div class="col-12 col-md-4 d-flex align-items-md-end">
+                                            <div class="col-12 col-md-6 d-flex align-items-md-end">
                                                 <label class="form-check mb-2 mb-md-0">
                                                     <input
                                                         class="form-check-input"
@@ -325,7 +315,7 @@ $organizationFunctionsFiltered = array_values(array_filter(
                                                 </label>
                                             </div>
 
-                                            <div class="col-12 col-md-4 d-flex align-items-md-end">
+                                            <div class="col-12 col-md-6 d-flex align-items-md-end">
                                                 <label class="form-check mb-2 mb-md-0">
                                                     <input
                                                         class="form-check-input"
@@ -337,7 +327,7 @@ $organizationFunctionsFiltered = array_values(array_filter(
                                                 </label>
                                             </div>
 
-                                            <div class="col-12 col-md-4 d-flex align-items-md-end">
+                                            <div class="col-12 col-md-6 d-flex align-items-md-end">
                                                 <label class="form-check mb-2 mb-md-0">
                                                     <input
                                                         class="form-check-input"
@@ -348,6 +338,16 @@ $organizationFunctionsFiltered = array_values(array_filter(
                                                     <span class="form-check-label"><?= $translator->t('organization.functions.authToManageMeetings'); ?></span>
                                                 </label>
                                             </div>
+
+                                            <div class="col-12">
+                                                <label class="form-label" for="description-<?= (int) $function->id ?>"><?= $translator->t('organization.functions.description'); ?></label>
+                                                <textarea
+                                                    name="description"
+                                                    id="description-<?= (int) $function->id ?>"
+                                                    class="form-control"
+                                                    rows="4"><?= htmlspecialchars((string) ($function->description ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
+                                            </div>
+
                                         </div>
                                     </div>
 
@@ -364,7 +364,7 @@ $organizationFunctionsFiltered = array_values(array_filter(
                 <div class="modal modal-blur fade" id="modal-role-create" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
                         <div class="modal-content">
-                            <form method="post" action="">
+                            <form method="post" action="actions.php?action=create_function">
                                 <div class="modal-header">
                                     <h5 class="modal-title"><?= $translator->t('organization.functions.new'); ?></h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
@@ -375,22 +375,36 @@ $organizationFunctionsFiltered = array_values(array_filter(
                                     <input type="hidden" name="role_action" value="save">
 
                                     <div class="row g-3">
-                                        <div class="col-12 col-md-8">
+                                        <div class="col-12 col-md-12">
                                             <label class="form-label" for="name-create"><?= $translator->t('organization.functions.designation'); ?></label>
                                             <input type="text" name="name" id="name-create" class="form-control">
                                         </div>
 
-                                        <div class="col-12 col-md-4 d-flex align-items-md-end">
+                                        <div class="col-12 col-md-6 d-flex align-items-md-end">
                                             <label class="form-check mb-2 mb-md-0">
                                                 <input class="form-check-input" type="checkbox" name="isActive" value="1" checked>
                                                 <span class="form-check-label"><?= $translator->t('organization.functions.active'); ?></span>
                                             </label>
                                         </div>
 
-                                        <div class="col-12 col-md-4 d-flex align-items-md-end">
+                                        <div class="col-12 col-md-6 d-flex align-items-md-end">
                                             <label class="form-check mb-2 mb-md-0">
                                                 <input class="form-check-input" type="checkbox" name="maySign" value="1" checked>
                                                 <span class="form-check-label"><?= $translator->t('organization.functions.authToSign'); ?></span>
+                                            </label>
+                                        </div>
+
+                                        <div class="col-12 col-md-6 d-flex align-items-md-end">
+                                            <label class="form-check mb-2 mb-md-0">
+                                                <input class="form-check-input" type="checkbox" name="mayManageOrganization" value="1" checked>
+                                                <span class="form-check-label"><?= $translator->t('organization.functions.authToManageOrganization'); ?></span>
+                                            </label>
+                                        </div>
+
+                                        <div class="col-12 col-md-6 d-flex align-items-md-end">
+                                            <label class="form-check mb-2 mb-md-0">
+                                                <input class="form-check-input" type="checkbox" name="mayManageMeetings" value="1" checked>
+                                                <span class="form-check-label"><?= $translator->t('organization.functions.authToManageMeetings'); ?></span>
                                             </label>
                                         </div>
 
@@ -417,6 +431,7 @@ $organizationFunctionsFiltered = array_values(array_filter(
     <?php include_once 'footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js" defer></script>
+
 </body>
 
 </html>

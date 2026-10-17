@@ -13,6 +13,7 @@ if (!$auth->isLoggedIn()) {
 
 use Src\User\User;
 use Src\Organization\OrganizationMember;
+use Src\Organization\OrganizationFunction;
 use Src\Person\Person;
 use Src\Meeting\Meeting;
 use Src\Meeting\MeetingAttachment;
@@ -1264,7 +1265,7 @@ switch ($action) {
 
         $redirect->back();
         break;
-        
+
     case 'update_profile':
         try {
             $firstName = trim((string) ($_POST['firstName'] ?? ''));
@@ -1958,6 +1959,93 @@ switch ($action) {
         }
 
         $mail->sendWelcomeEmail($recipientMail, $recipientName, $recipientMail, $tempPassword, $member->organization);
+
+        $redirect->back();
+        break;
+
+    case 'create_function':
+        $organizationId = (int) ($session->get('DefaultOrganization') ?? 0);
+        $name = trim((string)($_POST['name'] ?? ''));
+        $description = trim((string)($_POST['description'] ?? ''));
+        $isActive = isset($_POST['isActive']) ? (bool)$_POST['isActive'] : false;
+        $maySign = isset($_POST['maySign']) ? 1 : 0;
+        $mayManageOrganization = isset($_POST['mayManageOrganization']) ? 1 : 0;
+        $mayManageMeetings = isset($_POST['mayManageMeetings']) ? 1 : 0;
+
+        if ($organizationId <= 0) {
+            $flash->addToast('Keine Organisation ausgewählt', 'danger');
+            $redirect->back();
+        }
+
+        if ($name === '') {
+            $flash->addToast('Bitte eine Bezeichnung für die Funktion angeben', 'danger');
+            $redirect->back();
+        }
+
+        $function = new OrganizationFunction(
+            id: null,
+            organization: $organizationId,
+            name: $name,
+            description: $description !== '' ? $description : null,
+            sortOrder: 0,
+            isActive: $isActive,
+            maySign: $maySign,
+            mayManageOrganization: $mayManageOrganization,
+            mayManageMeetings: $mayManageMeetings,
+        );
+
+        try {
+            $newId = $organizationFunctionRepository->create($function);
+        } catch (\Exception $e) {
+            $newId = 0;
+        }
+
+        if ($newId <= 0) {
+            $flash->addToast('Fehler beim Erstellen der Funktion', 'danger');
+        } else {
+            $flash->addToast('Funktion erfolgreich erstellt', 'success');
+        }
+
+        $redirect->back();
+        break;
+
+    case 'delete_function':
+        $functionId = isset($_POST['functionId']) ? (int)$_POST['functionId'] : 0;
+
+        if ($functionId <= 0) {
+            $flash->addToast('Keine Funktion ausgewählt', 'danger');
+            $redirect->back();
+        }
+
+        try {
+            $deleted = $organizationFunctionRepository->delete($functionId);
+        } catch (\Exception $e) {
+            $deleted = false;
+        }
+
+        if (!$deleted) {
+            $flash->addToast('Fehler beim Löschen der Funktion', 'danger');
+
+            $logEntry = new Log(
+                id: null,
+                userId: (int) $_SESSION['id'],
+                action: 'Funktion zu ' . $functionId . ' gelöscht',
+                severity: 'info',
+                timestamp: date('Y-m-d H:i:s')
+            );
+            $logRepository->create($logEntry);
+        } else {
+            $flash->addToast('Funktion erfolgreich gelöscht', 'success');
+
+            $logEntry = new Log(
+                id: null,
+                userId: (int) $_SESSION['id'],
+                action: 'Funktion zu ' . $functionId . ' gelöscht',
+                severity: 'info',
+                timestamp: date('Y-m-d H:i:s')
+            );
+            $logRepository->create($logEntry);
+        }
 
         $redirect->back();
         break;

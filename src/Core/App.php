@@ -58,6 +58,7 @@ final class App
         $this->session->start();
 
         $this->db = new Database($this->config);
+        $this->logRepository = new LogRepository($this->db);
         $this->translator = new Translator();
         $this->organizationRepository = new OrganizationRepository($this->db);
         $this->mail = new Mail($this->config, $this->translator, $this->organizationRepository);
@@ -65,7 +66,7 @@ final class App
         $this->userRepository = new UserRepository($this->db);
         $this->auth = new AuthService($this->userRepository, $this->session, $this->translator);
         $this->redirector = new Redirector();
-        $this->organizationFunctionRepository = new OrganizationFunctionRepository($this->db);
+        $this->organizationFunctionRepository = new OrganizationFunctionRepository($this->db, $this->logRepository);
         $this->organizationMemberRepository = new OrganizationMemberRepository($this->db);
         $this->languageRepository = new LanguageRepository($this->db, $this->translator);
         $this->meetingRepository = new MeetingRepository($this->db);
@@ -76,7 +77,6 @@ final class App
         $this->countryRepository = new CountryRepository($this->db);
         $this->acl = new ACL($this->userRepository, $this->organizationFunctionRepository, $this->organizationMemberRepository);
         $this->taskRepository = new TaskRepository($this->db);
-        $this->logRepository = new LogRepository($this->db);
 
         $this->meetingRepository->finishPastMeetings();
     }

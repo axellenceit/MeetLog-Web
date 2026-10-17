@@ -2,6 +2,11 @@
 
 MeetLog ist eine webbasierte Anwendung zur strukturierten Vorbereitung, Durchführung und Nachbereitung von Besprechungen in Organisationen. Die erste Beta stellt den zentralen Funktionsumfang für Organisationen, Personen, Meetings, Tagesordnungen, Teilnehmer und Aufgaben bereit.
 
+## Version
+
+* Version 0.13
+* Datum 2026-10-16
+
 ## Enthaltene Funktionen
 
 * Verwaltung von Organisationen inklusive Kontaktdaten, Logo und Registerinformationen

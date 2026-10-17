@@ -7,3 +7,9 @@ INSERT INTO `tblPerson` (`id`, `FirstName`, `LastName`, `Mail`, `Phone`, `Street
 
 INSERT INTO `tblUser` (`id`, `Person`, `Password`, `DefaultOrganization`, `Photo`, `Lang`, `IsActive`, `IsAdmin`, `IsDeleted`) VALUES
 (1, 1, '$2y$12$2C5yvnwlSelwSzU2Y.l8Y.fdQ3W9I5gNo2.cfolRzpOCuWvlWJsiy', 1, NULL, 'de', 1, 1, 0);
+
+INSERT INTO `tblOrganizationFunction` (`id`, `Organization`, `Name`, `Description`, `SortOrder`, `IsActive`, `MaySign`, `MayManageOrganization`, `MayManageMeetings`) VALUES
+(1, 1, 'Vorsitzende/r', 'Vorsitzende(r) des Vereins', 1, 1, 1, 1, 1);
+
+INSERT INTO `tblOrganizationMember` (`id`, `Organization`, `Person`, `User`, `Function`, `Note`, `IsActive`, `IsDeleted`) VALUES
+(1, 1, 1, 1, 1, NULL, 1, 0);
